@@ -39,20 +39,22 @@ The target is called h700_gles_compile_check. A successful build means the selec
 
 ## Full project configure
 
-The complete TwinsanityEvolved build also uses its pinned WASI SDK and WABT toolchain for the decompiled game module. Follow the upstream toolchain setup first, then configure the root project with the target cross-compilers and PS2R_GLES enabled.
+The complete TwinsanityEvolved build also uses its pinned WASI SDK and WABT toolchain for the decompiled game module. Follow the upstream toolchain setup first, then configure the root project with a real AArch64 Linux toolchain and an H700-compatible sysroot.
 
 ~~~bash
 ./tools/fetch_toolchain.sh
 
 cmake -S . -B build-h700 -G Ninja \
-  -DCMAKE_SYSTEM_NAME=Linux \
-  -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-  -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-  -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-  -DPS2R_GLES=ON
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/aarch64-linux-toolchain.cmake \
+  -DCMAKE_SYSROOT=/path/to/muos-sysroot \
+  -DPS2R_GLES=ON \
+  -DPS2R_GLES_INCLUDE_DIR=/path/to/muos-sysroot/usr/include \
+  -DPS2R_GLES_LIBRARY=/path/to/muos-sysroot/usr/lib/libGLESv2.so
 ~~~
 
-The full project may require further target-specific dependencies and configuration. The compile-only gate is intentionally independent so renderer API issues can be found before the whole game pipeline is ready.
+The sysroot must also provide the target SDL2 and FFmpeg development files required by the complete application. The root CMake project forwards the GLES option and explicit GLES header/library paths to its NativeEE ExternalProject, then links the final application to GLESv2 rather than desktop OpenGL.
+
+The full project may require additional target-specific dependencies and configuration. The compile-only gate is intentionally independent: it can find renderer API and header incompatibilities before the complete runtime sysroot and game pipeline are ready.
 
 ## CI workflow
 
