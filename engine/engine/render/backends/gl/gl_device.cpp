@@ -79,8 +79,13 @@ bool GlDevice::Init(std::function<void()> swap) {
         // the GPU and the driver (the start-up line: a user's log names the machine's GPU)
         const GLubyte* r = glGetString(GL_RENDERER);
         const GLubyte* v = glGetString(GL_VERSION);
+#if PS2R_HOST_GLES
+        device_name_ = std::string(r ? reinterpret_cast<const char*>(r) : "?") + " / OpenGL ES " +
+                       (v ? reinterpret_cast<const char*>(v) : "?");
+#else
         device_name_ = std::string(r ? reinterpret_cast<const char*>(r) : "?") + " / OpenGL " +
                        (v ? reinterpret_cast<const char*>(v) : "?");
+#endif
     }
     shaders_.SetZeroToOneDepth(zero_to_one);
     shaders_.SetGsZ24Depth(settings_.gs_z24);
