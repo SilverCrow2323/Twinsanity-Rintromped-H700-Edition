@@ -11,6 +11,17 @@ This page separates the existing TwinsanityEvolved build from the work needed fo
 - The shader path uses `noperspective` in the S/T/Q interpolation contract. The [GLSL ES 3.20 core specification](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html) only lists `smooth` and `flat`; the equivalent output must be proven in the renderer tests.
 - The PS Vita build uses a separate vitaGL/GXM path. It is not an H700 build.
 
+## Current diagnostic milestone
+
+The dedicated branch [h700/porting](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/tree/h700/porting) now contains two independent device probes:
+
+- **EGL/GLES pbuffer:** tests default-display initialisation and an off-screen ES context.
+- **SDL/GLES window:** requests ES 3.2, creates a 640×480 window and swaps six colour frames so the display path can be observed.
+
+The successful [H700 CI run #43306974401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43306974401) passed host tests, AArch64 cross-build, ELF/GLIBC checks, package verification and artifact upload. It produced the diagnostic artifact `twinsanity-rintromped-h700-preflight`.
+
+This proves that the diagnostic binaries and muOS archive build correctly. It does **not** prove that the H700 device can initialise its graphics stack; no physical device report has been reviewed yet. The [engineering PR #2](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/pull/2) is intentionally kept in draft.
+
 ## What is not confirmed
 
 - A successful launch on an RG35XX H or another H700 device.
