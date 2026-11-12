@@ -26,7 +26,7 @@ case "$sdl_rc" in 0|2|3|5|6) ;; *) cat "$TMP/sdl-stdout.txt" >&2; exit 1;; esac
 [ -s "$TMP/sdl-report.txt" ]
 grep -q 'H700 EGL/GLES probe' "$TMP/report.txt"
 grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
-if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
+if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_BIN="$TMP/probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
 # Rebuild over an existing package and prove that obsolete ZIP entries are removed.
@@ -39,7 +39,7 @@ with open(sys.argv[1], "wb") as stream:
     stream.write(header)
 PY
 chmod 755 "$TMP/fake-aarch64"
-PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" \
+PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
   scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
 python3 - "$TMP/rebuild.muxapp" <<'PY'
 import sys
