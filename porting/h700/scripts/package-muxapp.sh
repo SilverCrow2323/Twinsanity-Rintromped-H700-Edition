@@ -4,12 +4,14 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 OUT=${1:-"$ROOT/dist/Twinsanity-Rintromped-H700-Edition.muxapp"}
 BIN=${PROBE_BIN:-"$ROOT/dist/tw-rintromped-h700-probe"}
 SDL_BIN=${SDL_PROBE_BIN:-"$ROOT/dist/tw-rintromped-h700-sdl-probe"}
+SHADER_BIN=${SHADER_PROBE_BIN:-"$ROOT/dist/tw-rintromped-h700-gles-shader-smoke"}
 [ -x "$BIN" ] || { echo "Missing AArch64 EGL/GLES diagnostic binary; run scripts/build-probe.sh first." >&2; exit 1; }
 [ -x "$SDL_BIN" ] || { echo "Missing AArch64 SDL/GLES diagnostic binary; run scripts/build-probe.sh first." >&2; exit 1; }
+[ -x "$SHADER_BIN" ] || { echo "Missing AArch64 NativeEE GLES shader smoke binary; build h700_gles_shader_smoke first." >&2; exit 1; }
 command -v readelf >/dev/null 2>&1 || { echo "Missing readelf" >&2; exit 2; }
 command -v zip >/dev/null 2>&1 || { echo "Missing zip" >&2; exit 2; }
 command -v python3 >/dev/null 2>&1 || { echo "Missing python3 for archive verification" >&2; exit 2; }
-for binary in "$BIN" "$SDL_BIN"; do
+for binary in "$BIN" "$SDL_BIN" "$SHADER_BIN"; do
   readelf -h "$binary" | grep -Eq 'Machine:.*AArch64' || { echo "Refusing non-AArch64 binary: $binary" >&2; exit 1; }
 done
 STAGE=$(mktemp -d)
@@ -23,11 +25,13 @@ APP="$STAGE/TwinsanityRintromped"
 mkdir -p "$APP/device" "$APP/logs"
 cp "$BIN" "$APP/tw-rintromped-h700-probe"
 cp "$SDL_BIN" "$APP/tw-rintromped-h700-sdl-probe"
+cp "$SHADER_BIN" "$APP/tw-rintromped-h700-gles-shader-smoke"
 cp "$ROOT/muos/TwinsanityRintromped/mux_launch.sh" "$APP/mux_launch.sh"
 cp "$ROOT/muos/TwinsanityRintromped/mux_lang.ini" "$APP/mux_lang.ini"
 cp "$ROOT/device/collect-system-info.sh" "$APP/device/collect-system-info.sh"
 chmod 755 "$APP/mux_launch.sh" "$APP/device/collect-system-info.sh" \
-  "$APP/tw-rintromped-h700-probe" "$APP/tw-rintromped-h700-sdl-probe"
+  "$APP/tw-rintromped-h700-probe" "$APP/tw-rintromped-h700-sdl-probe" \
+  "$APP/tw-rintromped-h700-gles-shader-smoke"
 (cd "$STAGE" && zip -qr "$TMP_ARCHIVE" TwinsanityRintromped)
 python3 - "$TMP_ARCHIVE" <<'PY'
 import sys
@@ -43,6 +47,7 @@ with zipfile.ZipFile(archive_path) as archive:
         "TwinsanityRintromped/mux_lang.ini",
         "TwinsanityRintromped/tw-rintromped-h700-probe",
         "TwinsanityRintromped/tw-rintromped-h700-sdl-probe",
+        "TwinsanityRintromped/tw-rintromped-h700-gles-shader-smoke",
         "TwinsanityRintromped/device/collect-system-info.sh",
     }
     if any(name.startswith("application/") for name in names):
