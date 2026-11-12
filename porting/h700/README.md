@@ -1,23 +1,18 @@
 # Twinsanity Rintromped - H700 Edition
 
-**Version 0.2.3-dev. Device preflight package available; not a playable port.**
+**Version 0.2.3-dev. Hardware graphics preflight passed on a physical H700; not a playable port.**
 
 Downstream H700 work for the upstream [TwinsanityEvolved](https://github.com/menaman123/TwinsanityEvolved) project. The original fork baseline is kept on `main`; H700 changes live on `h700/porting` under `porting/h700/`.
 
-## Current milestone: EGL and SDL graphics preflight
+## Current milestone: physical EGL + SDL/GLES preflight PASS
 
-The CI-built muOS diagnostic package is **`Twinsanity-Rintromped-H700-Preflight.muxapp`**. It is a hardware-inventory utility, not the game. It contains two independent graphics probes:
+The CI-built muOS diagnostic package is **`Twinsanity-Rintromped-H700-Preflight.muxapp`**. It has now been run on a physical muOS 2606.0 Andromeda H700 device. Both graphics tests passed:
 
-- **EGL/GLES pbuffer:** loads the system EGL/GLES libraries, requests an ES 3.2 context and records the GPU, API version, selected limits and extension list.
-- **SDL/GLES window:** dynamically loads the system SDL2 library, requests an ES 3.2 context, creates a 640×480 window and swaps six solid-colour frames. The panel should visibly change colour while this test runs.
+- **EGL/GLES pbuffer:** EGL 1.4, ARM vendor, Mali-G31, OpenGL ES 3.2 and GLSL ES 3.20.
+- **SDL/GLES window:** SDL selected the `mali` video driver, created a window and ES 3.2 context, and successfully swapped six solid-colour frames to the display.
+- **Device profile:** Allwinner sun50iw9, AArch64, kernel 4.9.170, 640×480p-59 display mode, approximately 1 GB RAM.
 
-The package also records the muOS/kernel environment, framebuffer and GPU device nodes, display variables and visible SDL/EGL/GLES libraries.
-
-- AArch64 ELF cross-build: required for both probe binaries.
-- GLIBC compatibility is checked during the build.
-- The `.muxapp` archive starts at its root with `TwinsanityRintromped/` (no enclosing `application/` directory); its layout and ZIP integrity are checked before upload.
-- GitHub Actions build history: [H700 porting runs](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions?query=branch%3Ah700%2Fporting).
-- The report from a physical H700 device is still required.
+This confirms the firmware's EGL/GLES initialisation and SDL presentation path. It does **not** run the game's shaders, renderer, level logic or gameplay.
 
 ## Install the diagnostic utility on muOS Andromeda
 
@@ -25,8 +20,7 @@ The package also records the muOS/kernel environment, framebuffer and GPU device
 2. Copy the `.muxapp` file into the `ARCHIVE` folder on SD1.
 3. Open **Applications → Archive Manager** and install it.
 4. Launch **Twinsanity Rintromped** from Applications.
-5. The screen should briefly show a sequence of solid colours during the SDL window test. If no colours appear, the report records the SDL error.
-6. Retrieve all reports from `MUOS/application/TwinsanityRintromped/logs/`:
+5. Retrieve reports from `MUOS/application/TwinsanityRintromped/logs/`:
    - `muos-device-report.txt`
    - `egl-gles-report.txt`
    - `sdl-window-report.txt`
@@ -37,17 +31,15 @@ The archive root contains `TwinsanityRintromped/` directly, with `mux_launch.sh`
 
 Upstream Linux requests desktop OpenGL 4.1 core and GLSL 4.10. The Vita path is GXM-specific and is not a drop-in GLES renderer. A separate H700 GLES backend is required.
 
-The EGL pbuffer probe checks context creation without presenting to the screen. The SDL probe now checks window creation, an ES context and buffer swaps, but it does **not** run the game's shaders, renderer or level logic. A passing diagnostic report is not a playable port.
+The next milestone is a minimal engine-side GLES prototype: shader compilation, vertex/index buffers, textures and an offscreen framebuffer, followed by comparison against desktop captures. The hardware probes are not a playable port.
 
 ## Status
 
 - Upstream fork baseline: preserved on `main`.
 - H700 branch: `h700/porting`.
-- EGL/GLES pbuffer probe and muOS diagnostic launcher: committed.
-- SDL window / GLES 3.2 context / buffer-swap probe: included in this development package.
-- Host syntax, compile and package-safety checks: required in CI.
-- AArch64 ELF builds and GLIBC baseline: checked in CI.
-- Physical H700 report: pending.
+- EGL/GLES pbuffer probe: physical device PASS.
+- SDL window / GLES 3.2 context / buffer-swap probe: physical device PASS.
+- Host checks, AArch64 builds and GLIBC baseline: checked in CI.
 - Full GLES game renderer: not implemented.
 - Playable H700 game build: not available.
 
