@@ -2,6 +2,7 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
@@ -79,7 +80,7 @@ import sys
 
 workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
 match = re.search(
-    r"^  gles-renderer-compile:\\s*\\n(.*?)(?=^  [A-Za-z0-9_-]+:\\s*$|\\Z)",
+    r"^  gles-renderer-compile:\s*\n(.*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",
     workflow,
     re.MULTILINE | re.DOTALL,
 )
