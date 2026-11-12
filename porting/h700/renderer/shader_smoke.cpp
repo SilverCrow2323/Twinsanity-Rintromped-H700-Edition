@@ -101,7 +101,8 @@ int main() {
         {"scanout-dither", shaders.ScanoutDitherProgram()},
         {"stencil-strip", shaders.StencilStripProgram()},
         {"stencil-invert", shaders.StencilInvertProgram()},
-        {"constant", shaders.ConstProgram()}
+        {"constant", shaders.ConstProgram()},
+        {"opaque-mask", shaders.OpaqueMaskProgram()}
     };
     bool all_programs = true;
     for (const auto& item : programs) {
