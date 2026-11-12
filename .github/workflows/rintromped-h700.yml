@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install host tools
-        run: sudo apt-get update && sudo apt-get install -y gcc binutils file zip unzip python3
+        run: sudo apt-get update && sudo apt-get install -y gcc binutils file zip python3
       - name: Run host preflight tests
         run: |
           cd porting/h700
@@ -37,7 +37,7 @@ jobs:
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
             apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu file zip unzip &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu file zip &&
             chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
             ./scripts/build-probe.sh &&
             ./scripts/package-muxapp.sh dist/Twinsanity-Rintromped-H700-Preflight.muxapp
