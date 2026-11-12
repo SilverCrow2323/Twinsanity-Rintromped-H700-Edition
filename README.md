@@ -49,6 +49,7 @@ The H700 path targets muOS Andromeda on Allwinner H700 devices. It uses SDL2's M
 | [H700 project hub](docs/h700/README.md) | Project overview, verified status and navigation |
 | [Device profile](docs/h700/device-profile.md) | Actual H700 hardware, firmware and graphics report |
 | [Graphics port](docs/h700/graphics-port.md) | EGL, SDL, GLES 3.2 and renderer compatibility work |
+| [API compatibility matrix](docs/h700/compatibility-matrix.md) | Desktop GL differences, GLES decisions and tests |
 | [Build guide](docs/h700/building.md) | Build profile, compile checks and CI workflow |
 | [muOS installation](docs/h700/install.md) | Diagnostic app installation and log locations |
 | [FAQ](docs/h700/faq.md) | Practical answers and troubleshooting |
