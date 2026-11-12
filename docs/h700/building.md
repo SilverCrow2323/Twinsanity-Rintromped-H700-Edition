@@ -8,7 +8,7 @@ The engine keeps desktop OpenGL as its default. H700 builds must opt in explicit
 -DPS2R_GLES=ON
 ~~~
 
-The option is Linux-only. It selects GLES headers, resolves GLESv2 and asks SDL for an OpenGL ES 3.2 context. It must not be enabled in Windows, macOS or Vita builds.
+The option is Linux-only. It selects GLES headers in both the NativeEE ExternalProject **and the top-level application/runner targets**, resolves GLESv2 and asks SDL for an OpenGL ES 3.2 context. It must not be enabled in Windows, macOS or Vita builds.
 
 ## Compile-only renderer gate
 
@@ -20,7 +20,7 @@ Host prerequisites on Ubuntu:
 sudo apt-get update
 sudo apt-get install -y \
   g++-aarch64-linux-gnu cmake ninja-build \
-  libgles2-mesa-dev libsdl2-dev
+  libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev
 ~~~
 
 Configure and compile:
@@ -52,7 +52,7 @@ cmake -S . -B build-h700 -G Ninja \
   -DPS2R_GLES_LIBRARY=/path/to/muos-sysroot/usr/lib/libGLESv2.so
 ~~~
 
-The sysroot must also provide the target SDL2 and FFmpeg development files required by the complete application. The root CMake project forwards the GLES option and explicit GLES header/library paths to its NativeEE ExternalProject, then links the final application to GLESv2 rather than desktop OpenGL.
+The sysroot must also provide the target SDL2 and FFmpeg development files required by the complete application. The root CMake project defines `PS2R_USE_GLES=1` for its own application targets, forwards the GLES option and explicit GLES header/library paths to its NativeEE ExternalProject, then links the final application to GLESv2 rather than desktop OpenGL. This keeps `runner/main.cpp` and engine translation units on the same `PS2R_GL_HEADER` selection.
 
 The full project may require additional target-specific dependencies and configuration. The compile-only gate is intentionally independent: it can find renderer API and header incompatibilities before the complete runtime sysroot and game pipeline are ready.
 
