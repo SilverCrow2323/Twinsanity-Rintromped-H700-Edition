@@ -34,7 +34,7 @@ else
     echo "Missing $SDL_BIN; SDL presentation test skipped." >&2
     SDL_RC=127
 fi
-printf 'Preflight complete: EGL/GLES=%s SDL/window=%s\n' "$EGL_RC" "$SDL_RC"
+printf 'Preflight complete: EGL/GLES=%s NativeEE-shaders=%s SDL/window=%s\n' "$EGL_RC" "$SHADER_RC" "$SDL_RC"
 # Diagnostics are stored in logs; return to the muOS menu without treating a
 # hardware capability failure as a launcher crash.
 exit 0
