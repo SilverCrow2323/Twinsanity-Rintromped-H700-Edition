@@ -12,6 +12,9 @@ on:
       - "h700/porting"
     paths:
       - "wiki-source/**"
+      - "porting/h700/docs/**"
+      - "porting/h700/README.md"
+      - "tools/validate_docs.py"
       - "docs/H700_PORTING_PLAN.md"
       - "docs/H700_RENDERER_AUDIT.md"
       - "docs/h700/**"
@@ -24,6 +27,9 @@ on:
   pull_request:
     paths:
       - "wiki-source/**"
+      - "porting/h700/docs/**"
+      - "porting/h700/README.md"
+      - "tools/validate_docs.py"
       - "docs/README.md"
       - "docs/STYLE_GUIDE.md"
       - "docs/H700_PORTING_PLAN.md"
@@ -52,6 +58,9 @@ jobs:
 
       - name: Validate Wiki pages and internal links
         run: python tools/validate_wiki.py
+
+      - name: Validate repository documentation, local links and image alt text
+        run: python tools/validate_docs.py
 
       - name: Check Wiki publisher shell syntax
         run: sh -n tools/publish_wiki.sh
