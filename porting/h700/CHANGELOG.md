@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.3-dev
+
+- Corrected the installable `.muxapp` layout: `TwinsanityRintromped/` is now the top-level archive directory, without an extra `application/` wrapper.
+- Tightened archive verification to reject the old nested layout and require launcher, language file, device helper and both diagnostic binaries at their direct paths.
+- The package remains diagnostics-only and does not contain, modify or replace a user-provided `game.iso`.
+
 ## 0.2.2-dev
 
 - Added a dynamically loaded SDL2 window probe that requests GLES 3.2 and swaps six visible colour frames.
