@@ -49,7 +49,6 @@ jobs:
   gles-shader-mesa-smoke:
     runs-on: ubuntu-22.04
     needs: host-checks
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v7
       - name: Install Mesa EGL/GLES development runtime
@@ -59,7 +58,6 @@ jobs:
       - name: Build NativeEE shader smoke
         run: cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
       - name: Compile and link production shaders on Mesa llvmpipe
-        continue-on-error: true
         env:
           EGL_PLATFORM: surfaceless
           LIBGL_ALWAYS_SOFTWARE: "1"
