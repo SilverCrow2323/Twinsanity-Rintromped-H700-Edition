@@ -44,6 +44,9 @@ The H700 path targets muOS Andromeda on Allwinner H700 devices. It uses SDL2's M
 
 ## Documentation
 
+Read the [documentation style guide](docs/STYLE_GUIDE.md) for the visual and editorial conventions used across project manuals and engineering pages.
+
+
 | Guide | What you'll find |
 |---|---|
 | [H700 project hub](docs/h700/README.md) | Project overview, verified status and navigation |
