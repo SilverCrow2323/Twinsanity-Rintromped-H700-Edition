@@ -73,6 +73,10 @@ def main() -> int:
           "H700 status must preserve the unvalidated/OpenGL 4.1 compatibility boundary")
     plan = ROOT / "docs" / "H700_PORTING_PLAN.md"
     check(plan.is_file(), "docs/H700_PORTING_PLAN.md is missing")
+    audit = ROOT / "docs" / "H700_RENDERER_AUDIT.md"
+    check(audit.is_file(), "docs/H700_RENDERER_AUDIT.md is missing")
+    check("[the renderer audit](../docs/H700_RENDERER_AUDIT.md)" in (WIKI / "H700-port-status.md").read_text(encoding="utf-8"),
+          "H700 Wiki page must link to the renderer audit")
 
     if errors:
         print("Wiki validation failed:")
