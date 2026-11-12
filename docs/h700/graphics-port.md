@@ -36,7 +36,7 @@ The lower three engine stages are the integration target. The physical device ha
 | GL_MAP_UNSYNCHRONIZED_BIT | Omit for GLES; keep write + explicit-flush flags | Added |
 | Desktop timer-query path | Disabled in initial GLES profile | Deliberate first-stage fallback |
 
-## Shader conversion policy
+## Production shader smoke\n\nThe CI harness now instantiates the real NativeEE `GlShaderLibrary` in a headless EGL/GLES context and builds the PS2, scanout, dither and stencil programs. The Mesa job is non-blocking during bring-up; it validates shader compile/link behavior on Mesa, not the Mali-G31 driver or final image correctness.\n\n## Shader conversion policy
 
 The shared shader sources remain in their original desktop form. The H700 profile converts them at compile time:
 
