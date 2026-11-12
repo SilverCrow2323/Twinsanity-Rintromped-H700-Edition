@@ -4,6 +4,9 @@ The tracked pages in wiki-source/ are the canonical source for the GitHub Wiki. 
 
 ## ✦ Page design rules
 
+The repository-wide [documentation style guide](../docs/STYLE_GUIDE.md) defines the shared visual language and evidence labels.
+
+
 - Give each practical subject its own page.
 - Start with a short explanation of what the reader can do on that page.
 - Use clear section headings, short paragraphs, tables and GitHub callout boxes.
