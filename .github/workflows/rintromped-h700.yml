@@ -45,6 +45,26 @@ jobs:
           ./scripts/test-kit.sh
           python3 renderer/check_gles_shader_profile.py
 
+
+  gles-shader-mesa-smoke:
+    runs-on: ubuntu-22.04
+    needs: host-checks
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Mesa EGL/GLES development runtime
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ libegl1-mesa-dev libgles2-mesa-dev
+      - name: Configure production shader smoke
+        run: cmake -S porting/h700/renderer -B build/mesa-gles -G Ninja
+      - name: Build NativeEE shader smoke
+        run: cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
+      - name: Compile and link production shaders on Mesa llvmpipe
+        continue-on-error: true
+        env:
+          EGL_PLATFORM: surfaceless
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: ./build/mesa-gles/h700_gles_shader_smoke
+
   aarch64-package:
     runs-on: ubuntu-22.04
     needs: [host-checks, gles-renderer-compile]
