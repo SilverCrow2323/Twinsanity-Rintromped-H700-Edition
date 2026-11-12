@@ -6,6 +6,10 @@
 
 The [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki) is the player-facing manual for installation, disc setup, mods, FAQs and troubleshooting. Its canonical tracked pages live in [wiki-source/](../wiki-source/README.md).
 
+## 🎨 Documentation standards
+
+Use the [documentation style guide](STYLE_GUIDE.md) for page structure, visual language, callouts, diagrams, assets, accessibility and evidence labels.
+
 ## 📘 H700 engineering guides
 
 | Page | Scope |
