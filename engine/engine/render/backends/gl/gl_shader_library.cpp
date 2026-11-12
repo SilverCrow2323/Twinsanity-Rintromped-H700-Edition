@@ -622,12 +622,29 @@ uint32_t GlShaderLibrary::BuildProgram(const char* vertex, const char* fragment,
     }
 #endif
     // the given compiled objects linked as they are (the caller keeps them), else the pair compiled here
+#if PS2R_HOST_GLES
+    std::fprintf(stderr, "[gl] GLES program %s: compiling vertex + fragment\n", label);
+#endif
     const bool given = link_vs && link_fs;
     GLuint vs = given ? link_vs : CompileShader(GL_VERTEX_SHADER, vertex);
-    if (!vs) return 0;
+    if (!vs) {
+#if PS2R_HOST_GLES
+        std::fprintf(stderr, "[gl] GLES program %s: vertex shader FAILED\n", label);
+#endif
+        return 0;
+    }
     GLuint fs = given ? link_fs : CompileShader(GL_FRAGMENT_SHADER, fragment);
-    if (!fs) { glDeleteShader(vs); return 0; }
+    if (!fs) {
+#if PS2R_HOST_GLES
+        std::fprintf(stderr, "[gl] GLES program %s: fragment shader FAILED\n", label);
+#endif
+        glDeleteShader(vs);
+        return 0;
+    }
     const uint32_t program = LinkProgram(vs, fs);
+#if PS2R_HOST_GLES
+    std::fprintf(stderr, "[gl] GLES program %s: %s\n", label, program ? "LINKED" : "LINK FAILED");
+#endif
 #if PS2R_HOST_VITA
     if (program) {
         ++g_cache_compiled;
