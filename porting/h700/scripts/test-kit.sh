@@ -47,7 +47,7 @@ import zipfile
 with zipfile.ZipFile(sys.argv[1], "a") as archive:
     archive.writestr("obsolete/old-layout-marker.txt", "must disappear on rebuild")
 PY
-PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" \
+PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
   scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
 python3 - "$TMP/rebuild.muxapp" <<'PY'
 import sys
