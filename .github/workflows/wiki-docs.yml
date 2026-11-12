@@ -16,6 +16,7 @@ on:
       - "docs/H700_RENDERER_AUDIT.md"
       - "docs/h700/**"
       - "docs/README.md"
+      - "docs/STYLE_GUIDE.md"
       - "tools/publish_wiki.sh"
       - "tools/validate_wiki.py"
       - ".github/workflows/wiki-docs.yml"
