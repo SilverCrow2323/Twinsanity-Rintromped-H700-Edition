@@ -16,7 +16,7 @@ References:
 - [Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)
 - [Arm Mali-G31 product support](https://support.arm.com/compute-ip/mali-g31)
 
-## Work packages
+See [H700_RENDERER_AUDIT.md](H700_RENDERER_AUDIT.md) for the source-level OpenGL 4.1 / SDL context / GLSL audit and the first GLES compatibility findings.\n\n## Work packages
 
 ### 1. Platform and renderer inventory
 
