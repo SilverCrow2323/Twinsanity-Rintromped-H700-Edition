@@ -80,7 +80,8 @@ bool GlDevice::Init(std::function<void()> swap) {
         const GLubyte* r = glGetString(GL_RENDERER);
         const GLubyte* v = glGetString(GL_VERSION);
 #if PS2R_HOST_GLES
-        device_name_ = std::string(r ? reinterpret_cast<const char*>(r) : "?") + " / OpenGL ES " +
+        // GL_VERSION already starts with "OpenGL ES"; do not duplicate the prefix.
+        device_name_ = std::string(r ? reinterpret_cast<const char*>(r) : "?") + " / " +
                        (v ? reinterpret_cast<const char*>(v) : "?");
 #else
         device_name_ = std::string(r ? reinterpret_cast<const char*>(r) : "?") + " / OpenGL " +
