@@ -1048,7 +1048,11 @@ void GlDrawExecutor::FrameClear(const DrawParams& p) {
     if (!p.do_frame_clear) return;
     GlStateCache& st = dev_.State();
     st.DepthMask(true);
+#if PS2R_HOST_GLES
+    glClearDepthf(0.0f);
+#else
     glClearDepth(0.0);
+#endif
     GLbitfield bits = GL_DEPTH_BUFFER_BIT;
     if (p.clear_color) {
         glClearColor(0.f, 0.f, 0.f, 0.f);
