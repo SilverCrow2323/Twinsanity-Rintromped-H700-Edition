@@ -1,5 +1,5 @@
-# cmake/OpenGlDependency.cmake -- the OpenGL link the GL backend, the SDL
-# context and the GUI name as OpenGL::GL, ONE way for every host.
+# cmake/OpenGlDependency.cmake -- the graphics link used by the renderer and SDL
+# context. Desktop hosts use OpenGL; the explicit H700 profile maps OpenGL::GL to GLESv2.
 #
 #   macOS   the OpenGL.framework (<OpenGL/gl3.h>, GL 4.1 core)
 #   Windows opengl32.lib (FindOpenGL) exports GL 1.1 only: the engine's GL TUs include
