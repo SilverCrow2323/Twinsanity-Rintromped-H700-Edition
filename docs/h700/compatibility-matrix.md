@@ -66,6 +66,10 @@ The device reports GL_EXT_disjoint_timer_query. The initial profile disables the
 
 </details>
 
+## Production shader smoke
+
+A new CI harness creates a headless EGL/GLES 3.2 pbuffer and calls the real NativeEE `GlShaderLibrary::Build()` function. It checks the production PS2, scanout, dither and stencil program objects. The Mesa job is non-blocking during bring-up and validates shader compile/link behavior on Mesa; it does not validate Mali-G31 behavior or final image correctness.
+
 ## Evidence labels
 
 - **Compile gate:** the C++ translation unit compiles against the GLES 3.2 headers.
