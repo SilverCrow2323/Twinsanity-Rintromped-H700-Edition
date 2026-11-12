@@ -432,6 +432,10 @@ set(TE_ENGINE_BUILD "${CMAKE_BINARY_DIR}/engine")
 #   CMAKE_PREFIX_PATH, CMAKE_OSX_ARCHITECTURES   forwarded when set (the clang-cl shim, vcpkg).
 option(TE_DIST "Release shape: static SDL2 (engine recipe) + the static LGPL FFmpeg under CMAKE_PREFIX_PATH" OFF)
 option(TE_LTO "Link-time optimisation for the port and the engine (PS2R_LTO)" OFF)
+option(PS2R_GLES "Build the Linux application and NativeEE renderer against OpenGL ES 3.2 (H700)" OFF)
+if(PS2R_GLES AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    message(FATAL_ERROR "PS2R_GLES is a Linux-only profile for H700/muOS")
+endif()
 set(TE_ENGINE_FORWARDED_ARGS "")
 foreach(var CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_TOOLCHAIN_FILE VCPKG_TARGET_TRIPLET CMAKE_LINKER
             CMAKE_PREFIX_PATH CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET)
@@ -446,6 +450,11 @@ if(WIN32 AND DEFINED _VCPKG_INSTALLED_DIR)
     # IDENTICAL (sdl2, ffmpeg[avcodec,swscale], opengl-registry), so the engine is pointed at the port's installed
     # tree with its own install step off: FFmpeg is built once per build dir.
     list(APPEND TE_ENGINE_FORWARDED_ARGS "-DVCPKG_INSTALLED_DIR=${_VCPKG_INSTALLED_DIR}" -DVCPKG_MANIFEST_INSTALL=OFF)
+endif()
+if(PS2R_GLES)
+    # The engine is configured as an ExternalProject: forward the opt-in or its
+    # own CMake would silently select desktop OpenGL on the AArch64 Linux host.
+    list(APPEND TE_ENGINE_FORWARDED_ARGS -DPS2R_GLES=ON)
 endif()
 if(TE_VITA)
     # The engine's ps2e draw surface without a GL 4.1 context (engine/platform/ps2e: PS2R_PS2E_DRAW_BACKEND); the
@@ -592,6 +601,12 @@ if(TE_VITA)
     include("${TE_ENGINE}/cmake/OpenGlDependency.cmake")
     target_link_libraries(nativeee_libs INTERFACE SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::swscale FFmpeg::avutil m)
     target_link_options(nativeee_libs INTERFACE "LINKER:--whole-archive,-lpthread,--no-whole-archive")
+elseif(PS2R_GLES)
+# H700 / muOS: import the same GLESv2 target used by the NativeEE ExternalProject.
+include("${TE_ENGINE}/cmake/OpenGlDependency.cmake")
+include("${TE_ENGINE}/cmake/FindFFmpeg.cmake")
+set(TE_HAVE_SDL_INPUT 1)
+target_link_libraries(nativeee_libs INTERFACE Threads::Threads SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::avutil FFmpeg::swscale)
 else()
 find_package(OpenGL REQUIRED)
 # FFmpeg (libavcodec / libavutil / libswscale): the movies' MPEG-2 video decoder (ps2r_ipu, behind ps2e_movie). The
