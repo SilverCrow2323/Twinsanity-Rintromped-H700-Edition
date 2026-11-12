@@ -18,6 +18,7 @@
 | Shader conversion adapter | Added | GLSL 410 core to ES 320, audited source guard |
 | GLES API adapters | Added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
 | Renderer compile gate | CI validation | AArch64 object compile against GLES and SDL headers |
+| Production shader smoke | Added | Real GlShaderLibrary EGL/GLES test; Mesa CI bring-up |
 | First NativeEE frame | Pending | Must pass compile, device shader and surface tests |
 | Game runtime | Not available | No playable build yet |
 
