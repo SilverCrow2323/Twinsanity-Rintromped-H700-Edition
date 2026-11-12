@@ -12,6 +12,11 @@ TOP_CMAKE = ROOT / "CMakeLists.txt"
 ENGINE_CMAKE = ROOT / "engine/CMakeLists.txt"
 GL_DEPENDENCY = ROOT / "engine/cmake/OpenGlDependency.cmake"
 SDL_CONTEXT = ROOT / "engine/engine/platform/sdl/gl_context.cpp"
+SHADER_SMOKE = ROOT / "porting/h700/renderer/shader_smoke.cpp"
+SHADER_CMAKE = ROOT / "porting/h700/renderer/CMakeLists.txt"
+PACKAGE_SCRIPT = ROOT / "porting/h700/scripts/package-muxapp.sh"
+LAUNCHER = ROOT / "porting/h700/muos/TwinsanityRintromped/mux_launch.sh"
+WORKFLOW = ROOT / ".github/workflows/rintromped-h700.yml"
 
 RAW = re.compile(r'R"([A-Za-z0-9_]*)\((.*?)\)\1"', re.DOTALL)
 VERSION = re.compile(r"^\s*#version\s+(\d+)\s+(\w+)\s*$", re.MULTILINE)
@@ -48,6 +53,44 @@ def main() -> int:
         "GL_MINOR_VERSION",
         "PS2R_HOST_GLES",
     ), "SDL ES context and version gate")
+
+    # The device package must execute the actual NativeEE shader library, not
+    # merely an EGL clear demo or a host-only compile target.
+    require_tokens(SHADER_SMOKE, (
+        "shaders.Build(uniforms)",
+        "shaders.Ps2Program()",
+        "shaders.ScanoutProgram()",
+        "shaders.ScanoutDitherProgram()",
+        "shaders.StencilStripProgram()",
+        "shaders.StencilInvertProgram()",
+        "shaders.ConstProgram()",
+        "shaders.OpaqueMaskProgram()",
+        "GLES 3.2",
+    ), "NativeEE production shader smoke")
+    require_tokens(SHADER_CMAKE, (
+        "h700_gles_shader_smoke",
+        "gl_shader_library.cpp",
+        "gl_shader_sources.cpp",
+        "gl_uniform_cache.cpp",
+        "EGL_LIBRARY",
+        "GLES_LIBRARY",
+    ), "production shader smoke build target")
+    require_tokens(PACKAGE_SCRIPT, (
+        "tw-rintromped-h700-gles-shader-smoke",
+        "TwinsanityRintromped/tw-rintromped-h700-gles-shader-smoke",
+    ), "device package contents")
+    require_tokens(LAUNCHER, (
+        "tw-rintromped-h700-gles-shader-smoke",
+        "gles-shader-report.txt",
+        "SHADER_RC",
+    ), "device shader smoke launcher/report")
+    require_tokens(WORKFLOW, (
+        "dpkg --add-architecture arm64",
+        "libegl1-mesa-dev:arm64",
+        "libgles2-mesa-dev:arm64",
+        "h700_gles_shader_smoke",
+        "tw-rintromped-h700-gles-shader-smoke",
+    ), "AArch64 production shader package gate")
 
     shader_text = SHADERS.read_text(encoding="utf-8")
     adapter_text = ADAPTER.read_text(encoding="utf-8")
@@ -92,6 +135,7 @@ def main() -> int:
 
     print("PASS: top-level app and NativeEE both select the H700 GLES header profile")
     print("PASS: GLESv2 dependency and SDL ES 3.2 version gate are present")
+    print("PASS: NativeEE production shader smoke is cross-built, packaged, launched and logged on-device")
     print(f"PASS: {converted} embedded GLSL source block(s) satisfy the H700 ES 3.20 conversion contract")
     print("PASS: only the audited v_texcoord noperspective declaration is permitted")
     return 0
