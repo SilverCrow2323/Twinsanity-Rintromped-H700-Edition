@@ -16,7 +16,13 @@ References:
 - [Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)
 - [Arm Mali-G31 product support](https://support.arm.com/compute-ip/mali-g31)
 
-See [H700_RENDERER_AUDIT.md](H700_RENDERER_AUDIT.md) for the source-level OpenGL 4.1 / SDL context / GLSL audit and the first GLES compatibility findings.\n\n## Work packages
+See [H700_RENDERER_AUDIT.md](H700_RENDERER_AUDIT.md) for the source-level OpenGL 4.1 / SDL context / GLSL audit and the first GLES compatibility findings.\n\n## Current preflight checkpoint
+
+The H700 development branch now produces two diagnostic executables: an EGL/GLES pbuffer test and an SDL2 window/context/swap test. GitHub Actions run [#43306974401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43306974401) passed both host checks and AArch64 package verification and uploaded the preflight `.muxapp`.
+
+The next evidence must come from the actual H700 device: collect the muOS inventory, EGL/GLES report and SDL window report. Do not begin claiming a renderer port from this diagnostic package alone.
+
+## Work packages
 
 ### 1. Platform and renderer inventory
 
