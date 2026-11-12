@@ -55,9 +55,9 @@ flowchart LR
 |---|---|---|
 | EGL display + pbuffer | <strong>PASS</strong> | Physical H700 report |
 | SDL window + GLES context | <strong>PASS</strong> | Six visible colour frames |
-| H700 CMake profile | In progress | Dedicated option and dependency path added |
-| GLSL ES conversion | In progress | Audited source conversion path added |
-| GLES API compatibility | In progress | Initial desktop-only calls isolated |
+| H700 CMake profile | Added | Root app and NativeEE both select GLES headers; CI compile gate pending |
+| GLSL ES conversion | Added | Runtime adapter and source-level regression guard; Mali shader test pending |
+| GLES API compatibility | Initial adapters added | Compile gate and device workload tests pending |
 | Full renderer compile | CI validation | AArch64 compile-only target added |
 | First engine-rendered frame | Pending | Requires successful compile and device run |
 | Gameplay | Pending | Not yet available |
