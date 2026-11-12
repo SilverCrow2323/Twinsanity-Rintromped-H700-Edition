@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
-ZIP=\${1:-}
-MAX_GLIBC=\${MAX_GLIBC:-2.31}
+ZIP=${1:-}
+MAX_GLIBC=${MAX_GLIBC:-2.31}
 [ -n "$ZIP" ] && [ -f "$ZIP" ] || { echo "usage: $0 twinsanityevolved-<version>-linux-aarch64.zip" >&2; exit 2; }
 for tool in unzip file readelf; do command -v "$tool" >/dev/null 2>&1 || { echo "missing tool: $tool" >&2; exit 2; }; done
 TMP=$(mktemp -d)

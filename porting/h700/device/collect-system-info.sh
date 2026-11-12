@@ -1,6 +1,6 @@
 #!/bin/sh
 set -eu
-OUT=\${1:-"\${TW_H700_SYSINFO:-./muos-device-report.txt}"}
+OUT=${1:-"${TW_H700_SYSINFO:-./muos-device-report.txt}"}
 mkdir -p "$(dirname "$OUT")"
 exec >"$OUT" 2>&1
 section(){ printf '\n===== %s =====\n' "$1"; }
@@ -22,8 +22,8 @@ done
 for n in /dev/fb0 /dev/dri /dev/mali0 /dev/mali /dev/input /dev/snd; do [ -e "$n" ] && ls -ld "$n" 2>/dev/null || true; done
 section ENV
 for n in SDL_VIDEODRIVER SDL_AUDIODRIVER EGL_PLATFORM GBM_BACKEND DISPLAY WAYLAND_DISPLAY XDG_RUNTIME_DIR LD_LIBRARY_PATH LD_PRELOAD; do
-  eval 'v=\${'"$n"'-}'
-  printf '%s=%s\n' "$n" "\${v:-<unset>}"
+  eval 'v=${'"$n"'-}'
+  printf '%s=%s\n' "$n" "${v:-<unset>}"
 done
 section LIBRARIES
 for d in /usr/lib /usr/lib/aarch64-linux-gnu /lib /lib/aarch64-linux-gnu /opt/muos/lib /opt/muos/share; do

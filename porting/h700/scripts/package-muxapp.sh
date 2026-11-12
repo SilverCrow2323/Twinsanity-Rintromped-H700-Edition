@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-OUT=\${1:-"$ROOT/dist/Twinsanity-Rintromped-H700-Edition.muxapp"}
-BIN=\${PROBE_BIN:-"$ROOT/dist/tw-rintromped-h700-probe"}
+OUT=${1:-"$ROOT/dist/Twinsanity-Rintromped-H700-Edition.muxapp"}
+BIN=${PROBE_BIN:-"$ROOT/dist/tw-rintromped-h700-probe"}
 [ -x "$BIN" ] || { echo "Missing AArch64 diagnostic binary; run scripts/build-probe.sh first." >&2; exit 1; }
 command -v readelf >/dev/null 2>&1 || { echo "Missing readelf" >&2; exit 2; }
 command -v zip >/dev/null 2>&1 || { echo "Missing zip" >&2; exit 2; }

@@ -2,7 +2,7 @@
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 LOCK="$ROOT/upstream.lock"
-WORK=\${UPSTREAM_WORK:-"$ROOT/work/upstream"}
+WORK=${UPSTREAM_WORK:-"$ROOT/work/upstream"}
 . "$LOCK"
 if [ -d "$WORK/.git" ]; then
   git -C "$WORK" fetch --depth 1 origin "$tag"

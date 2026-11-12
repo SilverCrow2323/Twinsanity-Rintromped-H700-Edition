@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-OUT=\${OUT:-"$ROOT/dist/tw-rintromped-h700-probe"}
-CC=\${CC:-aarch64-linux-gnu-gcc}
+OUT=${OUT:-"$ROOT/dist/tw-rintromped-h700-probe"}
+CC=${CC:-aarch64-linux-gnu-gcc}
 command -v "$CC" >/dev/null 2>&1 || { echo "Missing cross compiler: $CC" >&2; exit 2; }
 TARGET=$("$CC" -dumpmachine 2>/dev/null || true)
 case "$TARGET" in *aarch64*|*arm64*) ;; *) echo "Compiler is not AArch64: $TARGET" >&2; exit 2;; esac
