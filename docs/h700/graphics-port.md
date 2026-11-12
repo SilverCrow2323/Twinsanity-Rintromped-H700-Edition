@@ -26,6 +26,7 @@ The lower three engine stages are the integration target. The physical device ha
 |---|---|---|
 | GL/glcorearb.h | GLES3/gl32.h selected by PS2R_USE_GLES | Added |
 | OpenGL 4.1 core context | SDL ES 3.2 attributes | Added |
+| Runtime context check | SDL may return a lower version than requested | Query GL_MAJOR_VERSION / GL_MINOR_VERSION; reject below ES 3.2 and log GPU/version | Added |
 | GLSL 410 core | GLSL ES 320 plus default high precision | Added |
 | noperspective on PS2 STQ varying | Remove only on v_texcoord; vertex path sets gl_Position.w = 1 | Added; visual equivalence still to verify |
 | glProgramUniform* | Temporarily bind target program and use glUniform* | Added; correctness-first, not yet optimized |
