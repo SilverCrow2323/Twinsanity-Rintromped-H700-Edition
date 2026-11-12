@@ -1,46 +1,43 @@
-# Twinsanity Rintromped — H700 Edition
+# Twinsanity Rintromped - H700 Edition
 
-Downstream H700 porting work for [TwinsanityEvolved](https://github.com/menaman123/TwinsanityEvolved).
+**Version 0.2.1-dev. Bring-up project only; not a playable port.**
 
-> **Status: bring-up / preflight only. This is not a playable H700 port and no installable game package is published.**
+Downstream H700 work for the upstream TwinsanityEvolved project. The original fork baseline is kept on main; H700 changes live on h700/porting under porting/h700/.
 
-## Goals
+## Current milestone: device preflight
 
-- Allwinner H700 / Cortex-A53 / ARM64 handhelds.
-- Mali-G31 GPU through the EGL + OpenGL ES stack supplied by the firmware.
-- muOS Andromeda first; keep the platform layer portable to other H700 firmware.
-- Preserve upstream history and keep H700 work isolated from `main`.
+The diagnostic utility inspects EGL/GLES, graphics vendor/renderer/version, selected limits, runtime environment, muOS/kernel information, framebuffer and GPU device nodes. It is not the game and contains no game assets.
 
-## Branches
+## Build and test
 
-- `main`: upstream fork baseline; do not put H700-specific changes here.
-- `h700/porting`: downstream H700 bring-up and renderer work.
+Install the AArch64 cross compiler, binutils, file, zip and unzip. From porting/h700 run scripts/test-kit.sh, scripts/build-probe.sh and scripts/package-muxapp.sh. GitHub Actions performs host checks and a Debian Bullseye AArch64 cross-build, then publishes a diagnostic .muxapp artifact.
 
-## Current milestone
+## Install on muOS Andromeda
 
-**M0 — device/runtime inventory**
+Place the workflow artifact Twinsanity-Rintromped-H700-Preflight.muxapp in ARCHIVE on SD1 and install it with Applications → Archive Manager. Launch Twinsanity Rintromped in Applications. Retrieve egl-gles-report.txt and muos-device-report.txt from MUOS/application/TwinsanityRintromped/logs/.
 
-- EGL/GLES preflight probe prepared.
-- H700 system-report script prepared.
-- muOS diagnostic launcher scaffold prepared.
-- Host-side checks pass.
-- AArch64 cross-build and physical H700 run are pending.
-- SDL/EGL window presentation and the GLES renderer are not implemented yet.
+The launcher follows the muOS Application Runner contract and uses the bind-mounted runtime path /run/muos/storage/application/TwinsanityRintromped.
 
-## Technical constraint
+## Renderer blocker
 
-Upstream desktop Linux requests OpenGL 4.1 core and uses desktop-only GL calls. The Vita lane is not a reusable GLES renderer: it has its own platform setup and the common draw backend is disabled there. Rintromped therefore needs a real GLES backend for the H700 rather than a relabelled Linux ARM64 binary.
+Upstream Linux requests desktop OpenGL 4.1 core and GLSL 4.10. The Vita path is GXM-specific and is not a drop-in GLES renderer. A separate H700 GLES backend is required. A successful preflight does not establish renderer compatibility.
 
-## Source and build
+## Status
 
-The bring-up kit is versioned separately under this folder. It contains the EGL/GLES probe, muOS launcher scaffold, build/package scripts, and test protocol. It contains no game ISO, copyrighted game assets, or proprietary firmware files.
+- Upstream fork baseline: preserved on main.
+- H700 branch: h700/porting.
+- Probe and muOS diagnostic launcher: source added.
+- Host-side checks: passing locally.
+- AArch64 CI build: configured, pending workflow execution.
+- Physical H700 run: pending.
+- SDL presentation and GLES renderer: not implemented.
+- Playable game build: not available.
 
-The diagnostic `.muxapp` produced by the first CI stage is only a hardware-reporting utility; it is not the game.
+No game ISO, proprietary firmware blob or copyrighted game assets are included.
 
-## Upstream pin
+## References
 
-See `upstream.lock` for the exact upstream repository and commit used as the baseline.
-
-## Licensing / assets
-
-This fork retains upstream files and notices. No game disc image or game assets are included. Users must supply their own legally obtained game image for any future playable build.
+- Upstream: https://github.com/menaman123/TwinsanityEvolved
+- muOS Application Runner: https://community.muos.dev/t/application-runner/1282
+- muOS installable archives: https://community.muos.dev/t/manually-creating-installable-archives/824
+- muOS 2606.0 Andromeda: https://muos.dev/release/current/2606_0

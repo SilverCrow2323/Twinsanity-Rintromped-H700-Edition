@@ -1,0 +1,61 @@
+name: Twinsanity Rintromped H700
+
+on:
+  push:
+    branches: [h700/porting]
+    paths:
+      - 'porting/h700/**'
+      - '.github/workflows/rintromped-h700.yml'
+  pull_request:
+    paths:
+      - 'porting/h700/**'
+      - '.github/workflows/rintromped-h700.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-checks:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host tools
+        run: sudo apt-get update && sudo apt-get install -y gcc binutils file zip unzip
+      - name: Run host preflight tests
+        run: |
+          cd porting/h700
+          chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh
+          ./scripts/test-kit.sh
+
+  aarch64-package:
+    runs-on: ubuntu-22.04
+    needs: host-checks
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cross-build with Debian Bullseye toolchain
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
+            apt-get update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu file &&
+            chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
+            ./scripts/build-probe.sh
+          '
+      - name: Verify ARM64 ELF and glibc baseline
+        run: |
+          file porting/h700/dist/tw-rintromped-h700-probe
+          readelf -h porting/h700/dist/tw-rintromped-h700-probe | grep -E 'Class:.*ELF64|Machine:.*AArch64'
+          max=$(readelf --version-info porting/h700/dist/tw-rintromped-h700-probe | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -n 1 || true)
+          echo "Maximum required GLIBC symbol: $max"
+          test -z "$max" || test "$(printf '%s\n' "$max" GLIBC_2.31 | sort -V | tail -n 1)" = "GLIBC_2.31"
+      - name: Package diagnostic muxapp
+        run: |
+          chmod +x porting/h700/scripts/package-muxapp.sh
+          porting/h700/scripts/package-muxapp.sh porting/h700/dist/Twinsanity-Rintromped-H700-Preflight.muxapp
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twinsanity-rintromped-h700-preflight
+          path: |
+            porting/h700/dist/tw-rintromped-h700-probe
+            porting/h700/dist/Twinsanity-Rintromped-H700-Preflight.muxapp
+          if-no-files-found: error
