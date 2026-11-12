@@ -1,6 +1,6 @@
 # Twinsanity Rintromped - H700 Edition
 
-**Version 0.2.2-dev. Device preflight package available; not a playable port.**
+**Version 0.2.3-dev. Device preflight package available; not a playable port.**
 
 Downstream H700 work for the upstream [TwinsanityEvolved](https://github.com/menaman123/TwinsanityEvolved) project. The original fork baseline is kept on `main`; H700 changes live on `h700/porting` under `porting/h700/`.
 
@@ -15,7 +15,7 @@ The package also records the muOS/kernel environment, framebuffer and GPU device
 
 - AArch64 ELF cross-build: required for both probe binaries.
 - GLIBC compatibility is checked during the build.
-- muOS archive structure and ZIP integrity are checked before upload.
+- The `.muxapp` archive starts at its root with `TwinsanityRintromped/` (no enclosing `application/` directory); its layout and ZIP integrity are checked before upload.
 - GitHub Actions build history: [H700 porting runs](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions?query=branch%3Ah700%2Fporting).
 - The report from a physical H700 device is still required.
 
@@ -31,7 +31,7 @@ The package also records the muOS/kernel environment, framebuffer and GPU device
    - `egl-gles-report.txt`
    - `sdl-window-report.txt`
 
-The launcher follows the muOS Application Runner contract: `func.sh`, `SETUP_APP`, and the bind-mounted application path `/run/muos/storage/application/TwinsanityRintromped`.
+The archive root contains `TwinsanityRintromped/` directly, with `mux_launch.sh`, `mux_lang.ini`, `device/`, `logs/` and both probe executables inside it. It does not ship or replace `game.iso`; a user-provided image remains user data. The launcher follows the muOS Application Runner contract: `func.sh`, `SETUP_APP`, and the bind-mounted application path `/run/muos/storage/application/TwinsanityRintromped`.
 
 ## Renderer blocker
 
