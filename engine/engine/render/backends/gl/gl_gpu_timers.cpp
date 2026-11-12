@@ -24,8 +24,8 @@ const char* GlGpuTimers::ModeName() const {
     }
 }
 
-#if PS2R_HOST_VITA
-// vitaGL has no timer queries: the census is compiled out (SetMode leaves the timer off)
+#if PS2R_HOST_VITA || PS2R_HOST_GLES
+// Vita and the initial GLES profile keep the desktop-only timer-query census disabled (SetMode leaves the timer off)
 void GlGpuTimers::SetMode(int, bool) { mode_ = kOff; }
 void GlGpuTimers::Mark(int, uint64_t) {}
 void GlGpuTimers::Break(uint64_t) {}
