@@ -9,10 +9,29 @@ This is a source-level compatibility audit. It does not claim that the H700 rend
 | Root CMakeLists.txt | Non-Vita Linux finds SDL2 and desktop OpenGL | An AArch64 target still follows the desktop GL dependency unless a separate target is added |
 | engine/cmake/OpenGlDependency.cmake | Uses OpenGL::GL outside the Vita lane | Add an explicit EGL/GLES dependency path; do not silently replace the desktop dependency |
 | engine/engine/platform/host/platform.h | Linux includes GL/glcorearb.h | H700 needs GLES headers and a separate compile definition |
-| engine/engine/platform/sdl/gl_context.cpp | Requests OpenGL 4.1 core through SDL | A handheld profile must request an ES context and record the actual returned version |
+| engine/engine/platform/sdl/gl_context.cpp | Requests OpenGL 4.1 core through SDL | H700 must request an ES context; physical device now confirms SDL creates ES 3.2 |
 | engine/engine/render/backends/gl/CMakeLists.txt | Builds the common GL renderer against OpenGL::GL | The target is not currently an H700 GLES renderer |
 | engine/engine/render/backends/gl/gl_shader_sources.cpp | Shader strings use #version 410 core | Build and test GLSL ES variants; changing only the version string is insufficient |
 | engine/engine/render/backends/gl/gl_vertex_stream.cpp | Uses mapped buffers, explicit flush and sync objects | Check GLES version/extensions and provide a tested fallback where required |
+
+## Physical H700 graphics evidence (2026-11-12)
+
+Both diagnostic probes were run successfully on muOS 2606.0 Andromeda, kernel 4.9.170, Allwinner sun50iw9 / ARM Cortex-A53-class AArch64 CPU.
+
+| Test | Device result |
+|---|---|
+| EGL | 1.4, vendor ARM, Bifrost r20p0 |
+| GLES context | OpenGL ES 3.2, GLSL ES 3.20 |
+| GPU | ARM Mali-G31 |
+| SDL video backend | `mali` |
+| SDL window/context | Created successfully |
+| Presentation | Six solid-colour frames swapped successfully |
+| Framebuffer mode | 640×480p-59 |
+| GL limits | 8192 max texture size, 16 vertex attributes, 16 fragment texture units |
+
+The SDL result confirms actual window creation and buffer presentation through muOS's SDL `mali` video driver. This removes basic EGL/GLES initialisation and SDL presentation as immediate blockers.
+
+Runtime-reported extensions include `GL_OES_mapbuffer`, `GL_EXT_buffer_storage`, `GL_OES_vertex_array_object`, `GL_EXT_texture_storage`, `GL_EXT_disjoint_timer_query`, ASTC texture compression and `GL_EXT_draw_elements_base_vertex`. Extension presence is not proof that the current desktop renderer uses them correctly; check exact entry points, semantics and fallback behavior.
 
 ## Shader-specific blocker
 
@@ -53,11 +72,10 @@ These tests determine whether the firmware can initialise EGL/GLES and SDL prese
 
 ## Implementation order
 
-1. Collect the real device reports and record SDL video driver, EGL vendor, GLES renderer/version and extensions.
-2. Add an explicit H700 build profile; never infer it only from the AArch64 CPU architecture.
-3. Build a minimal GLES shader and render-target prototype.
-4. Compare output with desktop references for title, UI, texture formats, transparency, depth, shadows and copies.
-5. Add buffer-streaming and synchronisation fallbacks based on measured extensions.
-6. Integrate input, audio, disc streaming and muOS packaging only after the renderer's first scene is stable.
+1. Add an explicit H700 build profile; never infer it only from the AArch64 CPU architecture.
+2. Build a minimal GLES shader and render-target prototype using SDL's confirmed `mali` video backend.
+3. Compare output with desktop references for title, UI, texture formats, transparency, depth, shadows and copies.
+4. Classify and adapt buffer-streaming and synchronisation based on the actual Mali extension set.
+5. Integrate input, audio, disc streaming and muOS packaging only after the renderer's first scene is stable.
 
 A successful probe is not a playable-port claim.
