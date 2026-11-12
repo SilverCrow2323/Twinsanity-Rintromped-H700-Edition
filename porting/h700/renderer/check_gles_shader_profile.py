@@ -16,8 +16,11 @@ NOPERSPECTIVE = re.compile(r"\bnoperspective\s+(?:in|out)\s+vec3\s+(\w+)\s*;")
 def main() -> int:
     shader_text = SHADERS.read_text(encoding="utf-8")
     adapter_text = ADAPTER.read_text(encoding="utf-8")
-    sources = [m.group(2) for m in RAW.finditer(shader_text)]
-    shader_sources = [s for s in sources if "#version" in s]
+    # Shader library also owns the inline movie-YUV fragment shader. Audit it
+    # alongside the larger central source catalogue so no embedded variant is missed.
+    inline_sources = [m.group(2) for m in RAW.finditer(adapter_text)]
+    sources = [m.group(2) for m in RAW.finditer(shader_text)] + inline_sources
+    shader_sources = [s for s in sources if re.search(r"^\\s*#version\\s+410\\s+core\\s*$", s, re.MULTILINE)]
     if not shader_sources:
         raise SystemExit("FAIL: no raw GLSL shader sources found")
 
@@ -52,7 +55,7 @@ def main() -> int:
     if missing:
         raise SystemExit("FAIL: C++ GLES shader adapter missing: " + ", ".join(missing))
 
-    print(f"PASS: {converted} GLSL source block(s) satisfy the H700 ES 3.20 conversion contract")
+    print(f"PASS: {converted} embedded GLSL source block(s) satisfy the H700 ES 3.20 conversion contract")
     print("PASS: only the audited v_texcoord noperspective declaration is permitted")
     return 0
 
