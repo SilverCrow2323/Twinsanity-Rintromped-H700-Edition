@@ -26,7 +26,7 @@ flowchart TD
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
 | 2 · GLES compile + link | Renderer and SDL units compile; target libraries resolve | CI validation pending |
-| 3 · Production shaders | NativeEE shader library builds on Mali-G31 | Mesa smoke added; device test pending |
+| 3 · Production shaders | NativeEE shader library builds on Mali-G31 | Device smoke packaged; Mali run pending |
 | 4 · GS surfaces | FBO, depth/stencil, textures, mipmaps and readback validated | Pending |
 | 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
 | 6 · Game boot | Game reaches title and first interactive scene | Pending |
