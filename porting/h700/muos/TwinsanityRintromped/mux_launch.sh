@@ -3,12 +3,29 @@
 # GRID: Twinsanity Rintromped
 . /opt/muos/script/var/func.sh || exit 1
 APP_BIN="tw-rintromped-h700-probe"
+SDL_BIN="tw-rintromped-h700-sdl-probe"
 SETUP_APP "$APP_BIN" ""
 APP_DIR="/run/muos/storage/application/TwinsanityRintromped"
 cd "$APP_DIR" || exit 1
 mkdir -p logs
 export APP_DIR
 export TW_H700_REPORT="$APP_DIR/logs/egl-gles-report.txt"
+export TW_H700_SDL_REPORT="$APP_DIR/logs/sdl-window-report.txt"
 "$APP_DIR/device/collect-system-info.sh" "$APP_DIR/logs/muos-device-report.txt" || true
 [ -x "$APP_DIR/$APP_BIN" ] || { echo "Missing $APP_BIN in $APP_DIR" >&2; exit 127; }
-exec "$APP_DIR/$APP_BIN" "$@"
+
+# Run both probes even when the EGL pbuffer probe fails: SDL may expose a
+# window/display path that the default EGL display probe cannot initialise.
+"$APP_DIR/$APP_BIN" "$@"
+EGL_RC=$?
+if [ -x "$APP_DIR/$SDL_BIN" ]; then
+    "$APP_DIR/$SDL_BIN"
+    SDL_RC=$?
+else
+    echo "Missing $SDL_BIN; SDL presentation test skipped." >&2
+    SDL_RC=127
+fi
+printf 'Preflight complete: EGL/GLES=%s SDL/window=%s\n' "$EGL_RC" "$SDL_RC"
+# Diagnostics are stored in logs; return to the muOS menu without treating a
+# hardware capability failure as a launcher crash.
+exit 0
