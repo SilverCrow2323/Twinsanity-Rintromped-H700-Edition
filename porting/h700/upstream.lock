@@ -1,4 +1,5 @@
-upstream=https://github.com/menaman123/TwinsanityEvolved
-ref=v0.9.3
+repository=https://github.com/menaman123/TwinsanityEvolved.git
+tag=v0.9.3
 commit=fd6840f6d143b9b15036d552f26da3e767810d3f
-project=Twinsanity Rintromped - H700 Edition
+release=https://github.com/menaman123/TwinsanityEvolved/releases/tag/v0.9.3
+project=Twinsanity-Rintromped-H700-Edition
