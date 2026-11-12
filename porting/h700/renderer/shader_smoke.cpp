@@ -1,9 +1,11 @@
 // Compile and link NativeEE's production shader library in a real GLES context.
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
 #include <GLES3/gl32.h>
 
 #include <cstdio>
 #include <initializer_list>
+#include <utility>
 
 #include "engine/render/backends/gl/gl_shader_library.h"
 #include "engine/render/backends/gl/gl_uniform_cache.h"
@@ -34,7 +36,7 @@ int main() {
 
     const EGLint config_attrs[] = {
         EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT_KHR,
         EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8,
         EGL_NONE
     };
