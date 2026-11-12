@@ -50,6 +50,8 @@ jobs:
           max=$(readelf --version-info porting/h700/dist/tw-rintromped-h700-probe | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -n 1 || true)
           echo "Maximum required GLIBC symbol: $max"
           test -z "$max" || test "$(printf '%s\n' "$max" GLIBC_2.31 | sort -V | tail -n 1)" = "GLIBC_2.31"
+      - name: Make cross-build output writable
+        run: sudo chown -R "$(id -u):$(id -g)" porting/h700/dist
       - name: Package diagnostic muxapp on Ubuntu runner
         run: |
           chmod +x porting/h700/scripts/package-muxapp.sh
