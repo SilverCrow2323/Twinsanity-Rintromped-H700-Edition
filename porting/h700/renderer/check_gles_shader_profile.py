@@ -135,7 +135,7 @@ def main() -> int:
 
     print("PASS: top-level app and NativeEE both select the H700 GLES header profile")
     print("PASS: GLESv2 dependency and SDL ES 3.2 version gate are present")
-    print("PASS: NativeEE production shader smoke is cross-built, packaged, launched and logged on-device")
+    print("PASS: NativeEE production shader smoke cross-build, package and launcher wiring is present")
     print(f"PASS: {converted} embedded GLSL source block(s) satisfy the H700 ES 3.20 conversion contract")
     print("PASS: only the audited v_texcoord noperspective declaration is permitted")
     return 0
