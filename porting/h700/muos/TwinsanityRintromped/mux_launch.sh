@@ -16,8 +16,8 @@ export TW_H700_SHADER_REPORT="$APP_DIR/logs/gles-shader-report.txt"
 "$APP_DIR/device/collect-system-info.sh" "$APP_DIR/logs/muos-device-report.txt" || true
 [ -x "$APP_DIR/$APP_BIN" ] || { echo "Missing $APP_BIN in $APP_DIR" >&2; exit 127; }
 
-# Run both probes even when the EGL pbuffer probe fails: SDL may expose a
-# window/display path that the default EGL display probe cannot initialise.
+# Run every diagnostic independently: EGL pbuffer, NativeEE production shaders,
+# and SDL's visible window path can fail for different driver/runtime reasons.
 "$APP_DIR/$APP_BIN" "$@"
 EGL_RC=$?
 if [ -x "$APP_DIR/$SHADER_BIN" ]; then
