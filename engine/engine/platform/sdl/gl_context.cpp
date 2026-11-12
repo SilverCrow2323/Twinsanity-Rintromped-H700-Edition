@@ -119,6 +119,24 @@ bool GlContext::Create(Window& window) {
         return false;
     }
     if (!MakeCurrent(window)) return false;
+#if PS2R_HOST_GLES
+    // SDL may create a context with a lower version than requested. Refuse it
+    // before NativeEE issues GLES 3.x entry points or compiles GLSL ES 3.20.
+    GLint major = 0, minor = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    if (major < 3 || (major == 3 && minor < 2)) {
+        std::fprintf(stderr, "[gl] H700 needs OpenGL ES 3.2; SDL returned %d.%d (%s)\n",
+                     major, minor, GL_VERSION ? reinterpret_cast<const char*>(glGetString(GL_VERSION)) : "unknown");
+        Destroy();
+        return false;
+    }
+    const GLubyte* es_version = glGetString(GL_VERSION);
+    const GLubyte* es_renderer = glGetString(GL_RENDERER);
+    std::fprintf(stderr, "[gl] H700 context: %s / %s\n",
+                 es_renderer ? reinterpret_cast<const char*>(es_renderer) : "?",
+                 es_version ? reinterpret_cast<const char*>(es_version) : "?");
+#endif
 #if defined(_WIN32)
     // The GL entry points are function pointers on Windows (engine/platform/windows/gl_loader.h): fill them from this
     // context's driver before the first GL call below. A driver without one of the 4.1-core names the engine uses
