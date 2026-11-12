@@ -24,6 +24,7 @@ on:
     paths:
       - "wiki-source/**"
       - "docs/README.md"
+      - "docs/STYLE_GUIDE.md"
       - "docs/H700_PORTING_PLAN.md"
       - "docs/H700_RENDERER_AUDIT.md"
       - "docs/h700/**"
