@@ -7,6 +7,7 @@ This page is the working contract between the upstream desktop renderer and the 
 | Component | Upstream renderer | H700 target |
 |---|---|---|
 | Context | OpenGL 4.1 core | OpenGL ES 3.2 |
+| SDL context verification | No explicit version gate | Require returned context >= ES 3.2; log renderer and version | Added |
 | Shader language | GLSL 4.10 core | GLSL ES 3.20 |
 | Header | GL/glcorearb.h | GLES3/gl32.h |
 | Window | SDL2 desktop GL | SDL2 mali video driver |
