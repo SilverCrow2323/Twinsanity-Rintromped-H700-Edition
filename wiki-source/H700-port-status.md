@@ -1,0 +1,37 @@
+# H700 port status
+
+This page separates the existing TwinsanityEvolved build from the work needed for an H700 handheld port.
+
+## What is known
+
+- The Allwinner H700 is based on a quad-core Cortex-A53 CPU and includes a G31 GPU ([Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)).
+- Arm documents the Mali-G31 API support as OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
+- The current repository README lists a Linux AArch64 build, but its desktop release notes specify OpenGL 4.1.
+- The PS Vita build uses a separate native console path; it is not an H700 build.
+
+## What is not confirmed
+
+- A successful launch on RG35XX H or another H700 device.
+- Compatibility with muOS's display and graphics stack.
+- A working gamepad mapping, audio device, suspend/resume path or package installer.
+- Performance, frame pacing, memory use or thermal behaviour on the handheld.
+
+> [!IMPORTANT]
+> **MUST KNOW!!** Do not label the H700 port as playable or release-ready until a real device reaches the title screen and completes the hardware test matrix in the development plan.
+
+## Engineering gates
+
+1. **Platform audit** — identify every host OpenGL dependency, the current context creation path, SDL use, audio backend, file I/O assumptions and runtime library requirements.
+2. **Graphics decision** — evaluate an EGL + OpenGL ES 3.2 backend against the actual renderer requirements. Consider Vulkan only if the existing rendering architecture and target firmware make it the safer path.
+3. **Handheld host layer** — connect display, input, audio, timing, storage and exit behaviour to the target firmware without breaking desktop or PS Vita builds.
+4. **Performance pass** — measure CPU time, draw-call cost, GPU time, texture uploads, streaming stalls and peak memory on the H700.
+5. **muOS package** — produce a dedicated installable package with only program files and lawful project assets. The user supplies the disc image.
+6. **Device validation** — test boot, title, gameplay, audio, controls, saves, disc streaming, shutdown and recovery on the actual handheld.
+
+## What to use today
+
+- Use the desktop release on a supported PC.
+- Use the PS Vita VPK only on a compatible PS Vita setup.
+- Treat the H700 work as an engineering target until this page records a tested device, firmware version, build identifier and results.
+
+---
