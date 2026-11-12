@@ -20,7 +20,7 @@ def main() -> int:
     # alongside the larger central source catalogue so no embedded variant is missed.
     inline_sources = [m.group(2) for m in RAW.finditer(adapter_text)]
     sources = [m.group(2) for m in RAW.finditer(shader_text)] + inline_sources
-    shader_sources = [s for s in sources if re.search(r"^\\s*#version\\s+410\\s+core\\s*$", s, re.MULTILINE)]
+    shader_sources = [s for s in sources if re.search(r"^\s*#version\s+410\s+core\s*$", s, re.MULTILINE)]
     if not shader_sources:
         raise SystemExit("FAIL: no raw GLSL shader sources found")
 
