@@ -1,81 +1,55 @@
-# Desktop GL to H700 GLES audit
+# Desktop GL → H700 GLES audit
 
-This is a source-level compatibility audit. It does not claim that the H700 renderer is implemented or that any game scene runs on-device.
+> [!NOTE]
+> This is a source-level compatibility record. The physical H700 device has passed the graphics preflight, but the NativeEE renderer and gameplay remain unvalidated.
 
-## Confirmed source assumptions
+## Confirmed platform differences
 
-| Source | Current assumption | H700 consequence |
+| Source area | Desktop path | H700 path |
 |---|---|---|
-| Root CMakeLists.txt | Non-Vita Linux finds SDL2 and desktop OpenGL | An AArch64 target still follows the desktop GL dependency unless a separate target is added |
-| engine/cmake/OpenGlDependency.cmake | Uses OpenGL::GL outside the Vita lane | Add an explicit EGL/GLES dependency path; do not silently replace the desktop dependency |
-| engine/engine/platform/host/platform.h | Linux includes GL/glcorearb.h | H700 needs GLES headers and a separate compile definition |
-| engine/engine/platform/sdl/gl_context.cpp | Requests OpenGL 4.1 core through SDL | H700 must request an ES context; physical device now confirms SDL creates ES 3.2 |
-| engine/engine/render/backends/gl/CMakeLists.txt | Builds the common GL renderer against OpenGL::GL | The target is not currently an H700 GLES renderer |
-| engine/engine/render/backends/gl/gl_shader_sources.cpp | Shader strings use #version 410 core | Build and test GLSL ES variants; changing only the version string is insufficient |
-| engine/engine/render/backends/gl/gl_vertex_stream.cpp | Uses mapped buffers, explicit flush and sync objects | Check GLES version/extensions and provide a tested fallback where required |
+| Root CMakeLists.txt | OpenGL::GL desktop dependency | Explicit PS2R_GLES profile; forwarded into NativeEE ExternalProject |
+| engine/cmake/OpenGlDependency.cmake | FindOpenGL / platform library | GLES3 headers and imported GLESv2 target |
+| engine/platform/host/platform.h | GL/glcorearb.h | GLES3/gl32.h |
+| engine/platform/sdl/gl_context.cpp | OpenGL 4.1 core | SDL ES 3.2 request and runtime version gate |
+| GL shader source | GLSL 410 core | Audited GLSL ES 320 conversion |
+| Uniform updates | glProgramUniform* | Bind target program, use glUniform*, restore |
+| Depth clear | glClearDepth | glClearDepthf |
+| Mip-level dimensions | glGetTexLevelParameteriv | Derive from base dimensions and mip index |
+| Depth-only FBO | glDrawBuffer(GL_NONE) | glDrawBuffers(1, { GL_NONE }) |
+| Vertex ring buffer | Unsynchronised desktop map flag | GLES write + explicit-flush flags |
 
-## Physical H700 graphics evidence (2026-11-12)
+## Physical device evidence · 12 November 2026
 
-Both diagnostic probes were run successfully on muOS 2606.0 Andromeda, kernel 4.9.170, Allwinner sun50iw9 / ARM Cortex-A53-class AArch64 CPU.
-
-| Test | Device result |
+| Test | Result |
 |---|---|
-| EGL | 1.4, vendor ARM, Bifrost r20p0 |
-| GLES context | OpenGL ES 3.2, GLSL ES 3.20 |
+| EGL | 1.4 · ARM · Bifrost r20p0 |
 | GPU | ARM Mali-G31 |
-| SDL video backend | `mali` |
-| SDL window/context | Created successfully |
-| Presentation | Six solid-colour frames swapped successfully |
-| Framebuffer mode | 640×480p-59 |
-| GL limits | 8192 max texture size, 16 vertex attributes, 16 fragment texture units |
+| OpenGL ES / GLSL ES | 3.2 / 3.20 |
+| SDL video driver | mali |
+| SDL window and context | Created |
+| Presentation | Six visible colour frames |
+| Framebuffer | 640×480p-59 |
 
-The SDL result confirms actual window creation and buffer presentation through muOS's SDL `mali` video driver. This removes basic EGL/GLES initialisation and SDL presentation as immediate blockers.
+The device also advertises GL_OES_mapbuffer, GL_EXT_buffer_storage, GL_OES_vertex_array_object, GL_EXT_texture_storage, ASTC families and GL_EXT_disjoint_timer_query. Extension presence is not proof that an engine feature has been integrated correctly.
 
-Runtime-reported extensions include `GL_OES_mapbuffer`, `GL_EXT_buffer_storage`, `GL_OES_vertex_array_object`, `GL_EXT_texture_storage`, `GL_EXT_disjoint_timer_query`, ASTC texture compression and `GL_EXT_draw_elements_base_vertex`. Extension presence is not proof that the current desktop renderer uses them correctly; check exact entry points, semantics and fallback behavior.
+## Shader-specific decision
 
-## Shader-specific blocker
+The PS2 S/T/Q shader path declares noperspective on v_texcoord. GLSL ES 3.20 does not define noperspective as a core interpolation qualifier. The audited PS2 vertex path sets gl_Position.w = 1.0, making smooth interpolation screen-linear in that specific path.
 
-The PS2 S/T/Q shader path uses the GLSL interpolation qualifier noperspective. The Khronos GLSL ES 3.20 core specification lists smooth and flat as core interpolation qualifiers; noperspective is not in that core list.
+The H700 conversion removes the qualifier only from that named varying. The source guard checks every embedded shader block. Visual equivalence still needs to be proven with actual NativeEE render captures.
 
-The existing shader source comments that gl_Position.w is 1.0 in this path, so smooth interpolation may be equivalent for those vertices. That is a hypothesis to prove with frame/image comparisons, not permission to remove the qualifier globally.
+## Remaining validation
 
-References:
-- Khronos GLSL ES 3.20 specification: https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html
-- Arm Mali-G31 product page: https://support.arm.com/compute-ip/mali-g31
-- Allwinner H700 brief: https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf
+- Compile all renderer translation units with GLES 3.2 headers for AArch64.
+- Link against the target muOS EGL/GLES/SDL2/FFmpeg sysroot.
+- Compile every production shader variant on the actual Mali driver.
+- Test framebuffer, depth/stencil, sampler, texture upload, mip and readback paths.
+- Compare deterministic output with desktop reference captures.
+- Measure stalls, synchronisation, frame pacing, memory and sustained thermals.
 
-## API work still required
+## Canonical references
 
-Classify every used GL call, enum, format and extension in the inventory before implementation. In particular, inspect:
-
-- glMapBufferRange, explicit flush and sync/fence handling.
-- Sampler objects and texture storage/update paths.
-- Framebuffer/renderbuffer formats, depth/stencil attachments and blits.
-- Pixel-store row length, texture-level queries and readback/PBO paths.
-- Timer queries and optional anisotropic filtering.
-- Shader precision declarations, interpolation semantics and any desktop-only GLSL features.
-
-For each item record one disposition: GLES 3.2 core, runtime extension, safe fallback, renderer algorithm change, or not used by the H700 build.
-
-## Why the Vita path is not reusable
-
-The Vita build uses Vita-specific startup and vitaGL over Sony GXM. This is a separate platform path, not a generic GLES 3.2 implementation for Mali-G31.
-
-## Preflight evidence boundary
-
-The current H700 package contains:
-- an EGL/GLES pbuffer probe;
-- an SDL2 window probe that asks for an ES 3.2 context and swaps colour frames;
-- a muOS device/environment inventory.
-
-These tests determine whether the firmware can initialise EGL/GLES and SDL presentation. They do not compile the game's renderer, exercise its shaders, create the engine's render targets or enter gameplay.
-
-## Implementation order
-
-1. Add an explicit H700 build profile; never infer it only from the AArch64 CPU architecture.
-2. Build a minimal GLES shader and render-target prototype using SDL's confirmed `mali` video backend.
-3. Compare output with desktop references for title, UI, texture formats, transparency, depth, shadows and copies.
-4. Classify and adapt buffer-streaming and synchronisation based on the actual Mali extension set.
-5. Integrate input, audio, disc streaming and muOS packaging only after the renderer's first scene is stable.
-
-A successful probe is not a playable-port claim.
+- [Full compatibility matrix](../../../docs/h700/compatibility-matrix.md)
+- [Graphics port design](../../../docs/h700/graphics-port.md)
+- [Renderer audit](../../../docs/H700_RENDERER_AUDIT.md)
+- [H700 porting plan](../../../docs/H700_PORTING_PLAN.md)
