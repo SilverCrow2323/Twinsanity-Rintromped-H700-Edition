@@ -134,7 +134,11 @@ bool GlDevice::Init(std::function<void()> swap) {
     // GL state defaults: GEQUAL depth (the GS default), far plane cleared to 0.0.
     state_.Enable(GL_DEPTH_TEST);
     state_.DepthFunc(GL_GEQUAL);
+#if PS2R_HOST_GLES
+    glClearDepthf(0.0f);
+#else
     glClearDepth(0.0);
+#endif
     state_.Enable(GL_BLEND);
     state_.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -526,7 +530,11 @@ void GlDevice::Clear(SurfaceId color, SurfaceId depth, uint32_t rgba, float z, u
     }
     if ((flags & kClearDepth) && d) {
         state_.DepthMask(true);
+#if PS2R_HOST_GLES
+        glClearDepthf(static_cast<GLfloat>(z));
+#else
         glClearDepth(static_cast<double>(z));
+#endif
         bits |= GL_DEPTH_BUFFER_BIT;
     }
 #if PS2R_HOST_VITA
@@ -800,9 +808,10 @@ void GlDevice::FinishMipChain(SurfaceId id, int authored_levels, bool synthesize
     state_.BindTex2D(s.tex);
     int syn = 0;
     if (synthesize_tail) {
-        GLint cw = 0, ch = 0;
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, authored_levels, GL_TEXTURE_WIDTH, &cw);
-        glGetTexLevelParameteriv(GL_TEXTURE_2D, authored_levels, GL_TEXTURE_HEIGHT, &ch);
+        // GLES has no glGetTexLevelParameteriv. Mip dimensions are deterministic.
+        const int mip_shift = std::min(authored_levels, 30);
+        const GLint cw = std::max(1, static_cast<int>(s.desc.width) >> mip_shift);
+        const GLint ch = std::max(1, static_cast<int>(s.desc.height) >> mip_shift);
         if (cw > 0 && ch > 0) {
             std::vector<uint8_t> cur(static_cast<size_t>(cw) * ch * 4);
             GLuint fbo = 0;
@@ -876,7 +885,12 @@ uint32_t GlDevice::BindStencilTarget(SurfaceId color, SurfaceId stencil) {
         if (sten_fbo_rbo_ != st->rbo) {
             glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, st->rbo);
 #if !PS2R_HOST_VITA
+#if PS2R_HOST_GLES
+            const GLenum no_draw_buffer = GL_NONE;
+            glDrawBuffers(1, &no_draw_buffer);
+#else
             glDrawBuffer(GL_NONE);
+#endif
 #endif
             glReadBuffer(GL_NONE);
             const GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
