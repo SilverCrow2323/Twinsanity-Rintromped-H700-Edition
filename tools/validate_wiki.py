@@ -65,9 +65,14 @@ def main() -> int:
             if not resolved.exists():
                 errors.append(f"{page.relative_to(ROOT)}: broken link target {raw_target!r}")
 
-    docs_index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    docs_index_path = ROOT / "docs" / "README.md"
+    docs_index = docs_index_path.read_text(encoding="utf-8") if docs_index_path.is_file() else ""
     check("wiki-source/" in docs_index and "/wiki" in docs_index,
           "docs/README.md must link to the tracked Wiki source and GitHub Wiki")
+    style_guide = ROOT / "docs" / "STYLE_GUIDE.md"
+    check(style_guide.is_file(), "docs/STYLE_GUIDE.md is missing")
+    check("[documentation style guide]" in docs_index.lower(),
+          "docs/README.md must link the repository-wide documentation style guide")
     h700 = (WIKI / "H700-port-status.md").read_text(encoding="utf-8").lower()
     check("unvalidated" in h700 and "openGL 4.1".lower() in h700,
           "H700 status must preserve the unvalidated/OpenGL 4.1 compatibility boundary")
