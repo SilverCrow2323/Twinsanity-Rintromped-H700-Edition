@@ -5,7 +5,8 @@ ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$ROOT"
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
-grep -q 'zip -qr "$OUT_ABS" TwinsanityRintromped' scripts/package-muxapp.sh
+grep -q 'zip -qr "$TMP_ARCHIVE" TwinsanityRintromped' scripts/package-muxapp.sh
+grep -q 'mv -f "$TMP_ARCHIVE" "$OUT_ABS"' scripts/package-muxapp.sh
 if grep -q 'application/TwinsanityRintromped' scripts/package-muxapp.sh; then echo 'Legacy nested muxapp layout detected' >&2; exit 1; fi
 if grep -R -n -F '\${' scripts device muos --exclude=test-kit.sh; then echo 'Found escaped shell expansion' >&2; exit 1; fi
 for f in scripts/*.sh muos/TwinsanityRintromped/*.sh device/*.sh; do [ -f "$f" ] && sh -n "$f"; done
@@ -27,4 +28,44 @@ grep -q 'H700 EGL/GLES probe' "$TMP/report.txt"
 grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
 if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
+
+# Rebuild over an existing package and prove that obsolete ZIP entries are removed.
+python3 - "$TMP/fake-aarch64" <<'PY'
+import struct
+import sys
+ident = b"\x7fELF" + bytes([2, 1, 1, 0, 0]) + bytes(7)
+header = struct.pack("<16sHHIQQQIHHHHHH", ident, 2, 183, 1, 0, 0, 0, 0, 64, 56, 0, 64, 0, 0)
+with open(sys.argv[1], "wb") as stream:
+    stream.write(header)
+PY
+chmod 755 "$TMP/fake-aarch64"
+PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" \
+  scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
+python3 - "$TMP/rebuild.muxapp" <<'PY'
+import sys
+import zipfile
+with zipfile.ZipFile(sys.argv[1], "a") as archive:
+    archive.writestr("obsolete/old-layout-marker.txt", "must disappear on rebuild")
+PY
+PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" \
+  scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
+python3 - "$TMP/rebuild.muxapp" <<'PY'
+import sys
+import zipfile
+with zipfile.ZipFile(sys.argv[1]) as archive:
+    names = archive.namelist()
+    if "obsolete/old-layout-marker.txt" in names:
+        raise SystemExit("Stale ZIP entry survived package rebuild")
+    roots = {name.split("/", 1)[0] for name in names if name}
+    if roots != {"TwinsanityRintromped"}:
+        raise SystemExit(f"Unexpected muxapp root entries: {sorted(roots)}")
+    required = {
+        "TwinsanityRintromped/mux_launch.sh",
+        "TwinsanityRintromped/mux_lang.ini",
+    }
+    missing = sorted(required - set(names))
+    if missing:
+        raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
+print("Muxapp rebuild removes stale entries and preserves the required root layout.")
+PY
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
