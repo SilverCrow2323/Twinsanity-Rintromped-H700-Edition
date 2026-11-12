@@ -1,56 +1,57 @@
 # H700 porting status
 
-**Physical graphics preflight: PASS. NativeEE renderer integration: in progress. Playable port: not available.**
+**Physical graphics preflight: PASS. GLES profile and initial adapters: implemented. Full renderer and gameplay: not yet validated.**
 
 ## Current status
 
 | Area | Status | Evidence |
 |---|---|---|
-| Upstream baseline | Ready | Original baseline remains on main |
-| H700 branch | Active | h700/porting |
-| EGL / GLES | <strong>Device PASS</strong> | EGL 1.4, ES 3.2, Mali-G31 |
-| SDL window / buffer swaps | <strong>Device PASS</strong> | mali backend; six visible colour frames |
-| muOS diagnostic package | Packaged | AArch64 probes and corrected archive root |
+| Upstream baseline | Ready | Original baseline remains on `main` |
+| H700 branch | Active | `h700/porting`; work isolated from upstream baseline |
+| EGL / GLES | **Device PASS** | EGL 1.4, GLES 3.2, Mali-G31 |
+| SDL window / buffer swaps | **Device PASS** | SDL `mali` backend; six visible colour frames |
+| muOS diagnostic package | Packaged | AArch64 probes; archive root is `TwinsanityRintromped/` |
 | Device inventory | Collected | muOS 2606.0, sun50iw9, kernel 4.9.170 |
-| Root CMake H700 profile | Added | PS2R_GLES forwarded to NativeEE ExternalProject |
-| GLES header / dependency path | Added | GLES3/gl32.h and GLESv2 target |
+| Root CMake H700 profile | Added | `PS2R_GLES`; application and NativeEE both select GLES headers |
+| GLES dependency path | Added | `GLES3/gl32.h`, `libGLESv2`, imported `OpenGL::GL` interface |
 | SDL context selection | Added | Requests ES 3.2 and rejects lower returned versions |
-| Shader conversion adapter | Added | GLSL 410 core to ES 320, audited source guard |
-| GLES API adapters | Added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
-| Renderer compile gate | CI validation | AArch64 object compile against GLES and SDL headers |
-| Production shader smoke | Added | Real GlShaderLibrary EGL/GLES test; Mesa CI bring-up |
-| First NativeEE frame | Pending | Must pass compile, device shader and surface tests |
+| Shader conversion adapter | Added | GLSL 410 core → ES 320; source-level regression guard |
+| GLES API adapters | Initial set added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
+| Renderer compile gate | CI queued | AArch64 object compile against GLES and SDL headers |
+| Production shader smoke | Added | Real `GlShaderLibrary` EGL/GLES test; Mesa job is non-blocking during bring-up |
+| First NativeEE frame | Pending | Requires compile, Mali shader and surface validation |
 | Game runtime | Not available | No playable build yet |
 
-## Device profile
+## Physical device profile
 
-- muOS 2606.0 Andromeda, build db2a3bd0.
-- Allwinner sun50iw9, AArch64, four cores; approximately 1 GB RAM.
-- ARM Mali-G31, Bifrost r20p0.
+- muOS 2606.0 Andromeda, build `db2a3bd0`.
+- Allwinner `sun50iw9`, AArch64, four cores; approximately 1 GB RAM.
+- ARM Mali-G31, Bifrost `r20p0`.
 - EGL 1.4 / OpenGL ES 3.2 / GLSL ES 3.20.
-- SDL2 video driver: mali.
+- SDL2 video driver: `mali`.
 - Framebuffer mode: 640×480p-59.
-- The GPU frequency reported during collection was 816 MHz; it is not a guaranteed fixed clock.
+- GPU frequency was reported as 816 MHz during collection; this is not a fixed-clock guarantee.
 
-## Latest CI lanes
+## CI lanes
 
 - [H700 build workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-The renderer job is a compile-only gate. A green job would prove that the selected translation units compile against GLES headers; it would not prove target linking, shader execution, image correctness or gameplay.
+The renderer compile job is a compile-only gate. A green result proves that the selected translation units compile against GLES headers; it does not prove target linking, shader execution, image correctness or gameplay.
 
 ## Next gates
 
 1. Complete the AArch64 GLES compile gate and fix every real source/API failure.
 2. Configure and link NativeEE plus the application against the muOS target sysroot.
 3. Run every production shader variant on the actual Mali driver.
-4. Validate the GS render targets, depth/stencil attachments, texture paths and readback.
+4. Validate GS render targets, depth/stencil attachments, texture paths and readback.
 5. Present the first NativeEE-rendered frame.
 6. Only then begin game boot, input/audio, disc streaming and performance work.
 
 ## Canonical documentation
 
-- [Project documentation hub](../../../docs/h700/README.md)
+The player-facing Wiki and the engineering handbook are maintained separately. The canonical H700 engineering guides live in [docs/h700](../../../docs/h700/README.md):
+
 - [Graphics port](../../../docs/h700/graphics-port.md)
 - [GLES compatibility matrix](../../../docs/h700/compatibility-matrix.md)
 - [Build guide](../../../docs/h700/building.md)
