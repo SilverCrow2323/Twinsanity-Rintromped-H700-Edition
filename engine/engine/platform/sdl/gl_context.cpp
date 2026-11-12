@@ -33,14 +33,8 @@ void GlContext::RequestAttributes() {
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
 #endif
-#ifdef _WIN32
-    // 24, not 32, on Windows. The accelerated ICDs (nvoglv64 / igxelpicd64)
-    // advertise 24-bit depth with 8 stencil and no 32-bit depth format at all,
-    // while the Microsoft GDI Generic software renderer DOES offer 32 -- so
-    // asking for 32 does not fail, it silently selects the software format and
-    // the context comes back as "GDI Generic" OpenGL 1.1, where none of the 4.1
-    // core entry points exist. (The 24-bit retry in platform/sdl/window.cpp only
-    // fires when SDL_CreateWindow fails outright, which this does not.)
+#if defined(_WIN32) || PS2R_HOST_GLES
+    // 24-bit depth is the portable request for the H700 ES window configuration.
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 #else
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
