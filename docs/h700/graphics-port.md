@@ -1,91 +1,119 @@
+![H700 graphics pipeline](assets/hero.svg)
+
 # Graphics port
 
-## Why a separate backend profile?
+**From the confirmed muOS SDL/Mali path to the first NativeEE-rendered frame.**
 
-The upstream Linux renderer asks SDL for a desktop OpenGL 4.1 core context and includes desktop GL headers. The H700 device exposes OpenGL ES 3.2 through EGL and SDL's mali video driver.
+> [!NOTE]
+> The physical H700 has passed EGL 1.4, OpenGL ES 3.2, GLSL ES 3.20 and SDL window presentation. The engine's full rendering path is a separate validation gate.
 
-The H700 work therefore adds a **dedicated GLES build profile**. It does not replace the desktop dependency globally and does not reuse the Vita renderer path.
-
-## Runtime path
+## 🧭 Runtime architecture
 
 ~~~mermaid
 flowchart TD
-    A["SDL video subsystem"] --> B["SDL mali driver"]
-    B --> C["EGL display and context"]
-    C --> D["GLES 3.2 API"]
-    D --> E["NativeEE GL backend · GLES compile profile"]
-    E --> F["PS2 GS emulation surfaces"]
-    F --> G["SDL_GL_SwapWindow"]
+    A["muOS Andromeda"] --> B["SDL2 · mali video driver"]
+    B --> C["EGL 1.4"]
+    C --> D["OpenGL ES 3.2 · GLSL ES 3.20"]
+    D --> E["NativeEE GLES adapter"]
+    E --> F["GS textures · FBO · depth/stencil"]
+    F --> G["SDL buffer swap"]
 ~~~
 
-The lower three engine stages are the integration target. The physical device has confirmed the SDL, EGL and GLES layers only.
+The first three graphics layers are confirmed on the physical device. NativeEE integration, GS surfaces and game output remain under development.
 
-## Compatibility work introduced
+## ✅ Physical device evidence
 
-| Desktop assumption | GLES adaptation | State |
+| Layer | Result |
+|---|---|
+| EGL | 1.4 · ARM · Bifrost r20p0 |
+| GPU | Mali-G31 |
+| GLES / GLSL | 3.2 / 3.20 |
+| SDL video backend | `mali` |
+| Window and context | Created successfully |
+| Presentation | Six visible solid-colour frames |
+| Display mode | 640×480p-59 |
+
+See the [device profile](device-profile.md) for the full environment and extension inventory.
+
+## 🧩 Compatibility work in the engine
+
+| Desktop assumption | H700 adaptation | Evidence state |
 |---|---|---|
-| GL/glcorearb.h | GLES3/gl32.h selected by PS2R_USE_GLES | Added |
-| OpenGL 4.1 core context | SDL ES 3.2 attributes | Added |
-| Runtime context check | SDL may return a lower version than requested | Query GL_MAJOR_VERSION / GL_MINOR_VERSION; reject below ES 3.2 and log GPU/version | Added |
-| GLSL 410 core | GLSL ES 320 plus default high precision | Added |
-| noperspective on PS2 STQ varying | Remove only on v_texcoord; vertex path sets gl_Position.w = 1 | Added; visual equivalence still to verify |
-| glProgramUniform* | Temporarily bind target program and use glUniform* | Added; correctness-first, not yet optimized |
-| glClearDepth | glClearDepthf | Added |
-| glGetTexLevelParameteriv | Derive mip dimensions from base dimensions and level | Added |
-| glDrawBuffer(GL_NONE) | glDrawBuffers(1, { GL_NONE }) | Added |
-| GL_MAP_UNSYNCHRONIZED_BIT | Omit for GLES; keep write + explicit-flush flags | Added |
-| Desktop timer-query path | Disabled in initial GLES profile | Deliberate first-stage fallback |
+| `GL/glcorearb.h` | `GLES3/gl32.h` selected by `PS2R_USE_GLES` | Source added |
+| OpenGL 4.1 core | SDL requests ES 3.2 and verifies the returned version | Physical SDL path passes |
+| GLSL 4.10 core | Runtime conversion to GLSL ES 3.20 with highp defaults | Source guard added; device shader test pending |
+| `noperspective` varying | Removed only for the audited `v_texcoord` path | Mathematical rationale; image comparison pending |
+| `glProgramUniform*` | Bind target program, update with `glUniform*`, restore previous program | Compile/runtime test pending |
+| `glClearDepth` | `glClearDepthf` | Compile gate |
+| `glGetTexLevelParameteriv` | Derive mip dimensions from surface dimensions and level | Compile gate; mip capture pending |
+| `glDrawBuffer(GL_NONE)` | `glDrawBuffers(1, { GL_NONE })` | Compile gate; FBO test pending |
+| `GL_MAP_UNSYNCHRONIZED_BIT` | Omit desktop-only flag; retain GLES write/flush flags | Compile gate; streaming stress pending |
+| Desktop timer queries | Disabled in first GLES profile | Deliberate fallback |
 
-## Production shader smoke\n\nThe CI harness now instantiates the real NativeEE `GlShaderLibrary` in a headless EGL/GLES context and builds the PS2, scanout, dither and stencil programs. The Mesa job is non-blocking during bring-up; it validates shader compile/link behavior on Mesa, not the Mali-G31 driver or final image correctness.\n\n## Shader conversion policy
+## 🧪 Validation sequence
 
-The shared shader sources remain in their original desktop form. The H700 profile converts them at compile time:
+~~~mermaid
+flowchart LR
+    A["Compile GLES backend"] --> B["Compile/link production shaders"]
+    B --> C["Test FBO + depth/stencil"]
+    C --> D["Texture + mip + readback"]
+    D --> E["Compare deterministic images"]
+    E --> F["Present first NativeEE frame"]
+~~~
 
-1. Require the audited source directive #version 410 core.
-2. Rewrite it to #version 320 es.
-3. Insert highp float and int default precision declarations immediately after the version directive.
-4. Remove noperspective only from the v_texcoord varying declaration.
+Each gate needs its own evidence. A compile pass cannot substitute for shader execution, and shader execution cannot substitute for a correct rendered image.
 
-Why is the last change narrow? The PS2 vertex shader constructs gl_Position with w = 1.0 in this path. Smooth interpolation therefore reduces to screen-linear interpolation for this varying. This is a source-level equivalence argument; capture comparisons on the actual game renderer remain mandatory.
+## ⚙️ Shader conversion policy
 
-No global shader substitution is permitted. New shader features must be checked for GLES 3.2 semantics before being added to the shared source.
+The shared shader catalogue stays in desktop GLSL form. The H700 profile converts each shader immediately before compilation:
 
-## Current technical risks
+1. Require the audited `#version 410 core` source profile.
+2. Replace it with `#version 320 es`.
+3. Insert default `highp` precision declarations for float and int.
+4. Remove `noperspective` only from the audited `v_texcoord` varying.
+
+The PS2 vertex path sets `gl_Position.w = 1.0`, so smooth interpolation is screen-linear for this particular varying. This is a narrow source-level equivalence argument, not a global permission to remove interpolation qualifiers. The final proof is a deterministic image comparison on the actual renderer.
+
+## 🔬 Known engineering risks
 
 <details>
 <summary>Uniform update cost</summary>
 
-GLES 3.2 does not provide the desktop glProgramUniform entry points as core API. The initial adapter switches the active program around uniform updates. This preserves the explicit-program semantics but may be expensive. A later optimization should batch updates while the intended program is bound and maintain strict state-cache coherence.
+GLES 3.2 has no core `glProgramUniform*` family. The initial adapter temporarily binds the destination program and uses `glUniform*`. This favors correctness over throughput. Once shader and draw correctness are proven, updates should be batched while the intended program is already bound, with state-cache tests.
 
 </details>
 
 <details>
 <summary>Buffer streaming and synchronization</summary>
 
-The Mali driver advertises mapping and buffer-storage extensions. The first adapter uses GLES core mapping flags and removes the desktop-only unsynchronized flag. Correctness and frame pacing still need device measurements. The extension list alone is not a reason to enable a faster path.
+The tested Mali driver advertises `GL_OES_mapbuffer` and `GL_EXT_buffer_storage`. The initial path uses GLES core map flags and does not claim unsynchronized access. Measure write visibility, stalls and frame pacing before introducing an extension-specific ring.
 
 </details>
 
 <details>
-<summary>Texture readback and framebuffer formats</summary>
+<summary>Framebuffer, texture and readback behavior</summary>
 
-The mip-tail synthesis path previously queried texture level dimensions through desktop GL. The GLES path now derives the dimensions from the surface description. FBO completeness, depth/stencil formats, readback alignment and texture filtering need integration tests with real game surfaces.
+The engine must validate every color/depth/stencil attachment combination, mip allocation, texture upload format, row alignment and readback path. Extension presence alone does not prove that a particular format is renderable.
 
 </details>
 
 <details>
-<summary>Timer queries</summary>
+<summary>GPU timing</summary>
 
-GL_EXT_disjoint_timer_query is present on the tested device, but its API names and disjoint-timer rules differ from the desktop timer path. The first GLES profile disables the desktop query implementation rather than risking invalid calls. A GLES-specific timing adapter can follow once rendering is stable.
+The device advertises `GL_EXT_disjoint_timer_query`. The desktop query implementation is disabled until a GLES-specific adapter handles the extension entry points and disjoint state correctly.
 
 </details>
 
-## Acceptance criteria for the first renderer milestone
+## 🎯 First-frame acceptance criteria
 
-- All GL backend and SDL platform translation units compile against GLES 3.2 headers for AArch64.
-- The H700 build requests an ES 3.2 context and verifies the returned API.
-- All engine shader variants compile on the device.
-- A deterministic test surface is drawn, read back and compared against a desktop reference.
-- The first NativeEE-rendered frame is visible on the panel.
-- No regression is introduced in desktop, Windows or Vita CI.
+- [ ] All selected renderer and SDL translation units compile for AArch64 against GLES 3.2 headers.
+- [ ] The actual NativeEE shader library compiles and links every production shader on the Mali-G31.
+- [ ] Framebuffer, depth/stencil and texture tests pass on the device.
+- [ ] Deterministic output matches the agreed desktop reference.
+- [ ] A frame rendered by NativeEE—not a standalone SDL test—is visible on the panel.
+- [ ] Desktop, Windows and Vita CI remain green.
 
-Passing the compile gate is not equivalent to passing the shader, image or gameplay tests.
+> [!WARNING]
+> **MUST KNOW!!** The current H700 build is not playable. The diagnostic probes do not load `game.iso`, execute the game renderer or validate gameplay.
+
+[Back to the H700 hub](README.md) · [Compatibility matrix](compatibility-matrix.md) · [Roadmap](roadmap.md)
