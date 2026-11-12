@@ -8,7 +8,7 @@ This page separates the existing TwinsanityEvolved build from the work needed fo
 - Arm documents Mali-G31 support for OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
 - The current repository README lists a Linux AArch64 build, but its desktop release notes specify OpenGL 4.1.
 - The engine SDL context requests OpenGL 4.1 core; its shader source uses `#version 410 core`.
-- The shader path uses `noperspective` in the S/T/Q interpolation contract. GLSL ES 3.20 core only lists `smooth` and `flat`; the equivalent output must be proven in the renderer tests.
+- The shader path uses `noperspective` in the S/T/Q interpolation contract. The [GLSL ES 3.20 core specification](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html) only lists `smooth` and `flat`; the equivalent output must be proven in the renderer tests.
 - The PS Vita build uses a separate vitaGL/GXM path. It is not an H700 build.
 
 ## What is not confirmed
