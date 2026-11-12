@@ -13,7 +13,7 @@ for binary in "$BIN" "$SDL_BIN"; do
   readelf -h "$binary" | grep -Eq 'Machine:.*AArch64' || { echo "Refusing non-AArch64 binary: $binary" >&2; exit 1; }
 done
 STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT HUP INT TERM
-APP="$STAGE/application/TwinsanityRintromped"
+APP="$STAGE/TwinsanityRintromped"
 mkdir -p "$APP/device" "$APP/logs"
 cp "$BIN" "$APP/tw-rintromped-h700-probe"
 cp "$SDL_BIN" "$APP/tw-rintromped-h700-sdl-probe"
@@ -24,7 +24,7 @@ chmod 755 "$APP/mux_launch.sh" "$APP/device/collect-system-info.sh" \
   "$APP/tw-rintromped-h700-probe" "$APP/tw-rintromped-h700-sdl-probe"
 mkdir -p "$(dirname "$OUT")"
 OUT_ABS=$(CDPATH= cd -- "$(dirname -- "$OUT")" && pwd)/$(basename -- "$OUT")
-(cd "$STAGE" && zip -qr "$OUT_ABS" application)
+(cd "$STAGE" && zip -qr "$OUT_ABS" TwinsanityRintromped)
 python3 - "$OUT_ABS" <<'PY'
 import sys
 import zipfile
@@ -35,12 +35,14 @@ with zipfile.ZipFile(archive_path) as archive:
         raise SystemExit(f"Corrupt archive entry: {corrupt}")
     names = set(archive.namelist())
     required = {
-        "application/TwinsanityRintromped/mux_launch.sh",
-        "application/TwinsanityRintromped/mux_lang.ini",
-        "application/TwinsanityRintromped/tw-rintromped-h700-probe",
-        "application/TwinsanityRintromped/tw-rintromped-h700-sdl-probe",
-        "application/TwinsanityRintromped/device/collect-system-info.sh",
+        "TwinsanityRintromped/mux_launch.sh",
+        "TwinsanityRintromped/mux_lang.ini",
+        "TwinsanityRintromped/tw-rintromped-h700-probe",
+        "TwinsanityRintromped/tw-rintromped-h700-sdl-probe",
+        "TwinsanityRintromped/device/collect-system-info.sh",
     }
+    if any(name.startswith("application/") for name in names):
+        raise SystemExit("Invalid muxapp layout: do not nest app under application/")
     missing = sorted(required - names)
     if missing:
         raise SystemExit("Missing muxapp entries: " + ", ".join(missing))
