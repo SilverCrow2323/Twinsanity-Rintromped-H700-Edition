@@ -20,7 +20,7 @@ The dedicated branch [h700/porting](https://github.com/SilverCrow2323/Twinsanity
 
 The successful [H700 CI run #43306974401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43306974401) passed host tests, AArch64 cross-build, ELF/GLIBC checks, package verification and artifact upload. It produced the diagnostic artifact `twinsanity-rintromped-h700-preflight`.
 
-This proves that the diagnostic binaries and muOS archive build correctly. It does **not** prove that the H700 device can initialise its graphics stack; no physical device report has been reviewed yet. The [engineering PR #2](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/pull/2) is intentionally kept in draft.
+This proves that the diagnostic binaries and muOS archive build correctly. It does **not** prove that the H700 device can initialise its graphics stack; no physical device report has been reviewed yet, so H700 support remains unvalidated on hardware. The [engineering PR #2](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/pull/2) is intentionally kept in draft.
 
 ## What is not confirmed
 
