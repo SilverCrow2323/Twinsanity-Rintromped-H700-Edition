@@ -1,0 +1,44 @@
+name: Wiki documentation
+
+on:
+  push:
+    branches:
+      - main
+      - "docs/**"
+    paths:
+      - "wiki-source/**"
+      - "docs/H700_PORTING_PLAN.md"
+      - "tools/publish_wiki.sh"
+      - "tools/validate_wiki.py"
+      - ".github/workflows/wiki-docs.yml"
+      - "README.md"
+  pull_request:
+    paths:
+      - "wiki-source/**"
+      - "docs/H700_PORTING_PLAN.md"
+      - "tools/publish_wiki.sh"
+      - "tools/validate_wiki.py"
+      - ".github/workflows/wiki-docs.yml"
+      - "README.md"
+
+permissions:
+  contents: read
+
+jobs:
+  wiki-docs:
+    name: Validate Wiki pages and publisher
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+
+      - name: Validate Wiki pages and internal links
+        run: python tools/validate_wiki.py
+
+      - name: Check Wiki publisher shell syntax
+        run: sh -n tools/publish_wiki.sh
