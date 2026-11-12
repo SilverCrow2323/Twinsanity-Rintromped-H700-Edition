@@ -35,6 +35,15 @@ elseif(VITA)
     add_compile_definitions(_GNU_SOURCE)
 endif()
 
+option(PS2R_GLES "Build the Linux renderer for OpenGL ES 3.2 (H700 / SDL mali backend)" OFF)
+if(PS2R_GLES)
+    if(NOT CMAKE_SYSTEM_NAME STREQUAL "Linux" OR VITA OR WIN32 OR APPLE)
+        message(FATAL_ERROR "PS2R_GLES is the Linux-only GLES 3.2 profile; configure a Linux target (H700/muOS)")
+    endif()
+    add_compile_definitions(PS2R_USE_GLES=1)
+    message(STATUS "nativeee: PS2R_GLES=ON -- SDL requests an OpenGL ES 3.2 context; desktop GL is not used")
+endif()
+
 option(PS2R_SIMD "BlockDecode: vectorized (NEON) inner loop, proven byte-identical to the scalar path by tests/gs/format/test_block_decode" OFF)
 option(PS2R_DIAGNOSTICS "Compile the core/diag mechanism in (harness/dev builds); OFF = Release contains no probes" OFF)
 set(PS2R_OG_ROOT "$ENV{PS2R_OLD_ROOT}" CACHE PATH
