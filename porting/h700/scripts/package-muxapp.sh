@@ -12,7 +12,13 @@ command -v python3 >/dev/null 2>&1 || { echo "Missing python3 for archive verifi
 for binary in "$BIN" "$SDL_BIN"; do
   readelf -h "$binary" | grep -Eq 'Machine:.*AArch64' || { echo "Refusing non-AArch64 binary: $binary" >&2; exit 1; }
 done
-STAGE=$(mktemp -d); trap 'rm -rf "$STAGE"' EXIT HUP INT TERM
+STAGE=$(mktemp -d)
+mkdir -p "$(dirname "$OUT")"
+OUT_DIR=$(CDPATH= cd -- "$(dirname -- "$OUT")" && pwd)
+OUT_ABS="$OUT_DIR/$(basename -- "$OUT")"
+TMP_ARCHIVE_DIR=$(mktemp -d "$OUT_DIR/.muxapp-build.XXXXXX")
+TMP_ARCHIVE="$TMP_ARCHIVE_DIR/$(basename -- "$OUT")"
+trap 'rm -rf "$STAGE" "$TMP_ARCHIVE_DIR"' EXIT HUP INT TERM
 APP="$STAGE/TwinsanityRintromped"
 mkdir -p "$APP/device" "$APP/logs"
 cp "$BIN" "$APP/tw-rintromped-h700-probe"
@@ -22,10 +28,8 @@ cp "$ROOT/muos/TwinsanityRintromped/mux_lang.ini" "$APP/mux_lang.ini"
 cp "$ROOT/device/collect-system-info.sh" "$APP/device/collect-system-info.sh"
 chmod 755 "$APP/mux_launch.sh" "$APP/device/collect-system-info.sh" \
   "$APP/tw-rintromped-h700-probe" "$APP/tw-rintromped-h700-sdl-probe"
-mkdir -p "$(dirname "$OUT")"
-OUT_ABS=$(CDPATH= cd -- "$(dirname -- "$OUT")" && pwd)/$(basename -- "$OUT")
-(cd "$STAGE" && zip -qr "$OUT_ABS" TwinsanityRintromped)
-python3 - "$OUT_ABS" <<'PY'
+(cd "$STAGE" && zip -qr "$TMP_ARCHIVE" TwinsanityRintromped)
+python3 - "$TMP_ARCHIVE" <<'PY'
 import sys
 import zipfile
 archive_path = sys.argv[1]
@@ -48,5 +52,8 @@ with zipfile.ZipFile(archive_path) as archive:
         raise SystemExit("Missing muxapp entries: " + ", ".join(missing))
 print("Muxapp ZIP integrity and layout verified.")
 PY
+# Replace the previous package only after the fresh archive has passed validation.
+# Writing to a temporary archive prevents stale ZIP entries surviving a rebuild.
+mv -f "$TMP_ARCHIVE" "$OUT_ABS"
 sha256sum "$OUT_ABS"
 echo "Created $OUT_ABS"
