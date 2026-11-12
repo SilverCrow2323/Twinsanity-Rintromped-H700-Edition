@@ -106,9 +106,13 @@ int main() {
     };
     bool all_programs = true;
     for (const auto& item : programs) {
-        std::fprintf(stderr, "[SHADER] %-16s program=%u\n", item.first, item.second);
+        std::fprintf(stderr, "[SHADER] %-16s program=%u status=%s\n",
+                     item.first, item.second, item.second ? "linked" : "MISSING");
         all_programs = all_programs && item.second != 0;
     }
+    const uint32_t fast_program = shaders.Ps2FastProgram();
+    std::fprintf(stderr, "[SHADER] %-16s program=%u status=%s\n",
+                 "ps2-fast", fast_program, fast_program ? "linked (optional)" : "not built (optional)");
 
     glFinish();
     const GLenum gl_error = glGetError();
@@ -123,6 +127,6 @@ int main() {
                      built ? "true" : "false", all_programs ? "true" : "false", gl_error);
         return 4;
     }
-    std::fprintf(stderr, "[RESULT] PASS: NativeEE production shader programs compiled and linked in GLES 3.2\n");
+    std::fprintf(stderr, "[RESULT] PASS: all required NativeEE production shader programs compiled and linked in GLES 3.2\n");
     return 0;
 }
