@@ -913,3 +913,8 @@ of M`); `tools/ci/build_all.sh` runs every gate (`TE_MIN_FREE_GB` lowers its 15 
 This fork keeps the upstream README and source documentation intact. The isolated H700 preflight and porting notes live in [porting/h700/README.md](porting/h700/README.md).
 
 **Status:** the current H700 package is a diagnostic utility for EGL/GLES and SDL presentation, not a playable game build. Hardware reports and the GLES renderer port are still pending.
+
+
+## Project Wiki
+
+Player-facing guides, installation steps, disc setup, mods and troubleshooting are maintained in the [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki). The tracked source and page rules will be available in [wiki-source/](wiki-source/).
