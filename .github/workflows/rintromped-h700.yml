@@ -39,6 +39,7 @@ jobs:
           cd porting/h700
           chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh
           ./scripts/test-kit.sh
+          python3 renderer/check_gles_shader_profile.py
 
   aarch64-package:
     runs-on: ubuntu-22.04
