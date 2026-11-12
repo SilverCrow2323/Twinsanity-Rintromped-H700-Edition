@@ -29,6 +29,7 @@ set(TE_GLES_RENDER_SOURCES
 add_library(h700_gles_renderer_compile OBJECT ${TE_GLES_RENDER_SOURCES})
 target_compile_features(h700_gles_renderer_compile PRIVATE cxx_std_17)
 target_include_directories(h700_gles_renderer_compile PRIVATE
+    "${TE_ROOT}/engine"
     "${TE_ROOT}"
     "${TE_GLES_INCLUDE_DIR}"
 )
@@ -41,6 +42,7 @@ add_library(h700_sdl_gles_compile OBJECT
 )
 target_compile_features(h700_sdl_gles_compile PRIVATE cxx_std_17)
 target_include_directories(h700_sdl_gles_compile PRIVATE
+    "${TE_ROOT}/engine"
     "${TE_ROOT}"
     "${TE_GLES_INCLUDE_DIR}"
     "${TE_SDL2_INCLUDE_DIR}"
