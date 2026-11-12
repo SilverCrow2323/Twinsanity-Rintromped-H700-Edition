@@ -37,7 +37,7 @@ jobs:
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
             apt-get update &&
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file zip &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file zip python3 &&
             chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
             ./scripts/build-probe.sh &&
             ./scripts/package-muxapp.sh dist/Twinsanity-Rintromped-H700-Preflight.muxapp
