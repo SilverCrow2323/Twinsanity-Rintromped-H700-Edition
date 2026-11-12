@@ -2,7 +2,40 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
+
+# Keep the production Mesa shader smoke a required CI gate. A host source
+# check alone must not silently downgrade it to an allowed failure.
+WORKFLOW="$REPO_ROOT/.github/workflows/rintromped-h700.yml"
+python3 - "$WORKFLOW" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(
+    r"^  gles-shader-mesa-smoke:\s*\n(.*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",
+    workflow,
+    re.MULTILINE | re.DOTALL,
+)
+if not match:
+    raise SystemExit("Missing required gles-shader-mesa-smoke CI job")
+job = match.group(1)
+required = (
+    "needs: host-checks",
+    "libsdl2-dev",
+    "cmake -S porting/h700/renderer",
+    "h700_gles_shader_smoke_check",
+    "./build/mesa-gles/h700_gles_shader_smoke",
+)
+missing = [item for item in required if item not in job]
+if missing:
+    raise SystemExit("Mesa shader gate is incomplete: " + ", ".join(missing))
+if re.search(r"^\s*continue-on-error\s*:\s*true\b", job, re.MULTILINE):
+    raise SystemExit("Production Mesa shader smoke must remain a blocking CI gate")
+print("Required Mesa production shader-smoke CI gate verified.")
+PY
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
 grep -q 'zip -qr "$TMP_ARCHIVE" TwinsanityRintromped' scripts/package-muxapp.sh

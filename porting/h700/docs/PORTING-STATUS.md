@@ -18,7 +18,7 @@
 | Shader conversion adapter | Added | GLSL 410 core → ES 320; source-level regression guard |
 | GLES API adapters | Initial set added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
 | Renderer compile gate | CI queued | AArch64 object compile against GLES and SDL headers |
-| Production shader smoke | Added | Real `GlShaderLibrary` EGL/GLES test; Mesa job is non-blocking during bring-up |
+| Production shader smoke | **Required CI gate** | Blocking `gles-shader-mesa-smoke` runs the production `GlShaderLibrary` EGL/GLES test on Mesa after `host-checks`; current-head CI result must be checked on its run |
 | First NativeEE frame | Pending | Requires compile, Mali shader and surface validation |
 | Game runtime | Not available | No playable build yet |
 
@@ -38,6 +38,8 @@
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
 The renderer compile job is a compile-only gate. A green result proves that the selected translation units compile against GLES headers; it does not prove target linking, shader execution, image correctness or gameplay.
+
+The Mesa production shader-smoke job is a **blocking CI requirement**, not an optional bring-up lane. It installs the SDL2/EGL/GLES development dependencies, builds the real shader-smoke executable and runs it on Mesa llvmpipe. A green Mesa result is software-driver evidence only; it does not certify the Mali-G31 driver or replace the on-device shader test.
 
 ## Next gates
 
