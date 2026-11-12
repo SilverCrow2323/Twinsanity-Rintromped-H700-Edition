@@ -2,6 +2,7 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
 # Generated mip dimensions are updated while halving levels; they must stay mutable.
 if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=' "$REPO_ROOT/engine/engine/render/backends/gl/gl_device.cpp"; then
