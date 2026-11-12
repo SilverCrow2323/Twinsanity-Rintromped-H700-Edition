@@ -126,8 +126,9 @@ bool GlContext::Create(Window& window) {
     glGetIntegerv(GL_MAJOR_VERSION, &major);
     glGetIntegerv(GL_MINOR_VERSION, &minor);
     if (major < 3 || (major == 3 && minor < 2)) {
+        const GLubyte* returned_version = glGetString(GL_VERSION);
         std::fprintf(stderr, "[gl] H700 needs OpenGL ES 3.2; SDL returned %d.%d (%s)\n",
-                     major, minor, GL_VERSION ? reinterpret_cast<const char*>(glGetString(GL_VERSION)) : "unknown");
+                     major, minor, returned_version ? reinterpret_cast<const char*>(returned_version) : "unknown");
         Destroy();
         return false;
     }
