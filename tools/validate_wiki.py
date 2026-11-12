@@ -65,9 +65,9 @@ def main() -> int:
             if not resolved.exists():
                 errors.append(f"{page.relative_to(ROOT)}: broken link target {raw_target!r}")
 
-    readme = (ROOT / "README.md").read_text(encoding="utf-8")
-    check("wiki-source/" in readme and "/wiki" in readme,
-          "root README must link to the tracked Wiki source and GitHub Wiki")
+    docs_index = (ROOT / "docs" / "README.md").read_text(encoding="utf-8")
+    check("wiki-source/" in docs_index and "/wiki" in docs_index,
+          "docs/README.md must link to the tracked Wiki source and GitHub Wiki")
     h700 = (WIKI / "H700-port-status.md").read_text(encoding="utf-8").lower()
     check("unvalidated" in h700 and "openGL 4.1".lower() in h700,
           "H700 status must preserve the unvalidated/OpenGL 4.1 compatibility boundary")
