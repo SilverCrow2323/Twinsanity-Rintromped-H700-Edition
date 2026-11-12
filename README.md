@@ -27,8 +27,8 @@
 |---|---|
 | H700 EGL / GLES 3.2 | <strong>Passed on device</strong> |
 | SDL window and buffer presentation | <strong>Passed on device</strong> |
-| Dedicated Linux GLES build profile | In progress |
-| Real renderer compile gate | CI validation |
+| Dedicated Linux GLES build profile | Added · compile validation pending |
+| Real renderer compile gate | CI job queued |
 | First NativeEE-rendered frame | Pending |
 | Game boot and gameplay | Pending |
 
