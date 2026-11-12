@@ -78,3 +78,19 @@ Record the first failing translation unit and the exact undefined type, constant
 - Genuine source portability issue unrelated to graphics.
 
 Do not silence errors with global macros or by substituting a desktop GL header into the GLES target.
+
+
+## Production shader smoke (Mesa)
+
+The renderer harness also exposes `h700_gles_shader_smoke_check`. It creates a headless EGL/GLES 3.2 pbuffer, instantiates the real NativeEE `GlShaderLibrary`, and compiles/links the production PS2, scanout, dither and stencil shader programs.
+
+On Ubuntu CI:
+
+~~~bash
+sudo apt-get install -y cmake ninja-build g++ libegl1-mesa-dev libgles2-mesa-dev
+cmake -S porting/h700/renderer -B build/mesa-gles -G Ninja
+cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
+EGL_PLATFORM=surfaceless LIBGL_ALWAYS_SOFTWARE=1 ./build/mesa-gles/h700_gles_shader_smoke
+~~~
+
+The Mesa job is intentionally non-blocking while the new harness is stabilised. A pass proves that the production shader library compiles and links under Mesa GLES; it is not proof of Mali driver behavior or correct game images. The same shader smoke should later run on the physical H700.
