@@ -33,7 +33,7 @@ flowchart TD
 | 7 · Runtime systems | Controls, audio, ISO streaming, saves and clean exit | Pending |
 | 8 · Release | Stable frame pacing, thermals, install/update and docs | Pending |
 
-## 1 — Hardware preflight <badge status="success">Passed</badge>
+## 1 — Hardware preflight · PASSED
 
 - EGL 1.4 and GLES 3.2 initialise on the tested H700.
 - SDL selects the `mali` video backend.
