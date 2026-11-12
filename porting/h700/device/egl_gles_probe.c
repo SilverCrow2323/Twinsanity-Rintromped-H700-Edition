@@ -112,8 +112,11 @@ int main(void) {
     if(c==EGL_NO_CONTEXT){logline("[FAIL] ES3 context creation failed: 0x%04x\n",eglGetError());goto done;}
     if(!eglMakeCurrent(d,s,s,c)){logline("[FAIL] eglMakeCurrent failed: 0x%04x\n",eglGetError());goto done;}
     PFN_glGetString gs=NULL; PFN_glGetIntegerv gi=NULL; void *p=eglGetProcAddress("glGetString");
-    if(!p)p=dlsym(gles,"glGetString"); if(p&&sizeof(p)==sizeof(gs))memcpy(&gs,&p,sizeof(p));
-    p=eglGetProcAddress("glGetIntegerv"); if(!p)p=dlsym(gles,"glGetIntegerv"); if(p&&sizeof(p)==sizeof(gi))memcpy(&gi,&p,sizeof(p));
+    if (!p) p = dlsym(gles, "glGetString");
+    if (p && sizeof(p) == sizeof(gs)) memcpy(&gs, &p, sizeof(p));
+    p = eglGetProcAddress("glGetIntegerv");
+    if (!p) p = dlsym(gles, "glGetIntegerv");
+    if (p && sizeof(p) == sizeof(gi)) memcpy(&gi, &p, sizeof(p));
     if(!gs||!gi){logline("[FAIL] GLES entry point resolution failed\n");goto done;}
     GLint major=0,minor=0,lim=0; gi(GL_MAJOR_VERSION,&major); gi(GL_MINOR_VERSION,&minor);
     logline("[GL] vendor=%s\n",gs(GL_VENDOR)?(const char*)gs(GL_VENDOR):"?");
