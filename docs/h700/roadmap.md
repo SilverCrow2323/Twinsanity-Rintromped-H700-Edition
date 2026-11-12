@@ -20,7 +20,7 @@ flowchart TD
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL mali window and visible swaps | <strong>Passed on device</strong> |
 | 2 · GLES compile gate | All selected renderer and SDL TUs compile for AArch64 | CI validation |
-| 3 · Shader and surface tests | Every shader variant compiles; FBO, depth, textures and readback validated | Pending |
+| 3a · Production shader smoke | NativeEE shader library compiles/links in a headless GLES 3.2 context | CI bring-up |\n| 3 · Shader and surface tests | Every shader variant compiles; FBO, depth, textures and readback validated | Pending |
 | 4 · First engine frame | NativeEE renders a deterministic frame on the H700 panel | Pending |
 | 5 · Game boot | Game's first interactive scene reaches a stable frame | Pending |
 | 6 · Runtime systems | Input, audio, ISO streaming, save paths and exit flow work | Pending |
