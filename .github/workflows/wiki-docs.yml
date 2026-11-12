@@ -11,6 +11,7 @@ on:
       - "docs/H700_PORTING_PLAN.md"
       - "docs/H700_RENDERER_AUDIT.md"
       - "docs/h700/**"
+      - "docs/README.md"
       - "tools/publish_wiki.sh"
       - "tools/validate_wiki.py"
       - ".github/workflows/wiki-docs.yml"
@@ -18,7 +19,10 @@ on:
   pull_request:
     paths:
       - "wiki-source/**"
+      - "docs/README.md"
       - "docs/H700_PORTING_PLAN.md"
+      - "docs/H700_RENDERER_AUDIT.md"
+      - "docs/h700/**"
       - "tools/publish_wiki.sh"
       - "tools/validate_wiki.py"
       - ".github/workflows/wiki-docs.yml"
