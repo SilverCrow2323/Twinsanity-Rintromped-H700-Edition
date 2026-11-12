@@ -436,6 +436,11 @@ option(PS2R_GLES "Build the Linux application and NativeEE renderer against Open
 if(PS2R_GLES AND NOT CMAKE_SYSTEM_NAME STREQUAL "Linux")
     message(FATAL_ERROR "PS2R_GLES is a Linux-only profile for H700/muOS")
 endif()
+if(PS2R_GLES)
+    # The application/runner also includes engine/platform/host/platform.h;
+    # keep its GL header selection in lockstep with the NativeEE ExternalProject.
+    add_compile_definitions(PS2R_USE_GLES=1)
+endif()
 set(TE_ENGINE_FORWARDED_ARGS "")
 foreach(var CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_TOOLCHAIN_FILE CMAKE_SYSROOT
             CMAKE_FIND_ROOT_PATH CMAKE_SYSTEM_PROCESSOR CMAKE_C_COMPILER_TARGET CMAKE_CXX_COMPILER_TARGET
