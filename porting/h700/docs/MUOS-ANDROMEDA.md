@@ -1,6 +1,6 @@
 # muOS Andromeda application integration
 
-The launcher follows the muOS Application Runner contract for muOS 2601/2606: source func.sh, call SETUP_APP, and use the bind-mounted path /run/muos/storage/application/TwinsanityRintromped. The installable archive uses application/ as its top-level directory.
+The launcher follows the muOS Application Runner contract for muOS 2601/2606: source func.sh, call SETUP_APP, and use the bind-mounted path /run/muos/storage/application/TwinsanityRintromped. The installable archive root starts directly with TwinsanityRintromped/; it has no enclosing application/ directory.
 
 The .muxapp is a ZIP archive with a different extension. Install it from ARCHIVE using **Applications → Archive Manager**.
 
