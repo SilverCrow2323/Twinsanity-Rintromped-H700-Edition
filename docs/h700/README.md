@@ -29,6 +29,7 @@ The device creates an EGL 1.4 display, a GLES 3.2 context and a visible SDL wind
 |---|---|
 | [Device profile](device-profile.md) | Read the real device report and tested capabilities |
 | [Graphics port](graphics-port.md) | Understand the SDL → EGL → GLES path and renderer adaptations |
+| [API compatibility matrix](compatibility-matrix.md) | Track desktop GL differences, GLES decisions and validation state |
 | [Build guide](building.md) | Configure the GLES profile and run compile checks |
 | [muOS installation](install.md) | Install the diagnostic utility and retrieve reports |
 | [FAQ & troubleshooting](faq.md) | Quick answers, known limits and common problems |
