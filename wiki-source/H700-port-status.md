@@ -4,14 +4,16 @@ This page separates the existing TwinsanityEvolved build from the work needed fo
 
 ## What is known
 
-- The Allwinner H700 is based on a quad-core Cortex-A53 CPU and includes a G31 GPU ([Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)).
-- Arm documents the Mali-G31 API support as OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
+- The Allwinner H700 brief identifies a quad-core Cortex-A53 CPU and a G31 GPU ([Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)).
+- Arm documents Mali-G31 support for OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
 - The current repository README lists a Linux AArch64 build, but its desktop release notes specify OpenGL 4.1.
-- The PS Vita build uses a separate native console path; it is not an H700 build.
+- The engine SDL context requests OpenGL 4.1 core; its shader source uses `#version 410 core`.
+- The shader path uses `noperspective` in the S/T/Q interpolation contract. GLSL ES 3.20 core only lists `smooth` and `flat`; the equivalent output must be proven in the renderer tests.
+- The PS Vita build uses a separate vitaGL/GXM path. It is not an H700 build.
 
 ## What is not confirmed
 
-- A successful launch on RG35XX H or another H700 device.
+- A successful launch on an RG35XX H or another H700 device.
 - Compatibility with muOS's display and graphics stack.
 - A working gamepad mapping, audio device, suspend/resume path or package installer.
 - Performance, frame pacing, memory use or thermal behaviour on the handheld.
@@ -27,6 +29,8 @@ This page separates the existing TwinsanityEvolved build from the work needed fo
 4. **Performance pass** — measure CPU time, draw-call cost, GPU time, texture uploads, streaming stalls and peak memory on the H700.
 5. **muOS package** — produce a dedicated installable package with only program files and lawful project assets. The user supplies the disc image.
 6. **Device validation** — test boot, title, gameplay, audio, controls, saves, disc streaming, shutdown and recovery on the actual handheld.
+
+For the exact source-level blockers, see [the renderer audit](../docs/H700_RENDERER_AUDIT.md) and [the full porting plan](../docs/H700_PORTING_PLAN.md).
 
 ## What to use today
 
