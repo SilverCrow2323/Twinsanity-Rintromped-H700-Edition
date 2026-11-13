@@ -158,10 +158,14 @@ std::string DataDirectory() {
         return ps2r::app::GameFolder::EnsureWritableDataDirectory(
             portable.generic_string(), home.generic_string());
     ec.clear();
-    if (!home.empty() && fs::is_directory(home, ec))
-        return ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
+    if (!home.empty() && fs::is_directory(home, ec)) {
+        const std::string existing_home =
+            ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
+        if (!existing_home.empty()) return existing_home;
+    }
     // A new portable install gets its own userdata/ directory, but create it
-    // before SettingsFile attempts to write ps2r.ini inside it.
+    // before SettingsFile attempts to write ps2r.ini inside it. This is also
+    // the fallback when an older HOME directory has become read-only.
     if (!exe.empty() && !ps2r::app::GameFolder::EnsureWritableDataDirectory(exe.generic_string(), {}).empty())
         return ps2r::app::GameFolder::EnsureWritableDataDirectory(
             portable.generic_string(), home.generic_string());
