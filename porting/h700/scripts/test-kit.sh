@@ -166,6 +166,19 @@ grep -q 'SDL_WINDOWEVENT_FOCUS_LOST' "$DRAW_SOURCE"
 grep -q 'SDL_GameControllerAddMapping(mapping.c_str())' "$LAUNCHER_SOURCE"
 grep -q 'settings_.reset()' "$LAUNCHER_SOURCE"
 
+# H700 GLES queues uniform changes, then uploads them with the selected draw
+# program already bound. The immediate path remains available for A/B diagnosis.
+UNIFORM_SOURCE="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.cpp"
+UNIFORM_HEADER="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.h"
+grep -q 'PS2R_HOST_VITA || PS2R_HOST_GLES' "$UNIFORM_SOURCE"
+grep -q 'TE_GFX_UNIFORM_SYNC' "$UNIFORM_SOURCE"
+grep -q 'if (already_bound)' "$UNIFORM_SOURCE"
+grep -q 'Send(e.shadow, program == 0 ? e.loc : MirrorOf(e.loc), program, true)' "$UNIFORM_SOURCE"
+grep -q 'SendArray(to, a.count, a.v, program, true)' "$UNIFORM_SOURCE"
+grep -q 'bool already_bound = false' "$UNIFORM_HEADER"
+grep -q 'u.Sync(fast ? 1 : 0)' "$DRAW_SOURCE"
+grep -q 'u.Sync(0)' "$DRAW_SOURCE"
+
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
 # GitHub Actions artifact downloads may restore files as 0644; the packager must
 # accept regular ELF files and set executable mode on the staged application copy.
