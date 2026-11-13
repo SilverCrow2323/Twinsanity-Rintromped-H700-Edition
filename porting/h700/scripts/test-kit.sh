@@ -85,6 +85,9 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
 print("Muxapp rebuild removes stale entries and preserves the required root layout.")
 PY
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
+# GitHub Actions artifact downloads may restore files as 0644; the packager must
+# accept regular ELF files and set executable mode on the staged application copy.
+chmod 644 "$TMP/fake-aarch64"
 mkdir -p "$TMP/fake-ffmpeg/share/licenses"
 printf '%s\n' 'FFmpeg LGPL v2.1 text fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-COPYING.LGPLv2.1.txt"
 printf '%s\n' 'FFmpeg licence fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-LICENSE.md"
