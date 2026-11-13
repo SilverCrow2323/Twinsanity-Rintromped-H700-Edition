@@ -203,3 +203,49 @@ jobs:
             strings build/h700-full-aarch64/twinsanityevolved | grep -q -- "--enable-decoder=mpeg2video" &&
             ! strings build/h700-full-aarch64/twinsanityevolved | grep -Eq -- "--enable-gpl|--enable-nonfree|--enable-version3"
           '
+      - name: Make runner artifact writable
+        run: sudo chown -R "$(id -u):$(id -g)" build/h700-full-aarch64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-runner
+          path: |
+            build/h700-full-aarch64/twinsanityevolved
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-COPYING.LGPLv2.1.txt
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-LICENSE.md
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-BUILD-CONFIGURATION.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  full-app-muxapp:
+    runs-on: ubuntu-22.04
+    needs: [aarch64-package, full-app-aarch64-link]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ZIP and ELF verification tools
+        run: sudo apt-get update && sudo apt-get install -y binutils file zip python3
+      - uses: actions/download-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-runner
+          path: porting/h700/dist/full-runner
+      - uses: actions/download-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-preflight
+          path: porting/h700/dist/preflight
+      - name: Assemble and verify the installable full muOS muxapp
+        run: |
+          chmod +x porting/h700/scripts/package-full-muxapp.sh
+          GAME_BIN="$GITHUB_WORKSPACE/porting/h700/dist/full-runner/twinsanityevolved" \
+          PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-probe" \
+          SDL_PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-sdl-probe" \
+          SHADER_PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-gles-shader-smoke" \
+          FFMPEG_LICENSE_DIR="$GITHUB_WORKSPACE/porting/h700/dist/full-runner/third_party/ffmpeg/share/licenses" \
+            porting/h700/scripts/package-full-muxapp.sh porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp
+          sha256sum porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp > porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp.sha256
+      - uses: actions/upload-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-muxapp
+          path: |
+            porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp
+            porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp.sha256
+          if-no-files-found: error
+          retention-days: 14
