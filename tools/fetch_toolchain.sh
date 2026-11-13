@@ -70,9 +70,17 @@ if [ ! -x "$DEST/wabt/bin/wasm2c$EXE" ]; then
   if [ "$WABT_FROM_SOURCE" = 1 ]; then
     # No binary release for this host: build wasm2c / wasm-objdump / wasm-validate from the pinned source.
     tar -xJf "$DEST/$WABT_TGZ" -C "$DEST/wabt.tmp" --strip-components=1
-    cmake -S "$DEST/wabt.tmp" -B "$DEST/wabt.tmp/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
-          -DBUILD_TOOLS=ON -DBUILD_LIBWASM=OFF -DWITH_EXCEPTIONS=OFF -DUSE_INTERNAL_SHA256=ON > "$DEST/wabt.tmp/configure.log" 2>&1
-    cmake --build "$DEST/wabt.tmp/build" --target wasm2c wasm-objdump wasm-validate > "$DEST/wabt.tmp/build.log" 2>&1
+    if ! cmake -S "$DEST/wabt.tmp" -B "$DEST/wabt.tmp/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
+          -DBUILD_TOOLS=ON -DBUILD_LIBWASM=OFF -DWITH_EXCEPTIONS=OFF -DUSE_INTERNAL_SHA256=ON > "$DEST/wabt.tmp/configure.log" 2>&1; then
+      echo "fetch_toolchain: WABT configure failed; last 100 lines:" >&2
+      tail -n 100 "$DEST/wabt.tmp/configure.log" >&2
+      exit 5
+    fi
+    if ! cmake --build "$DEST/wabt.tmp/build" --target wasm2c wasm-objdump wasm-validate > "$DEST/wabt.tmp/build.log" 2>&1; then
+      echo "fetch_toolchain: WABT source build failed; last 160 lines:" >&2
+      tail -n 160 "$DEST/wabt.tmp/build.log" >&2
+      exit 6
+    fi
     mkdir -p "$DEST/wabt.tmp/bin"
     cp "$DEST/wabt.tmp/build/wasm2c" "$DEST/wabt.tmp/build/wasm-objdump" "$DEST/wabt.tmp/build/wasm-validate" "$DEST/wabt.tmp/bin/"
     # the wasm2c runtime the generated C is compiled with, where the binary releases keep it
