@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 
 #include "app/host/game_files_stamp.h"
 #include "app/host/launcher_settings.h"
@@ -21,8 +22,73 @@
 
 namespace ps2r::app {
 namespace {
+#if PS2R_HOST_GLES
+constexpr int kWidth = 640, kHeight = 480;
+constexpr const char* kImGuiGlslVersion = "#version 300 es";
+#else
 constexpr int kWidth = 860, kHeight = 560;
+constexpr const char* kImGuiGlslVersion = "#version 410 core";
+#endif
 const char* kPages[] = {"Play", "Display", "Controls", "Save states", "Fixes", "Data"};
+
+void ApplyTwinsanityStyle() {
+    ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 8.0f;
+    style.ChildRounding = 7.0f;
+    style.FrameRounding = 5.0f;
+    style.PopupRounding = 7.0f;
+    style.ScrollbarRounding = 8.0f;
+    style.GrabRounding = 5.0f;
+    style.WindowBorderSize = 0.0f;
+    style.FrameBorderSize = 1.0f;
+    style.ItemSpacing = ImVec2(9.0f, 8.0f);
+    style.FramePadding = ImVec2(11.0f, 8.0f);
+    ImVec4* colors = style.Colors;
+    colors[ImGuiCol_Text] = ImVec4(0.94f, 0.98f, 0.88f, 1.0f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.68f, 0.78f, 0.61f, 1.0f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.035f, 0.15f, 0.07f, 0.96f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.025f, 0.11f, 0.05f, 0.72f);
+    colors[ImGuiCol_Border] = ImVec4(0.35f, 0.65f, 0.25f, 0.65f);
+    colors[ImGuiCol_FrameBg] = ImVec4(0.09f, 0.25f, 0.11f, 1.0f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.16f, 0.39f, 0.15f, 1.0f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.21f, 0.46f, 0.18f, 1.0f);
+    colors[ImGuiCol_Button] = ImVec4(0.13f, 0.34f, 0.11f, 1.0f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.22f, 0.48f, 0.14f, 1.0f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.31f, 0.56f, 0.16f, 1.0f);
+    colors[ImGuiCol_Header] = ImVec4(0.13f, 0.34f, 0.11f, 0.95f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.22f, 0.48f, 0.14f, 1.0f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.31f, 0.56f, 0.16f, 1.0f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.97f, 0.86f, 0.24f, 1.0f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.88f, 0.64f, 0.14f, 1.0f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(1.0f, 0.78f, 0.20f, 1.0f);
+    colors[ImGuiCol_Separator] = ImVec4(0.35f, 0.62f, 0.23f, 0.70f);
+}
+
+void DrawTwinsanityBackdrop(const ImVec2& size) {
+    ImDrawList* draw = ImGui::GetBackgroundDrawList();
+    draw->AddRectFilledMultiColor(ImVec2(0, 0), size,
+        IM_COL32(24, 115, 34, 255), IM_COL32(13, 83, 26, 255),
+        IM_COL32(3, 39, 17, 255), IM_COL32(8, 65, 24, 255));
+    const float time = static_cast<float>(SDL_GetTicks64()) * 0.00035f;
+    for (int spiral = 0; spiral < 2; ++spiral) {
+        std::vector<ImVec2> points;
+        points.reserve(96);
+        const float cx = size.x * (spiral == 0 ? 0.30f : 0.63f);
+        const float cy = size.y * 0.20f;
+        for (int i = 0; i < 96; ++i) {
+            const float t = static_cast<float>(i) * 0.115f;
+            const float radius = 4.0f + static_cast<float>(i) * 0.72f;
+            const float angle = t + time * (spiral == 0 ? 1.0f : -0.78f) + (spiral ? 2.3f : 0.0f);
+            points.emplace_back(cx + std::cos(angle) * radius, cy + std::sin(angle) * radius * 0.58f);
+        }
+        const ImU32 tint = spiral == 0 ? IM_COL32(194, 245, 81, 86) : IM_COL32(255, 205, 45, 66);
+        draw->AddPolyline(points.data(), static_cast<int>(points.size()), tint, 0, 3.0f);
+    }
+    draw->AddCircleFilled(ImVec2(size.x * 0.88f, size.y * 0.16f), 42.0f,
+                          IM_COL32(159, 212, 61, 22), 36);
+}
+
 bool FileExists(const std::string& path) {
     std::FILE* f = std::fopen(path.c_str(), "rb");
     if (!f) return false;
@@ -67,13 +133,18 @@ std::string Launcher::DiscPath() const {
 }
 
 bool Launcher::OpenWindow(std::string& error) {
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     if (!SDL_WasInit(SDL_INIT_VIDEO)) {
         if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) { error = SDL_GetError(); return false; }
         video_inited_ = true;
     }
     platform::GlContext::RequestAttributes();
-    window_ = SDL_CreateWindow("NativeEE -- the title -- Setup", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, kWidth, kHeight,
-                               SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    Uint32 window_flags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
+#if !PS2R_HOST_GLES
+    window_flags |= SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI;
+#endif
+    window_ = SDL_CreateWindow("Crash Twinsanity - Rintromped H700", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                               kWidth, kHeight, window_flags);
     if (!window_) { error = SDL_GetError(); return false; }
     gl_context_ = SDL_GL_CreateContext(window_);
     if (!gl_context_) { error = SDL_GetError(); return false; }
@@ -87,10 +158,8 @@ bool Launcher::OpenWindow(std::string& error) {
     io.IniFilename = nullptr;
     io.LogFilename = nullptr;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
-    ImGui::StyleColorsDark();
-    ImGui::GetStyle().WindowRounding = 0.0f;
-    ImGui::GetStyle().FrameRounding = 4.0f;
-    if (!ImGui_ImplSDL2_InitForOpenGL(window_, gl_context_) || !ImGui_ImplOpenGL3_Init("#version 410 core")) {
+    ApplyTwinsanityStyle();
+    if (!ImGui_ImplSDL2_InitForOpenGL(window_, gl_context_) || !ImGui_ImplOpenGL3_Init(kImGuiGlslVersion)) {
         error = "ImGui backend init failed";
         return false;
     }
@@ -126,11 +195,46 @@ void Launcher::DetectControllers() {
         if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0) return;
         controllers_inited_ = true;
     }
+    SDL_GameControllerEventState(SDL_ENABLE);
+    SDL_JoystickEventState(SDL_ENABLE);
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
-        if (!SDL_IsGameController(i)) continue;
-        const char* name = SDL_GameControllerNameForIndex(i);
-        controllers_.push_back(name ? name : "controller");
-        if (SDL_GameController* gc = SDL_GameControllerOpen(i)) controller_handles_.push_back(gc);
+        const char* joystick_name = SDL_JoystickNameForIndex(i);
+        bool generic_mapping = false;
+        if (!SDL_IsGameController(i)) {
+            // Match GamepadBackend's muOS raw-joystick fallback. In particular,
+            // muOS-Keys must be opened as a GameController so GUIDE and START
+            // events reach the launcher's navigation and system exit chord.
+            char guid[64] = {};
+            SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(i), guid, sizeof(guid));
+            const std::string mapping = std::string(guid) + "," +
+                (joystick_name ? joystick_name : "Generic Controller") +
+                ",a:b0,b:b1,x:b2,y:b3,back:b4,guide:b5,start:b6,"
+                "leftstick:b7,rightstick:b8,leftshoulder:b9,rightshoulder:b10,"
+                "dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,"
+                "leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5";
+            if (SDL_GameControllerAddMapping(mapping.c_str()) < 0) {
+                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\n",
+                             joystick_name ? joystick_name : "unknown", guid, SDL_GetError());
+                continue;
+            }
+            generic_mapping = true;
+        }
+        SDL_GameController* gc = SDL_GameControllerOpen(i);
+        if (!gc) {
+            std::fprintf(stderr, "[muos.launcher.input] cannot open controller %d (%s): %s\n",
+                         i, joystick_name ? joystick_name : "unknown", SDL_GetError());
+            continue;
+        }
+        const char* name = SDL_GameControllerName(gc);
+        controllers_.push_back(name ? name : (joystick_name ? joystick_name : "controller"));
+        controller_handles_.push_back(gc);
+        char* active_mapping = SDL_GameControllerMapping(gc);
+        std::fprintf(stderr, "[muos.launcher.input] controller %d: %s%s\n", i,
+                     name ? name : "unknown", generic_mapping ? " [generic mapping]" : "");
+        if (active_mapping) {
+            std::fprintf(stderr, "[muos.launcher.input] mapping: %s\n", active_mapping);
+            SDL_free(active_mapping);
+        }
     }
 }
 
@@ -157,6 +261,12 @@ Launcher::Outcome Launcher::Run() {
     settings_ = std::make_unique<LauncherSettings>(cfg_, UserData::SettingsFile(cfg_), cfg_.paths.user_data);
     DetectControllers();
     screen_ = FirstRun::GameFilesPresent(cfg_, title_) ? Screen::Ready : Screen::NeedDisc;
+    // When muOS forces this screen alongside --iso, keep the selected image in
+    // the first-run field too; the user only needs to confirm extraction once.
+    if (!cfg_.paths.iso.empty()) {
+        std::snprintf(path_buffer_, sizeof(path_buffer_), "%s", cfg_.paths.iso.c_str());
+        copy_disc_ = false;  // muOS already selected an image in the app folder; do not duplicate it.
+    }
     std::fprintf(stderr, "launcher: %s (user data %s)\n", screen_ == Screen::Ready ? "settings screen" : "first run: no game files",
                  cfg_.paths.user_data.c_str());
     if (!scripted_drop_.empty()) {
@@ -207,7 +317,21 @@ Launcher::Outcome Launcher::Run() {
             outcome_ = Outcome::Failed;
         }
     }
+    // Stop and join any first-run worker before freeing the state it references.
+    // The Play path then enters the game with the UI model and its temporary
+    // controller/session allocations already released.
+    if (worker_.joinable()) {
+        if (extract_) extract_->cancel.store(true);
+        worker_.join();
+    }
     CloseWindow();
+    settings_.reset();
+    extract_.reset();
+    std::vector<std::string>().swap(controllers_);
+    std::vector<void*>().swap(controller_handles_);
+    std::string().swap(image_path_);
+    std::string().swap(last_extract_summary_);
+    std::string().swap(verify_message_);
     return outcome_;
 }
 
@@ -234,7 +358,28 @@ void Launcher::PumpEvents() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         ImGui_ImplSDL2_ProcessEvent(&e);
-        if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)) {
+        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+            muos_menu_down_ = false;
+            muos_start_down_ = false;
+        } else if (e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP) {
+            const bool down = e.type == SDL_CONTROLLERBUTTONDOWN;
+            static bool logged_buttons[SDL_CONTROLLER_BUTTON_MAX] = {};
+            const unsigned button = e.cbutton.button;
+            if (down && button < SDL_CONTROLLER_BUTTON_MAX && !logged_buttons[button]) {
+                logged_buttons[button] = true;
+                const char* name = SDL_GameControllerGetStringForButton(static_cast<SDL_GameControllerButton>(button));
+                std::fprintf(stderr, "[muos.launcher.input] first SDL button %u (%s), instance=%d\n",
+                             button, name ? name : "unknown", e.cbutton.which);
+            }
+            if (button == SDL_CONTROLLER_BUTTON_GUIDE) muos_menu_down_ = down;
+            if (button == SDL_CONTROLLER_BUTTON_START) muos_start_down_ = down;
+            if (muos_menu_down_ && muos_start_down_ && !muos_exit_requested_) {
+                muos_exit_requested_ = true;
+                std::fprintf(stderr, "[muos.hotkey] MENU + START: leaving launcher for muOS\n");
+                outcome_ = Outcome::Quit;
+                running_ = false;
+            }
+        } else if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)) {
             running_ = false;
             outcome_ = Outcome::Quit;
         } else if (e.type == SDL_DROPFILE) {
@@ -248,6 +393,8 @@ void Launcher::PumpEvents() {
             settings_->OfferKey(SDL_GetScancodeName(e.key.keysym.scancode));
         } else if (e.type == SDL_KEYDOWN && settings_ && settings_->PadBindingArmed() && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
             settings_->CancelBinding();   // Escape leaves the armed pad row as it was
+        } else if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE && page_ != 0) {
+            page_ = 0;
         } else if ((e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERAXISMOTION) && settings_ && settings_->PadBindingArmed()) {
             // Press-to-bind from the pad: a button edge, or a trigger past 25 % travel.
             const std::string control = e.type == SDL_CONTROLLERBUTTONDOWN
@@ -309,11 +456,16 @@ void Launcher::DrawFrame() {
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
     const ImVec2 display = ImGui::GetIO().DisplaySize;
+    DrawTwinsanityBackdrop(display);
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(display);
-    ImGui::Begin("launcher", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoBringToFrontOnFocus);
-    ImGui::Text("the title -- PC (NativeEE)");
-    ImGui::SameLine(display.x - 330);
+    ImGui::Begin("launcher", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
+                                     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings |
+                                     ImGuiWindowFlags_NoBackground);
+    ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 1.0f), "CRASH TWINSANITY");
+    ImGui::SameLine();
+    ImGui::TextDisabled("// RINTROMPED H700");
+    ImGui::SameLine(display.x - 150.0f);
     ImGui::TextDisabled("%s", build_id_.c_str());
     ImGui::Separator();
     switch (screen_) {
@@ -334,8 +486,8 @@ void Launcher::DrawFrame() {
 
 void Launcher::DrawNeedDisc() {
     ImGui::Spacing();
-    ImGui::TextWrapped("No game files found under %s.", cfg_.paths.game_files.c_str());
-    ImGui::TextWrapped("This program ships no game data. Drop your own the title disc image (NTSC-U, SLUS-12345; .iso or "
+    ImGui::TextWrapped("No Crash Twinsanity game files found under %s.", cfg_.paths.game_files.c_str());
+    ImGui::TextWrapped("This application ships no game data. Drop your own Crash Twinsanity disc image (PAL SLES-52568 or NTSC-U SLUS-20909; .iso or "
                        ".bin) on this window, or type its path below. The image is verified (ISO9660 volume, SLUS_123.45 present, "
                        "ELF SHA-256 equal to the one this build was made from) before anything is written.");
     ImGui::Spacing();
@@ -389,60 +541,93 @@ void Launcher::DrawExtracting() {
 }
 
 void Launcher::DrawReady() {
-    ImGui::BeginChild("pages", ImVec2(150, 0), true);
-    for (int i = 0; i < 6; i++)
-        if (ImGui::Selectable(kPages[i], page_ == i)) page_ = i;
-    ImGui::EndChild();
-    ImGui::SameLine();
-    ImGui::BeginChild("content", ImVec2(0, 0), false);
-    switch (page_) {
-        case 0: {
-            ImGui::Spacing();
-            if (!last_extract_summary_.empty()) ImGui::TextWrapped("%s", last_extract_summary_.c_str());
-            ImGui::TextWrapped("Game files: %s", cfg_.paths.game_files.c_str());
-            ImGui::TextWrapped("Disc image: %s", DiscPath().c_str());
-            const GameFilesStamp::Check stamp = GameFilesStamp::Verify(cfg_.paths.game_files, build_id_);
-            // The stamp is the extraction's completion marker (FirstRun writes it
-            // LAST). Mismatch = another build's files; Absent = no completed
-            // extraction (hand-supplied files, or a half-finished one) -- both
-            // warn here, and a disc image that cannot be found is called out by
-            // name, so Play is never the only hint that something is missing.
-            const bool disc_missing = !FileExists(DiscPath());
-            std::string warning;
-            if (stamp.state == GameFilesStamp::State::Mismatch)
-                warning = GameFilesStamp::Warning(stamp, build_id_);
-            else if (stamp.state != GameFilesStamp::State::Match)
-                warning = "game files under " + cfg_.paths.game_files + " carry no extraction stamp (" + GameFilesStamp::MetaValue(stamp) +
-                          "): the extraction did not complete, or the files were supplied by hand";
-            if (disc_missing) warning += (warning.empty() ? "" : "; ") + std::string("disc image not found: " + DiscPath());
-            if (!warning.empty()) {
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.8f, 0.3f, 1));
-                ImGui::TextWrapped("%s -- re-extract from the Data page if files are missing or stale.", warning.c_str());
-                ImGui::PopStyleColor();
-                if (ImGui::Button("Go to Data page (re-extract)")) page_ = 5;
-            }
-            ImGui::Spacing();
-            if (controllers_.empty()) ImGui::TextDisabled("Controller: none (keyboard + mouse)");
-            for (const std::string& c : controllers_) ImGui::Text("Controller: %s", c.c_str());
-            ImGui::Spacing();
-            if (ImGui::Button("Play", ImVec2(200, 48))) { outcome_ = Outcome::Play; running_ = false; std::fprintf(stderr, "launcher: Play\n"); }
+    const GameFilesStamp::Check stamp = GameFilesStamp::Verify(cfg_.paths.game_files, build_id_);
+    const bool disc_missing = !FileExists(DiscPath());
+    std::string warning;
+    if (stamp.state == GameFilesStamp::State::Mismatch)
+        warning = GameFilesStamp::Warning(stamp, build_id_);
+    else if (stamp.state != GameFilesStamp::State::Match)
+        warning = "Game files have no matching extraction stamp: " + GameFilesStamp::MetaValue(stamp);
+    if (disc_missing) warning += (warning.empty() ? "" : "; ") + std::string("disc image not found: " + DiscPath());
+
+    if (!last_extract_summary_.empty()) ImGui::TextDisabled("%s", last_extract_summary_.c_str());
+    if (page_ == 0) {
+        ImGui::BeginChild("twinsanity-home-hero", ImVec2(0, 102), true);
+        ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 1.0f), "RINTROMPED");
+        ImGui::SameLine();
+        ImGui::TextDisabled("H700 EDITION");
+        ImGui::TextWrapped("The twins are ready. Configure your controls, adjust the graphics and jump straight into the adventure.");
+        ImGui::EndChild();
+
+        if (!warning.empty()) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.80f, 0.30f, 1.0f));
+            ImGui::TextWrapped("%s", warning.c_str());
+            ImGui::PopStyleColor();
             ImGui::SameLine();
-            if (ImGui::Button("Quit", ImVec2(100, 48))) { outcome_ = Outcome::Quit; running_ = false; }
-            ImGui::Spacing();
-            ImGui::PushTextWrapPos(0);
-            ImGui::TextDisabled("In-game: F1 dev panel, F5 save state, F8 restore. Options > Display / Controls pages in the game's menu.");
-            ImGui::PopTextWrapPos();
-            if (!verify_message_.empty() && !verify_ok_)
-                ImGui::TextColored(ImVec4(1, 0.55f, 0.45f, 1), "%s", verify_message_.c_str());
-            break;
+            if (ImGui::SmallButton("OPEN DATA")) page_ = 5;
         }
-        case 1: settings_->DrawDisplayPage(); break;
-        case 2: settings_->DrawControlsPage(controllers_); break;
-        case 3: settings_->DrawSaveStatesPage(); break;
-        case 4: settings_->DrawFixesPage(); break;
+
+        ImGui::Spacing();
+        ImGui::BeginDisabled(disc_missing);
+        if (ImGui::Button("START GAME", ImVec2(180, 52))) {
+            outcome_ = Outcome::Play;
+            running_ = false;
+            std::fprintf(stderr, "launcher: Play\n");
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("DISPLAY", ImVec2(104, 52))) page_ = 1;
+        ImGui::SameLine();
+        if (ImGui::Button("CONTROLS", ImVec2(112, 52))) page_ = 2;
+        ImGui::SameLine();
+        if (ImGui::Button("QUIT", ImVec2(82, 52))) {
+            outcome_ = Outcome::Quit;
+            running_ = false;
+        }
+        ImGui::Spacing();
+        if (ImGui::Button("SAVE STATES", ImVec2(118, 34))) page_ = 3;
+        ImGui::SameLine();
+        if (ImGui::Button("FIXES", ImVec2(118, 34))) page_ = 4;
+        ImGui::SameLine();
+        if (ImGui::Button("GAME DATA", ImVec2(118, 34))) page_ = 5;
+
+        ImGui::Spacing();
+        if (controllers_.empty()) ImGui::TextDisabled("Controller not detected // keyboard input remains available");
+        else {
+            ImGui::TextDisabled("CONTROLLER");
+            for (const std::string& controller : controllers_) ImGui::SameLine(), ImGui::Text("%s", controller.c_str());
+        }
+        ImGui::Separator();
+        ImGui::TextDisabled("SYSTEM EXIT: MENU + START");
+        if (!verify_message_.empty() && !verify_ok_)
+            ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.45f, 1.0f), "%s", verify_message_.c_str());
+        return;
+    }
+
+    ImGui::BeginChild("twinsanity-settings-overlay", ImVec2(0, 0), true);
+    if (ImGui::Button("< BACK", ImVec2(70, 32))) page_ = 0;
+    ImGui::SameLine();
+    for (int i = 1; i < 6; ++i) {
+        if (i > 1) ImGui::SameLine();
+        if (ImGui::Button(kPages[i], ImVec2(80, 32))) page_ = i;
+    }
+    ImGui::Separator();
+    switch (page_) {
+        case 1:
+            settings_->DrawDisplayPage();
+            break;
+        case 2:
+            settings_->DrawControlsPage(controllers_);
+            break;
+        case 3:
+            settings_->DrawSaveStatesPage();
+            break;
+        case 4:
+            settings_->DrawFixesPage();
+            break;
         case 5: {
-            const GameFilesStamp::Check stamp = GameFilesStamp::Verify(cfg_.paths.game_files, build_id_);
-            const std::string request = settings_->DrawDataPage(cfg_.paths.game_files, DiscPath(), GameFilesStamp::MetaValue(stamp));
+            const std::string request = settings_->DrawDataPage(
+                cfg_.paths.game_files, DiscPath(), GameFilesStamp::MetaValue(stamp));
             ImGui::Spacing();
             ImGui::SetNextItemWidth(-130);
             ImGui::InputTextWithHint("##newdisc", "drop a disc image here or type its path", path_buffer_, sizeof path_buffer_);
@@ -458,10 +643,12 @@ void Launcher::DrawReady() {
             }
             break;
         }
+        default:
+            break;
     }
     if (!settings_->Log().empty()) {
         ImGui::Separator();
-        for (const std::string& l : settings_->Log()) ImGui::TextDisabled("%s", l.c_str());
+        for (const std::string& line : settings_->Log()) ImGui::TextDisabled("%s", line.c_str());
     }
     ImGui::EndChild();
 }

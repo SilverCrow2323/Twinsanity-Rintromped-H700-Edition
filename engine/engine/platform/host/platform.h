@@ -60,6 +60,7 @@
 #define PS2R_HOST_MACOS 1
 #define PS2R_HOST_LINUX 0
 #define PS2R_HOST_VITA 0
+#define PS2R_HOST_GLES 0
 #elif defined(__vita__)
 // The PlayStation Vita target (engine/platform/vita/; VitaSDK's arm-vita-eabi GCC over newlib). The GL a Vita build
 // can reach is vitaGL (GL ES 2-class over sceGxm, its GLSL translated to Cg and compiled at run time by Sony's compiler);
@@ -68,14 +69,22 @@
 #define PS2R_HOST_MACOS 0
 #define PS2R_HOST_LINUX 0
 #define PS2R_HOST_VITA 1
+#define PS2R_HOST_GLES 0
 #elif defined(__linux__)
+#define PS2R_HOST_MACOS 0
+#define PS2R_HOST_LINUX 1
+#define PS2R_HOST_VITA 0
+#if defined(PS2R_USE_GLES) && PS2R_USE_GLES
+// muOS / H700: the Mali driver exposes GLES 3.2 through SDL's "mali" video backend.
+#define PS2R_GL_HEADER <GLES3/gl32.h>
+#define PS2R_HOST_GLES 1
+#else
 #ifndef GL_GLEXT_PROTOTYPES
 #define GL_GLEXT_PROTOTYPES 1
 #endif
 #define PS2R_GL_HEADER <GL/glcorearb.h>
-#define PS2R_HOST_MACOS 0
-#define PS2R_HOST_LINUX 1
-#define PS2R_HOST_VITA 0
+#define PS2R_HOST_GLES 0
+#endif
 #elif defined(_WIN32)
 // The Windows target (engine/platform/windows/): opengl32.dll exports GL 1.1 only, so the GL
 // header is the GENERATED loader -- Khronos' glcorearb.h for the types and every entry point the
@@ -86,6 +95,7 @@
 #define PS2R_HOST_MACOS 0
 #define PS2R_HOST_LINUX 0
 #define PS2R_HOST_VITA 0
+#define PS2R_HOST_GLES 0
 #else
 #error "engine/platform/host: no host target for this operating system (add engine/platform/<target>/)"
 #endif

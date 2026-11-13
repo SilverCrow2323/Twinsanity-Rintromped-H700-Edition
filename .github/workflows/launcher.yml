@@ -67,7 +67,7 @@ jobs:
 
   macos:
     name: launcher macos-arm64
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     env:
       TE_MIN_FREE_GB: 3

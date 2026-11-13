@@ -164,8 +164,25 @@ void GlUniformCache::Send(const Shadow& s, int loc, int program) {
     if (loc < 0) return;
     ++sent_;
 #if !PS2R_HOST_VITA
-    // (a named program: written whether or not it is bound -- the mirrored program is not when its pair's value changes)
+    // Desktop GL can write a named program without binding it. GLES 3.2 has
+    // no core glProgramUniform entry points, so bind temporarily and restore.
     if (const uint32_t p = programs_[program & 1]) {
+#if PS2R_HOST_GLES
+        GLint previous = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &previous);
+        const bool restore = static_cast<GLuint>(previous) != p;
+        if (restore) glUseProgram(p);
+        switch (s.kind) {
+            case 1: glUniform1i(loc, s.i[0]); break;
+            case 2: glUniform1f(loc, s.f[0]); break;
+            case 3: glUniform2f(loc, s.f[0], s.f[1]); break;
+            case 4: glUniform3f(loc, s.f[0], s.f[1], s.f[2]); break;
+            case 5: glUniform2i(loc, s.i[0], s.i[1]); break;
+            case 6: glUniform4f(loc, s.f[0], s.f[1], s.f[2], s.f[3]); break;
+            default: --sent_; break;
+        }
+        if (restore) glUseProgram(static_cast<GLuint>(previous));
+#else
         switch (s.kind) {
             case 1: glProgramUniform1i(p, loc, s.i[0]); break;
             case 2: glProgramUniform1f(p, loc, s.f[0]); break;
@@ -175,6 +192,7 @@ void GlUniformCache::Send(const Shadow& s, int loc, int program) {
             case 6: glProgramUniform4f(p, loc, s.f[0], s.f[1], s.f[2], s.f[3]); break;
             default: --sent_; break;
         }
+#endif
         return;
     }
 #else
@@ -196,7 +214,16 @@ void GlUniformCache::SendArray(int loc, int count, const float* v, int program) 
     ++sent_;
 #if !PS2R_HOST_VITA
     if (const uint32_t p = programs_[program & 1]) {
+#if PS2R_HOST_GLES
+        GLint previous = 0;
+        glGetIntegerv(GL_CURRENT_PROGRAM, &previous);
+        const bool restore = static_cast<GLuint>(previous) != p;
+        if (restore) glUseProgram(p);
+        glUniform4fv(loc, count, v);
+        if (restore) glUseProgram(static_cast<GLuint>(previous));
+#else
         glProgramUniform4fv(p, loc, count, v);
+#endif
         return;
     }
 #else

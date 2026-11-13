@@ -1,52 +1,76 @@
 # H700 port status
 
-This page separates the existing TwinsanityEvolved build from the work needed for an H700 handheld port.
+This page separates **verified graphics hardware support** from the unfinished work required to run the actual game.
 
-## What is known
+## ✅ What the physical device has passed
 
-- The Allwinner H700 brief identifies a quad-core Cortex-A53 CPU and a G31 GPU ([Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)).
-- Arm documents Mali-G31 support for OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
-- The current repository README lists a Linux AArch64 build, but its desktop release notes specify OpenGL 4.1.
-- The engine SDL context requests OpenGL 4.1 core; its shader source uses `#version 410 core`.
-- The shader path uses `noperspective` in the S/T/Q interpolation contract. The [GLSL ES 3.20 core specification](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html) only lists `smooth` and `flat`; the equivalent output must be proven in the renderer tests.
-- The PS Vita build uses a separate vitaGL/GXM path. It is not an H700 build.
+On 12 November 2026, the diagnostic package was run on a physical muOS Andromeda H700 handheld. Both the EGL and SDL/GLES reports were successful.
 
-## Current diagnostic milestone
+| Layer | Observed result |
+|---|---|
+| Firmware | muOS 2606.0 Andromeda · build db2a3bd0 |
+| Kernel | Linux 4.9.170 |
+| SoC family | Allwinner sun50iw9 · AArch64 |
+| GPU | ARM Mali-G31 · Bifrost r20p0 |
+| EGL | 1.4 · ARM vendor |
+| Graphics API | OpenGL ES 3.2 |
+| Shader language | GLSL ES 3.20 |
+| SDL video driver | mali |
+| Window presentation | Six solid-colour frames swapped visibly |
+| Display mode | 640×480p-59 |
 
-The dedicated branch [h700/porting](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/tree/h700/porting) now contains two independent device probes:
+<blockquote>
+<strong>Graphics preflight: PASS.</strong> The device can initialise EGL/GLES 3.2 and present an SDL window through muOS's Mali video driver.
 
-- **EGL/GLES pbuffer:** tests default-display initialisation and an off-screen ES context.
-- **SDL/GLES window:** requests ES 3.2, creates a 640×480 window and swaps six colour frames so the display path can be observed.
+<strong>Game port: still unvalidated.</strong> The real NativeEE renderer, game shaders, game boot and gameplay have not yet passed on the device.
+</blockquote>
 
-The successful [H700 CI run #43306974401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43306974401) passed host tests, AArch64 cross-build, ELF/GLIBC checks, package verification and artifact upload. It produced the diagnostic artifact `twinsanity-rintromped-h700-preflight`.
+## 🔍 What this result means
 
-This proves that the diagnostic binaries and muOS archive build correctly. It does **not** prove that the H700 device can initialise its graphics stack; no physical device report has been reviewed yet, so H700 support remains unvalidated on hardware. The [engineering PR #2](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/pull/2) is intentionally kept in draft.
+The physical test confirms SDL → EGL → GLES 3.2 on the documented muOS/Mali-G31 device. Separately, CI on head `e58a5fba` passed the real NativeEE GLES renderer/SDL AArch64 compile and the production shader library smoke under Mesa. The complete `twinsanityevolved` runner linked as ELF64/AArch64 with a maximum required `GLIBC_2.30`, and the full muOS package was built and inspected.
 
-## What is not confirmed
+This validates the cross-compilation, shader-smoke, ELF/GLIBC and packaging gates. It does **not** prove that the production shaders behave correctly on Mali or that the game has rendered its first NativeEE frame on the handheld.
 
-- A successful launch on an RG35XX H or another H700 device.
-- Compatibility with muOS's display and graphics stack.
-- A working gamepad mapping, audio device, suspend/resume path or package installer.
-- Performance, frame pacing, memory use or thermal behaviour on the handheld.
+The original desktop renderer targets **OpenGL 4.1**. The H700 GLES 3.2 path is a dedicated port and adapter layer; the successful cross-compile and Mesa smoke do not establish full OpenGL 4.1 feature equivalence or validate the production renderer on Mali. That compatibility boundary remains open until the first NativeEE frame and the device render-target/shader matrix pass.
+
+## ⏳ What is not validated yet
+
+- A NativeEE-rendered frame from the game's actual renderer.
+- All engine shader variants and their visual equivalence.
+- Game boot, title screen and interactive gameplay.
+- Controller mapping, audio, disc streaming and save/load.
+- Performance, sustained frame pacing, memory use and thermals.
+- Upgrade-safe final muOS packaging.
 
 > [!IMPORTANT]
-> **MUST KNOW!!** Do not label the H700 port as playable or release-ready until a real device reaches the title screen and completes the hardware test matrix in the development plan.
+> **MUST KNOW!!** Do not call the H700 port playable or release-ready until a physical device reaches gameplay and completes the hardware test matrix.
 
-## Engineering gates
+## 🧭 Engineering milestones
 
-1. **Platform audit** — identify every host OpenGL dependency, the current context creation path, SDL use, audio backend, file I/O assumptions and runtime library requirements.
-2. **Graphics decision** — evaluate an EGL + OpenGL ES 3.2 backend against the actual renderer requirements. Consider Vulkan only if the existing rendering architecture and target firmware make it the safer path.
-3. **Handheld host layer** — connect display, input, audio, timing, storage and exit behaviour to the target firmware without breaking desktop or PS Vita builds.
-4. **Performance pass** — measure CPU time, draw-call cost, GPU time, texture uploads, streaming stalls and peak memory on the H700.
-5. **muOS package** — produce a dedicated installable package with only program files and lawful project assets. The user supplies the disc image.
-6. **Device validation** — test boot, title, gameplay, audio, controls, saves, disc streaming, shutdown and recovery on the actual handheld.
+~~~mermaid
+flowchart TD
+    A["EGL / GLES / SDL physical preflight · PASS"] --> B["NativeEE GLES renderer compile · CI PASS"]
+    B --> C["Production shader smoke on Mesa · CI PASS"]
+    C --> D["Full AArch64 runner + muOS muxapp · CI PASS"]
+    D --> E["First NativeEE-rendered frame on Mali · pending"]
+    E --> F["Game boot and title"]
+    F --> G["Controls · audio · disc streaming"]
+    G --> H["Performance and release"]
+~~~
 
-For the exact source-level blockers, see [the renderer audit](../docs/H700_RENDERER_AUDIT.md) and [the full porting plan](../docs/H700_PORTING_PLAN.md).
+## Where to follow progress
+
+- [H700 engineering hub](../docs/h700/README.md)
+- [Graphics port and current adapters](../docs/h700/graphics-port.md)
+- [API compatibility matrix](../docs/h700/compatibility-matrix.md)
+- [Build guide](../docs/h700/building.md)
+- [Roadmap](../docs/h700/roadmap.md)
+- [the renderer audit](../docs/H700_RENDERER_AUDIT.md)
+- [full porting plan](../docs/H700_PORTING_PLAN.md)
+- [development branch](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/tree/h700/porting)
 
 ## What to use today
 
-- Use the desktop release on a supported PC.
-- Use the PS Vita VPK only on a compatible PS Vita setup.
-- Treat the H700 work as an engineering target until this page records a tested device, firmware version, build identifier and results.
+A full H700 candidate `.muxapp` is available from [H700 workflow run 43399059636](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43399059636). The package SHA-256 is `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d` (5,643,365 bytes). It has the exact `TwinsanityRintromped/` root and contains `mux_launch.sh` and `mux_lang.ini`; it excludes `game.iso` and `disc-image.txt`.
 
----
+This is a CI build candidate, not a published release and not proof of a playable game. For physical testing, install the candidate and place your own ISO at `MUOS/application/TwinsanityRintromped/game.iso`. Collect `logs/gles-shader-report.txt` and `logs/game-launch.log`; the first NativeEE frame, boot, controls, audio/video and performance remain pending.

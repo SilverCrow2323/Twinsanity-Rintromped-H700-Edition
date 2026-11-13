@@ -1,10 +1,9 @@
-// platform/sdl/gl_context.h -- GlContext: an OpenGL 4.1 core-profile context on an
-// Window.
+// platform/sdl/gl_context.h -- GlContext: the SDL graphics context on a Window.
 //
-// 4.1 core is the macOS ceiling and the profile every shader in the tree targets;
-// the depth attribute asks for 32 bits and the swap interval is 0 so a headless
-// or harness run is never quantised to the display refresh (the presenter paces
-// frames itself).
+// Desktop targets request OpenGL 4.1 core. The explicit H700 profile requests
+// OpenGL ES 3.2 and validates the version returned by the SDL video driver.
+// The depth attribute is 32 bits on desktop (24 on Windows / GLES); the swap
+// interval is 0 so the presenter can apply its own frame pacing policy.
 #pragma once
 
 namespace ps2r {

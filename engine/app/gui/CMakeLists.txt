@@ -26,6 +26,11 @@ if(PS2R_PRODUCT_GUI)
     target_compile_features(ps2r_imgui PUBLIC cxx_std_17)
     target_include_directories(ps2r_imgui SYSTEM PUBLIC "${PS2R_IMGUI_DIR}")
     target_link_libraries(ps2r_imgui PRIVATE SDL2::SDL2 OpenGL::GL ${CMAKE_DL_LIBS})
+    # The same ImGui renderer is used by the H700 pre-launch screen. Compile
+    # its backend against GLES 3 headers rather than the desktop GL loader.
+    if(PS2R_GLES)
+        target_compile_definitions(ps2r_imgui PRIVATE IMGUI_IMPL_OPENGL_ES3=1)
+    endif()
     add_library(ps2r_session_gui STATIC session_gui.cpp session_panel.cpp savestate_rows.cpp
         savestate_browser.cpp sound_section.cpp triage_section.cpp)
     target_link_libraries(ps2r_session_gui PUBLIC ps2r_session_controls PRIVATE ps2r_imgui SDL2::SDL2)

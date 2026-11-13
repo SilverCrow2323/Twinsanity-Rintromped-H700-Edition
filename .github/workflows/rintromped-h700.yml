@@ -1,0 +1,255 @@
+name: Twinsanity Rintromped H700
+
+concurrency:
+  # Bump the group after a full-build runner stopped reporting progress.
+  # New runs can proceed without waiting for that stale Actions group.
+  group: ${{ github.workflow }}-${{ github.ref }}-h700-v2
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: [h700/porting]
+    paths:
+      - 'porting/h700/**'
+      - 'CMakeLists.txt'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'engine/**'
+      - 'game/**'
+      - 'games/**'
+      - 'platform/**'
+      - 'runner/**'
+      - 'launcher/discs/**'
+      - 'tools/**'
+      - '.github/workflows/rintromped-h700.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  host-checks:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install host tools
+        run: sudo apt-get update && sudo apt-get install -y gcc binutils file zip python3
+      - name: Run host preflight tests
+        run: |
+          cd porting/h700
+          chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh
+          ./scripts/test-kit.sh
+          python3 renderer/check_gles_shader_profile.py
+
+
+  gles-shader-mesa-smoke:
+    runs-on: ubuntu-22.04
+    needs: host-checks
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install Mesa EGL/GLES development runtime
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++ libsdl2-dev libegl1-mesa-dev libgles2-mesa-dev
+      - name: Configure production shader smoke
+        run: cmake -S porting/h700/renderer -B build/mesa-gles -G Ninja
+      - name: Build NativeEE shader smoke
+        run: cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
+      - name: Compile and link production shaders on Mesa llvmpipe
+        env:
+          EGL_PLATFORM: surfaceless
+          LIBGL_ALWAYS_SOFTWARE: "1"
+        run: ./build/mesa-gles/h700_gles_shader_smoke
+
+  aarch64-package:
+    runs-on: ubuntu-22.04
+    needs: [host-checks, gles-renderer-compile]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install host packaging and ELF tools
+        run: sudo apt-get update && sudo apt-get install -y binutils file zip python3
+      - name: Download and verify pinned CMake 3.31.12
+        run: |
+          curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz -o "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz"
+          echo "0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c  $RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz" | sha256sum --check
+      - name: Cross-build with Debian Bullseye sysroot
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz:/tmp/cmake.tar.gz:ro" -w /src/porting/h700 debian:bullseye-slim sh -lc '
+            mkdir -p /opt/cmake &&
+            tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 &&
+            export PATH=/opt/cmake/bin:$PATH &&
+            cmake --version | grep -q "3.31.12" &&
+            dpkg --add-architecture arm64 &&
+            rm -f /etc/apt/sources.list &&
+            printf "%s\\n" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
+              > /etc/apt/sources.list &&
+            apt-get -o Acquire::Check-Valid-Until=false update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
+            chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
+            ./scripts/build-probe.sh &&
+            cmake -S renderer -B dist/gles-smoke-build -G Ninja -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu &&
+            cmake --build dist/gles-smoke-build --target h700_gles_shader_smoke --parallel 2 &&
+            cp dist/gles-smoke-build/h700_gles_shader_smoke dist/tw-rintromped-h700-gles-shader-smoke
+          '
+      - name: Verify both ARM64 ELFs and GLIBC baseline
+        run: |
+          for binary in \
+            porting/h700/dist/tw-rintromped-h700-probe \
+            porting/h700/dist/tw-rintromped-h700-sdl-probe \
+            porting/h700/dist/tw-rintromped-h700-gles-shader-smoke; do
+            file "$binary"
+            readelf -h "$binary" | grep -Eq 'Class:.*ELF64'
+            readelf -h "$binary" | grep -Eq 'Machine:.*AArch64'
+            max=$(readelf --version-info "$binary" | grep -o 'GLIBC_[0-9.]*' | sort -Vu | tail -n 1 || true)
+            echo "$binary maximum required GLIBC symbol: $max"
+            test -z "$max" || test "$(printf '%s\n' "$max" GLIBC_2.31 | sort -V | tail -n 1)" = "GLIBC_2.31"
+          done
+      - name: Make cross-build output writable
+        run: sudo chown -R "$(id -u):$(id -g)" porting/h700/dist
+      - name: Package diagnostic muxapp on Ubuntu runner
+        run: |
+          chmod +x porting/h700/scripts/package-muxapp.sh
+          porting/h700/scripts/package-muxapp.sh porting/h700/dist/Twinsanity-Rintromped-H700-Preflight.muxapp
+      - uses: actions/upload-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-preflight
+          path: |
+            porting/h700/dist/tw-rintromped-h700-probe
+            porting/h700/dist/tw-rintromped-h700-sdl-probe
+            porting/h700/dist/tw-rintromped-h700-gles-shader-smoke
+            porting/h700/dist/Twinsanity-Rintromped-H700-Preflight.muxapp
+          if-no-files-found: error
+          retention-days: 14
+
+  gles-renderer-compile:
+    runs-on: ubuntu-22.04
+    needs: host-checks
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download and verify pinned CMake 3.31.12
+        run: |
+          curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz -o "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz"
+          echo "0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c  $RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz" | sha256sum --check
+      - name: Cross-compile renderer and SDL against ARM64 GLES / SDL development packages
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz:/tmp/cmake.tar.gz:ro" -w /src debian:bullseye-slim sh -lc '
+            mkdir -p /opt/cmake &&
+            tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 &&
+            export PATH=/opt/cmake/bin:$PATH &&
+            cmake --version | grep -q "3.31.12" &&
+            dpkg --add-architecture arm64 &&
+            rm -f /etc/apt/sources.list &&
+            printf "%s\\n" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
+              > /etc/apt/sources.list &&
+            apt-get -o Acquire::Check-Valid-Until=false update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
+            cmake -S porting/h700/renderer -B build/h700-gles -G Ninja -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu &&
+            cmake --build build/h700-gles --target h700_gles_compile_check --parallel 2
+          '
+
+
+  full-app-aarch64-link:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    needs: [host-checks, gles-renderer-compile, gles-shader-mesa-smoke]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Download and verify pinned CMake 3.31.12
+        run: |
+          curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz -o "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz"
+          echo "0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c  $RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz" | sha256sum --check
+      - name: Build the complete game and NativeEE runner for ARM64
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz:/tmp/cmake.tar.gz:ro" -w /src debian:bullseye-slim sh -lc '
+            mkdir -p /opt/cmake &&
+            tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 &&
+            export PATH=/opt/cmake/bin:$PATH &&
+            cmake --version | grep -q "3.31.12" &&
+            dpkg --add-architecture arm64 &&
+            rm -f /etc/apt/sources.list &&
+            printf "%s\\n" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
+              > /etc/apt/sources.list &&
+            apt-get -o Acquire::Check-Valid-Until=false update &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+              ca-certificates curl git unzip xz-utils python3 perl make ninja-build g++ pkg-config file binutils \
+              gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
+              libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
+            WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh &&
+            FFMPEG_JOBS=2 bash porting/h700/scripts/build-ffmpeg-static.sh build/h700-full-aarch64/third_party/ffmpeg &&
+            cmake -S . -B build/h700-full-aarch64 -G Ninja \
+              -DCMAKE_TOOLCHAIN_FILE=/src/porting/h700/toolchains/aarch64-linux-gnu.cmake \
+              -DPS2R_GLES=ON \
+              -DPS2R_GLES_INCLUDE_DIR=/usr/include \
+              -DPS2R_GLES_LIBRARY=/usr/lib/aarch64-linux-gnu/libGLESv2.so \
+              -DFFMPEG_INCLUDE_DIR=/src/build/h700-full-aarch64/third_party/ffmpeg/include \
+              -DFFMPEG_AVCODEC_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavcodec.a \
+              -DFFMPEG_AVUTIL_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavutil.a \
+              -DFFMPEG_SWSCALE_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libswscale.a \
+              -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu &&
+            cmake --build build/h700-full-aarch64 --target twinsanityevolved --parallel 2 &&
+            test -x build/h700-full-aarch64/twinsanityevolved &&
+            file build/h700-full-aarch64/twinsanityevolved &&
+            readelf -h build/h700-full-aarch64/twinsanityevolved | grep -Eq "Class:.*ELF64" &&
+            readelf -h build/h700-full-aarch64/twinsanityevolved | grep -Eq "Machine:.*AArch64" &&
+            max=$(readelf --version-info build/h700-full-aarch64/twinsanityevolved | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -n 1 || true) &&
+            echo "full runner maximum required GLIBC symbol: $max" &&
+            test -z "$max" || test "$(printf "%s\\n" "$max" GLIBC_2.31 | sort -V | tail -n 1)" = "GLIBC_2.31" &&
+            readelf -d build/h700-full-aarch64/twinsanityevolved | grep NEEDED &&
+            if readelf -d build/h700-full-aarch64/twinsanityevolved | grep -Eq "libav(codec|util|swscale).*\\.so"; then echo "FFmpeg must be statically linked for muOS" >&2; exit 1; fi &&
+            strings build/h700-full-aarch64/twinsanityevolved | grep -q -- "--enable-decoder=mpeg2video" &&
+            ! strings build/h700-full-aarch64/twinsanityevolved | grep -Eq -- "--enable-gpl|--enable-nonfree|--enable-version3"
+          '
+      - name: Make runner artifact writable
+        run: sudo chown -R "$(id -u):$(id -g)" build/h700-full-aarch64
+      - uses: actions/upload-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-runner
+          path: |
+            build/h700-full-aarch64/twinsanityevolved
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-COPYING.LGPLv2.1.txt
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-LICENSE.md
+            build/h700-full-aarch64/third_party/ffmpeg/share/licenses/FFmpeg-BUILD-CONFIGURATION.txt
+          if-no-files-found: error
+          retention-days: 14
+
+  full-app-muxapp:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    needs: [aarch64-package, full-app-aarch64-link]
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install ZIP and ELF verification tools
+        run: sudo apt-get update && sudo apt-get install -y binutils file zip python3
+      - uses: actions/download-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-runner
+          path: porting/h700/dist/full-runner
+      - uses: actions/download-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-preflight
+          path: porting/h700/dist/preflight
+      - name: Assemble and verify the installable full muOS muxapp
+        run: |
+          chmod +x porting/h700/scripts/package-full-muxapp.sh
+          GAME_BIN="$GITHUB_WORKSPACE/porting/h700/dist/full-runner/twinsanityevolved" \
+          PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-probe" \
+          SDL_PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-sdl-probe" \
+          SHADER_PROBE_BIN="$GITHUB_WORKSPACE/porting/h700/dist/preflight/tw-rintromped-h700-gles-shader-smoke" \
+          FFMPEG_LICENSE_DIR="$GITHUB_WORKSPACE/porting/h700/dist/full-runner/third_party/ffmpeg/share/licenses" \
+            porting/h700/scripts/package-full-muxapp.sh porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp
+          sha256sum porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp > porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp.sha256
+      - uses: actions/upload-artifact@v7
+        with:
+          name: twinsanity-rintromped-h700-full-muxapp
+          path: |
+            porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp
+            porting/h700/dist/Twinsanity-Rintromped-H700-Edition.muxapp.sha256
+          if-no-files-found: error
+          retention-days: 14

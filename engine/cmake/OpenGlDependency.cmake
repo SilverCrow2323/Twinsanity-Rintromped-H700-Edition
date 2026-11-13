@@ -1,5 +1,5 @@
-# cmake/OpenGlDependency.cmake -- the OpenGL link the GL backend, the SDL
-# context and the GUI name as OpenGL::GL, ONE way for every host.
+# cmake/OpenGlDependency.cmake -- the graphics link used by the renderer and SDL
+# context. Desktop hosts use OpenGL; the explicit H700 profile maps OpenGL::GL to GLESv2.
 #
 #   macOS   the OpenGL.framework (<OpenGL/gl3.h>, GL 4.1 core)
 #   Windows opengl32.lib (FindOpenGL) exports GL 1.1 only: the engine's GL TUs include
@@ -25,6 +25,22 @@
 #
 # The GL header spelling is NOT here: every TU includes PS2R_GL_HEADER from the
 # ONE host header. Included from each directory that links OpenGL::GL.
+if(PS2R_GLES)
+    find_path(PS2R_GLES_INCLUDE_DIR NAMES GLES3/gl32.h)
+    find_library(PS2R_GLES_LIBRARY NAMES GLESv2)
+    if(NOT PS2R_GLES_INCLUDE_DIR OR NOT PS2R_GLES_LIBRARY)
+        message(FATAL_ERROR "nativeee: PS2R_GLES=ON needs GLES3/gl32.h and libGLESv2")
+    endif()
+    if(NOT TARGET OpenGL::GL)
+        add_library(OpenGL::GL INTERFACE IMPORTED GLOBAL)
+        set_target_properties(OpenGL::GL PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${PS2R_GLES_INCLUDE_DIR}"
+            INTERFACE_LINK_LIBRARIES "${PS2R_GLES_LIBRARY}")
+    endif()
+    message(STATUS "nativeee: H700 GLES headers ${PS2R_GLES_INCLUDE_DIR}; library ${PS2R_GLES_LIBRARY}")
+    return()
+endif()
+
 if(VITA)
     if(NOT TARGET OpenGL::GL)
         add_library(OpenGL::GL INTERFACE IMPORTED GLOBAL)

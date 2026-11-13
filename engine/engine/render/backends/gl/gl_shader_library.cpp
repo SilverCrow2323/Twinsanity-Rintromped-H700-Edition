@@ -238,11 +238,57 @@ const GlShaderLibrary::FastConstant* GlShaderLibrary::FastConstants(int* count) 
     return table;
 }
 
+#if PS2R_HOST_GLES
+namespace {
+// The engine's PS2 vertex path emits gl_Position.w = 1.0. Smooth interpolation
+// is consequently screen-linear for v_texcoord, matching the desktop
+// noperspective varying in this specific shader path.
+std::string GlesGlsl(const char* source) {
+    std::string s = source ? source : "";
+    // The shared raw-string shader sources begin with a newline for readability.
+    // Mesa accepts that prefix, but Mali's GLES compiler requires #version to be
+    // the first physical line. Strip whitespace only; any other prefix is a bug.
+    const size_t first = s.find_first_not_of(" \t\r\n\f\v");
+    if (first == std::string::npos) {
+        std::fprintf(stderr, "[gl] GLES shader rejected: empty source before #version\n");
+        return std::string();
+    }
+    if (first != 0) {
+        s.erase(0, first);
+        std::fprintf(stderr, "[gl] GLES shader: removed %zu leading whitespace byte(s) before #version\n", first);
+    }
+    if (s.compare(0, 8, "#version") != 0) {
+        std::fprintf(stderr, "[gl] GLES shader rejected: #version is not the first source line\n");
+        return std::string();
+    }
+    static const std::regex kDesktopVersion(R"(#version\s+410\s+core)");
+    static const std::regex kNoPerspective(R"(\bnoperspective(?=\s+(?:in|out)\s+vec3\s+v_texcoord\b))");
+    if (!std::regex_search(s, kDesktopVersion)) {
+        std::fprintf(stderr, "[gl] GLES shader rejected: expected the audited GLSL 4.10 source profile\n");
+        return std::string();
+    }
+    s = std::regex_replace(s, kDesktopVersion, "#version 320 es");
+    s = std::regex_replace(s, kNoPerspective, "");
+    const size_t version = s.find("#version");
+    const size_t line = version == std::string::npos ? std::string::npos : s.find('\n', version);
+    if (line == std::string::npos) return std::string();
+    // Preserve the existing #define feature arms and insert ES precision
+    // declarations immediately after #version, as required by GLSL ES.
+    s.insert(line + 1, "precision highp float;\nprecision highp int;\n");
+    return s;
+}
+}  // namespace
+#endif
+
 uint32_t GlShaderLibrary::CompileShader(uint32_t type, const char* source) {
     GLuint shader = glCreateShader(type);
 #if PS2R_HOST_VITA
     const std::string vita = VitaGlsl(type, source);
     source = vita.c_str();
+#elif PS2R_HOST_GLES
+    const std::string gles = GlesGlsl(source);
+    if (gles.empty()) { glDeleteShader(shader); return 0; }
+    source = gles.c_str();
 #endif
     glShaderSource(shader, 1, &source, nullptr);
 #if PS2R_HOST_VITA
@@ -592,12 +638,29 @@ uint32_t GlShaderLibrary::BuildProgram(const char* vertex, const char* fragment,
     }
 #endif
     // the given compiled objects linked as they are (the caller keeps them), else the pair compiled here
+#if PS2R_HOST_GLES
+    std::fprintf(stderr, "[gl] GLES program %s: compiling vertex + fragment\n", label);
+#endif
     const bool given = link_vs && link_fs;
     GLuint vs = given ? link_vs : CompileShader(GL_VERTEX_SHADER, vertex);
-    if (!vs) return 0;
+    if (!vs) {
+#if PS2R_HOST_GLES
+        std::fprintf(stderr, "[gl] GLES program %s: vertex shader FAILED\n", label);
+#endif
+        return 0;
+    }
     GLuint fs = given ? link_fs : CompileShader(GL_FRAGMENT_SHADER, fragment);
-    if (!fs) { glDeleteShader(vs); return 0; }
+    if (!fs) {
+#if PS2R_HOST_GLES
+        std::fprintf(stderr, "[gl] GLES program %s: fragment shader FAILED\n", label);
+#endif
+        glDeleteShader(vs);
+        return 0;
+    }
     const uint32_t program = LinkProgram(vs, fs);
+#if PS2R_HOST_GLES
+    std::fprintf(stderr, "[gl] GLES program %s: %s\n", label, program ? "LINKED" : "LINK FAILED");
+#endif
 #if PS2R_HOST_VITA
     if (program) {
         ++g_cache_compiled;

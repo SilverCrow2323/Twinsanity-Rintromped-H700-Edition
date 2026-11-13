@@ -1,95 +1,100 @@
+![H700 porting](h700/assets/hero.svg)
+
 # H700 porting plan
 
-## Scope
+## 🎯 Scope
 
-Bring TwinsanityEvolved to an Allwinner H700 handheld and its installed firmware without regressing the existing Windows, macOS, Linux desktop or PS Vita targets.
+Bring Twinsanity Rintromped to Allwinner H700 handhelds running muOS without regressing Windows, macOS, Linux desktop or PS Vita targets.
 
-This document is an engineering plan, not a compatibility claim. There is no H700 hardware validation recorded yet.
+This is an engineering plan, not a compatibility claim. The physical graphics preflight passed; the complete game renderer and gameplay have not yet been validated on the handheld.
 
-## Baseline
+## ✅ Verified baseline
 
-The current player README and release notes describe desktop targets, a Linux AArch64 archive and a separate PS Vita package. The desktop release notes specify OpenGL 4.1. The PS Vita path is a distinct native target.
+On 12 November 2026, a physical device running muOS 2606.0 Andromeda (build db2a3bd0) reported:
 
-The Allwinner H700 brief identifies a quad-core Cortex-A53 CPU and G31 GPU. Arm's Mali-G31 product material lists OpenGL ES 3.2 and Vulkan 1.2 support. Desktop OpenGL 4.1 and OpenGL ES 3.2 must not be treated as interchangeable: the actual renderer entry points, shader language, context creation and required features have to be audited.
+- Allwinner sun50iw9, AArch64, four CPU cores and approximately 1 GB RAM.
+- ARM Mali-G31 with Bifrost r20p0 driver.
+- EGL 1.4, OpenGL ES 3.2 and GLSL ES 3.20.
+- SDL2 selected the mali video driver, created a window and presented six visible colour frames.
+- Display mode: 640×480p-59.
 
-References:
-- [Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)
-- [Arm Mali-G31 product support](https://support.arm.com/compute-ip/mali-g31)
+See the [device profile](h700/device-profile.md) and [API compatibility matrix](h700/compatibility-matrix.md).
 
-See [H700_RENDERER_AUDIT.md](H700_RENDERER_AUDIT.md) for the source-level OpenGL 4.1 / SDL context / GLSL audit and the first GLES compatibility findings.\n\n## Current preflight checkpoint
+## 🗺️ Work packages
 
-The H700 development branch now produces two diagnostic executables: an EGL/GLES pbuffer test and an SDL2 window/context/swap test. GitHub Actions run [#43306974401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43306974401) passed both host checks and AArch64 package verification and uploaded the preflight `.muxapp`.
+~~~mermaid
+flowchart TD
+    A["Hardware preflight · PASS"] --> B["GLES build profile"]
+    B --> C["Compile all renderer units"]
+    C --> D["Shader + surface validation"]
+    D --> E["First NativeEE frame"]
+    E --> F["Game boot and runtime"]
+    F --> G["Performance + release"]
+~~~
 
-The next evidence must come from the actual H700 device: collect the muOS inventory, EGL/GLES report and SDL window report. Do not begin claiming a renderer port from this diagnostic package alone.
+### 1. Platform and renderer profile
 
-## Work packages
+- Select H700 explicitly with PS2R_GLES; never infer GLES from AArch64.
+- Forward the profile and sysroot paths through the application ExternalProject to NativeEE.
+- Link GLESv2 in the H700 application path while keeping desktop OpenGL unchanged.
+- Keep the SDL mali driver as the verified device-facing path.
 
-### 1. Platform and renderer inventory
+**Exit gate:** root application and NativeEE configure with the same target sysroot and graphics profile.
 
-- Identify the current non-Vita host renderer and the exact OpenGL version/features it uses.
-- Inventory shader versions, framebuffer/render-target behaviour, sync primitives, texture formats and optional extensions.
-- Identify SDL, EGL, window-system, audio and controller dependencies.
-- Record the Linux AArch64 build's actual libc and shared-library requirements.
-- Separate CPU architecture support from firmware/display/GPU support.
+### 2. Renderer compile gate
 
-**Exit gate:** a written dependency matrix and a reproducible cross-build baseline.
+- Compile the actual GL backend and SDL platform source files against GLES 3.2 headers.
+- Remove or adapt desktop-only entry points without changing unrelated platform paths.
+- Keep the compile-only target separate from the game executable.
 
-### 2. Graphics backend decision
+**Exit gate:** all selected AArch64 renderer translation units compile with warnings treated as errors.
 
-- Evaluate an EGL + OpenGL ES 3.2 implementation against every renderer dependency.
-- Identify features that need shader translation or a renderer refactor.
-- Consider Vulkan only after comparing implementation cost, driver availability and memory use on the target firmware.
-- Preserve the desktop backend behind an explicit build option.
+### 3. Shader and surface validation
 
-**Exit gate:** a minimal renderer prototype clears a frame, uploads a texture, compiles the required shaders and presents reliably on the handheld.
+- Compile every engine shader variant on the Mali-G31.
+- Verify GLSL precision and the PS2 S/T/Q interpolation path.
+- Test FBO completeness and color, depth and stencil attachments.
+- Validate texture uploads, mip tails, buffer streaming, synchronization and readback.
+- Compare deterministic captures with desktop references.
 
-### 3. Handheld host integration
+**Exit gate:** the engine's render-target and shader test scenes match expected reference output.
 
-- Determine the correct display/context creation path for the actual muOS version.
-- Map the handheld gamepad through the firmware's actual input API; avoid assumed physical button numbering.
-- Initialise audio through the supported device backend.
-- Verify monotonic timing, frame pacing, file paths, removable storage and safe shutdown.
-- Keep personal disc images and memory cards outside the package.
+### 4. First NativeEE-rendered frame
 
-**Exit gate:** boot to the game's title screen with audio, working controls and a clean exit on the target device.
+- Initialise the renderer through the real application composition root.
+- Draw a deterministic scene through the production backend, not a standalone SDL sample.
+- Present through the normal application path.
+- Save a screenshot and a log containing renderer, shader, surface and frame-time data.
 
-### 4. Performance and memory
+**Exit gate:** the first engine-rendered frame is visible on the physical H700 panel.
 
-- Measure CPU time, GPU time and frame pacing separately.
-- Profile draw-call submission, render-target switches, texture uploads and shader compilation.
-- Measure peak memory, disc-streaming stalls and save/load latency.
-- Use device measurements before enabling costly visual effects or high internal resolutions.
-- Add bounded caches and logs; avoid unbounded growth over long sessions.
+### 5. Game runtime integration
 
-**Exit gate:** repeatable gameplay sessions with documented frame-time and memory measurements.
+Only after the renderer's first frame is stable:
+- Validate the game module and user-provided ISO loading.
+- Map physical controls using measured muOS input events.
+- Initialise audio and check underruns.
+- Verify disc streaming, memory cards, settings, safe exit and repeated cold launches.
 
-### 5. muOS packaging
+**Exit gate:** stable boot to the title screen and representative gameplay with working controls and audio.
 
-- Add a dedicated target package; do not relabel a desktop AArch64 archive as a handheld release.
-- Include only the executable, required runtime libraries, project-owned assets and licence notices.
-- Keep the disc image user-supplied and read it from a documented path.
-- Provide a launcher, log location, uninstall behaviour and upgrade-safe user-data handling.
-- Validate package contents with the project's asset scan and archive inspection.
+### 6. Performance, packaging and release
 
-**Exit gate:** package installs, launches, updates and uninstalls cleanly on the exact tested firmware.
+Measure frame-time distribution, CPU/GPU cost, peak memory, streaming stalls and thermals. Then create an upgrade-safe muOS package that preserves user-owned game data.
 
-### 6. Hardware validation matrix
+## 🧪 Hardware validation matrix
 
-Record the device model, firmware version, package checksum and build commit for every run.
-
-| Test | Required evidence |
-|---|---|
-| Cold boot | Launcher and game reach title without crash |
-| Display | Stable picture, correct orientation and no corruption |
-| Controls | Confirmed mapping for all required actions |
-| Audio | Output works without repeated underruns |
-| Disc I/O | PAL and supported North American image tests, using user-owned media |
-| Gameplay | Hub and representative streamed levels |
-| Saves | Memory-card save/load and recovery after restart |
-| Performance | Frame-time distribution, not only peak FPS |
-| Thermals | No instability during a sustained session |
-| Shutdown | Clean exit and no damaged user data |
+| Test | Required evidence | State |
+|---|---|---|
+| EGL display and GLES context | Device log | <strong>PASS</strong> |
+| SDL window and buffer swaps | Six visible colour frames | <strong>PASS</strong> |
+| Real renderer compile | AArch64 CI compile gate | Pending result |
+| Engine shader variants | On-device compile log | Pending |
+| Render targets / depth / stencil | FBO and image tests | Pending |
+| First NativeEE frame | Physical screenshot + log | Pending |
+| Game boot / input / audio / ISO | Hardware test session | Pending |
+| Performance / thermal / shutdown | Sustained device measurements | Pending |
 
 ## Release rule
 
-Do not call the H700 port playable, stable or release-ready on the strength of a successful compile alone. The release note must identify the tested device and firmware and list the completed hardware gates.
+Do not call the H700 port playable, stable or release-ready on the strength of a cross-compile or diagnostic probe alone. Release notes must identify the tested device, firmware, build commit and completed hardware gates.

@@ -40,6 +40,55 @@ namespace {
 #if TE_HAVE_SDL_INPUT
 ps2r::platform::sdl::InputSystem* g_input = nullptr;
 bool g_events_inited = false;
+
+// muOS exposes its physical MENU key through SDL's GUIDE controller button.
+// MENU + START is configured by muOS for RetroArch, but standalone SDL apps
+// must honour the same exit chord themselves.
+bool g_muos_menu_down = false;
+bool g_muos_start_down = false;
+bool g_muos_exit_requested = false;
+bool g_muos_controller_button_seen[SDL_CONTROLLER_BUTTON_MAX] = {};
+bool g_muos_joystick_button_seen[64] = {};
+
+// Emit one diagnostic per button so the first on-device log reveals the actual
+// GUIDE/START mapping without flooding the game's frame log.
+void LogMuosButtonEventOnce(const SDL_Event& event) {
+    if (event.type == SDL_CONTROLLERBUTTONDOWN) {
+        const unsigned button = event.cbutton.button;
+        if (button >= SDL_CONTROLLER_BUTTON_MAX || g_muos_controller_button_seen[button]) return;
+        g_muos_controller_button_seen[button] = true;
+        const char* name = SDL_GameControllerGetStringForButton(static_cast<SDL_GameControllerButton>(button));
+        std::fprintf(stderr, "[muos.input] SDL controller button %u (%s), instance=%d\n",
+                     button, name ? name : "unknown", event.cbutton.which);
+    } else if (event.type == SDL_JOYBUTTONDOWN) {
+        const unsigned button = event.jbutton.button;
+        if (button >= 64 || g_muos_joystick_button_seen[button]) return;
+        g_muos_joystick_button_seen[button] = true;
+        std::fprintf(stderr, "[muos.input] SDL raw joystick button %u, instance=%d\n",
+                     button, event.jbutton.which);
+    }
+}
+
+void HandleMuosExitHotkey(const SDL_Event& event) {
+    LogMuosButtonEventOnce(event);
+    if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+        g_muos_menu_down = false;
+        g_muos_start_down = false;
+        return;
+    }
+
+    if (event.type != SDL_CONTROLLERBUTTONDOWN && event.type != SDL_CONTROLLERBUTTONUP) return;
+
+    const bool down = event.type == SDL_CONTROLLERBUTTONDOWN;
+    if (event.cbutton.button == SDL_CONTROLLER_BUTTON_GUIDE) g_muos_menu_down = down;
+    if (event.cbutton.button == SDL_CONTROLLER_BUTTON_START) g_muos_start_down = down;
+
+    if (g_muos_menu_down && g_muos_start_down && !g_muos_exit_requested) {
+        g_muos_exit_requested = true;
+        std::fprintf(stderr, "[muos.hotkey] MENU + START: requesting clean exit\n");
+        te::RequestExit(0);
+    }
+}
 #endif
 #if TE_HAVE_SDL_INPUT && defined(__vita__)
 // ---- THE VITA CONTROLLER READ STRAIGHT FROM sceCtrl ------------------------------------------------------------
@@ -341,7 +390,8 @@ bool Install(Pads& pads, const Settings& settings) {
                         std::fprintf(stderr, "[te.gfx] window closed: exit\n");
                         te::RequestExit(0);
                     }
-                    g_input->HandleEvent(e);
+                    HandleMuosExitHotkey(e);
+                g_input->HandleEvent(e);
                 }
             }
 #else
@@ -354,7 +404,8 @@ bool Install(Pads& pads, const Settings& settings) {
                     std::fprintf(stderr, "[te.gfx] window closed: exit\n");
                     te::RequestExit(0);
                 }
-                g_input->HandleEvent(e);
+                HandleMuosExitHotkey(e);
+                    g_input->HandleEvent(e);
             }
 #endif
         }
@@ -441,7 +492,7 @@ bool Pumping() { return g_installed && g_pump_owned; }
 
 
 #if TE_HAVE_SDL_INPUT
-void HandleSdlEvent(const SDL_Event& event) { if (g_input) g_input->HandleEvent(event); }
+void HandleSdlEvent(const SDL_Event& event) { HandleMuosExitHotkey(event); if (g_input) g_input->HandleEvent(event); }
 #endif
 
 std::string Sources() {

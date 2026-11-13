@@ -75,8 +75,8 @@ bool Window::Create(bool headless, int w, int h, const char* title) {
         }
         video_inited_ = true;
     }
-    // SDL_VideoInit resets the GL attributes: request the 4.1 core profile AFTER the
-    // video subsystem exists and BEFORE the window is created.
+    // SDL_VideoInit resets the GL attributes: request the target's desktop GL 4.1 or
+    // H700 GLES 3.2 profile AFTER video init and BEFORE creating the window.
     GlContext::RequestAttributes();
     headless_ = headless;
 #if PS2R_HOST_VITA
