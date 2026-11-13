@@ -48,7 +48,7 @@ EOF
 cat > "$TMP/launcher-app/twinsanityevolved" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
-printf '%s\n' "\${SDL_VIDEODRIVER:-}" > "$TW_H700_CAPTURE_DRIVER"
+printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
 EOF
 chmod 755 "$TMP/launcher-app/twinsanityevolved"
 printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
