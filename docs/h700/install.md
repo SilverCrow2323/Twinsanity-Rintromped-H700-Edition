@@ -23,6 +23,7 @@ TwinsanityRintromped/
 ├── mux_lang.ini
 ├── tw-rintromped-h700-probe
 ├── tw-rintromped-h700-sdl-probe
+├── tw-rintromped-h700-gles-shader-smoke
 ├── device/
 └── logs/
 ~~~
@@ -35,10 +36,11 @@ After launching, collect:
 MUOS/application/TwinsanityRintromped/logs/
 ├── muos-device-report.txt
 ├── egl-gles-report.txt
+├── gles-shader-report.txt
 └── sdl-window-report.txt
 ~~~
 
-Attach all three reports when asking for help with a new device or a graphics failure. The SDL report should include the selected video driver and context result.
+Attach all four reports when asking for help with a new device or a graphics failure. The shader report records the actual NativeEE production programs compiled and linked by the GLES driver; the SDL report includes the selected video driver and context result.
 
 ## Your game image remains yours
 
