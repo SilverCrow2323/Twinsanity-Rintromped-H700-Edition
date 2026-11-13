@@ -248,20 +248,20 @@ std::string GlesGlsl(const char* source) {
     // The shared raw-string shader sources begin with a newline for readability.
     // Mesa accepts that prefix, but Mali's GLES compiler requires #version to be
     // the first physical line. Strip whitespace only; any other prefix is a bug.
-    const size_t first = s.find_first_not_of(" \\t\\r\\n\\f\\v");
+    const size_t first = s.find_first_not_of(" \t\r\n\f\v");
     if (first == std::string::npos) {
-        std::fprintf(stderr, "[gl] GLES shader rejected: empty source before #version\\n");
+        std::fprintf(stderr, "[gl] GLES shader rejected: empty source before #version\n");
         return std::string();
     }
     if (first != 0) {
         s.erase(0, first);
-        std::fprintf(stderr, "[gl] GLES shader: removed %zu leading whitespace byte(s) before #version\\n", first);
+        std::fprintf(stderr, "[gl] GLES shader: removed %zu leading whitespace byte(s) before #version\n", first);
     }
     if (s.compare(0, 8, "#version") != 0) {
-        std::fprintf(stderr, "[gl] GLES shader rejected: #version is not the first source line\\n");
+        std::fprintf(stderr, "[gl] GLES shader rejected: #version is not the first source line\n");
         return std::string();
     }
-    static const std::regex kDesktopVersion(R"(#version\\s+410\\s+core)");
+    static const std::regex kDesktopVersion(R"(#version\s+410\s+core)");
     static const std::regex kNoPerspective(R"(\bnoperspective(?=\s+(?:in|out)\s+vec3\s+v_texcoord\b))");
     if (!std::regex_search(s, kDesktopVersion)) {
         std::fprintf(stderr, "[gl] GLES shader rejected: expected the audited GLSL 4.10 source profile\n");
