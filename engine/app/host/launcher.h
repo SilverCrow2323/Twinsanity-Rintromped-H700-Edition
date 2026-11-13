@@ -93,6 +93,9 @@ private:
     ImGuiContext* imgui_ = nullptr;
     bool video_inited_ = false, controllers_inited_ = false;
     bool running_ = true;
+    bool muos_menu_down_ = false;
+    bool muos_start_down_ = false;
+    bool muos_exit_requested_ = false;
     Outcome outcome_ = Outcome::Quit;
     Screen screen_ = Screen::NeedDisc;
     std::string image_path_;        // the dropped / typed image
