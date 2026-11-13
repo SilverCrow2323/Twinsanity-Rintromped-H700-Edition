@@ -213,7 +213,7 @@ void Launcher::DetectControllers() {
                 "dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,"
                 "leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5";
             if (SDL_GameControllerAddMapping(mapping.c_str()) < 0) {
-                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\\n",
+                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\n",
                              joystick_name ? joystick_name : "unknown", guid, SDL_GetError());
                 continue;
             }
@@ -221,7 +221,7 @@ void Launcher::DetectControllers() {
         }
         SDL_GameController* gc = SDL_GameControllerOpen(i);
         if (!gc) {
-            std::fprintf(stderr, "[muos.launcher.input] cannot open controller %d (%s): %s\\n",
+            std::fprintf(stderr, "[muos.launcher.input] cannot open controller %d (%s): %s\n",
                          i, joystick_name ? joystick_name : "unknown", SDL_GetError());
             continue;
         }
@@ -229,10 +229,10 @@ void Launcher::DetectControllers() {
         controllers_.push_back(name ? name : (joystick_name ? joystick_name : "controller"));
         controller_handles_.push_back(gc);
         char* active_mapping = SDL_GameControllerMapping(gc);
-        std::fprintf(stderr, "[muos.launcher.input] controller %d: %s%s\\n", i,
+        std::fprintf(stderr, "[muos.launcher.input] controller %d: %s%s\n", i,
                      name ? name : "unknown", generic_mapping ? " [generic mapping]" : "");
         if (active_mapping) {
-            std::fprintf(stderr, "[muos.launcher.input] mapping: %s\\n", active_mapping);
+            std::fprintf(stderr, "[muos.launcher.input] mapping: %s\n", active_mapping);
             SDL_free(active_mapping);
         }
     }
