@@ -1,7 +1,9 @@
 name: Twinsanity Rintromped H700
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Bump the group after a full-build runner stopped reporting progress.
+  # New runs can proceed without waiting for that stale Actions group.
+  group: ${{ github.workflow }}-${{ github.ref }}-h700-v2
   cancel-in-progress: true
 
 on:
