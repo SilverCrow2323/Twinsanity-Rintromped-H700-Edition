@@ -198,17 +198,42 @@ void Launcher::DetectControllers() {
     SDL_GameControllerEventState(SDL_ENABLE);
     SDL_JoystickEventState(SDL_ENABLE);
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
-        if (!SDL_IsGameController(i)) continue;
-        const char* name = SDL_GameControllerNameForIndex(i);
-        controllers_.push_back(name ? name : "controller");
-        if (SDL_GameController* gc = SDL_GameControllerOpen(i)) {
-            controller_handles_.push_back(gc);
-            char* mapping = SDL_GameControllerMapping(gc);
-            std::fprintf(stderr, "[muos.launcher.input] controller %d: %s\n", i, name ? name : "unknown");
-            if (mapping) {
-                std::fprintf(stderr, "[muos.launcher.input] mapping: %s\n", mapping);
-                SDL_free(mapping);
+        const char* joystick_name = SDL_JoystickNameForIndex(i);
+        bool generic_mapping = false;
+        if (!SDL_IsGameController(i)) {
+            // Match GamepadBackend's muOS raw-joystick fallback. In particular,
+            // muOS-Keys must be opened as a GameController so GUIDE and START
+            // events reach the launcher's navigation and system exit chord.
+            char guid[64] = {};
+            SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(i), guid, sizeof(guid));
+            const std::string mapping = std::string(guid) + "," +
+                (joystick_name ? joystick_name : "Generic Controller") +
+                ",a:b0,b:b1,x:b2,y:b3,back:b4,guide:b5,start:b6,"
+                "leftstick:b7,rightstick:b8,leftshoulder:b9,rightshoulder:b10,"
+                "dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,"
+                "leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5";
+            if (SDL_GameControllerAddMapping(mapping.c_str()) < 0) {
+                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\\n",
+                             joystick_name ? joystick_name : "unknown", guid, SDL_GetError());
+                continue;
             }
+            generic_mapping = true;
+        }
+        SDL_GameController* gc = SDL_GameControllerOpen(i);
+        if (!gc) {
+            std::fprintf(stderr, "[muos.launcher.input] cannot open controller %d (%s): %s\\n",
+                         i, joystick_name ? joystick_name : "unknown", SDL_GetError());
+            continue;
+        }
+        const char* name = SDL_GameControllerName(gc);
+        controllers_.push_back(name ? name : (joystick_name ? joystick_name : "controller"));
+        controller_handles_.push_back(gc);
+        char* active_mapping = SDL_GameControllerMapping(gc);
+        std::fprintf(stderr, "[muos.launcher.input] controller %d: %s%s\\n", i,
+                     name ? name : "unknown", generic_mapping ? " [generic mapping]" : "");
+        if (active_mapping) {
+            std::fprintf(stderr, "[muos.launcher.input] mapping: %s\\n", active_mapping);
+            SDL_free(active_mapping);
         }
     }
 }
@@ -238,8 +263,10 @@ Launcher::Outcome Launcher::Run() {
     screen_ = FirstRun::GameFilesPresent(cfg_, title_) ? Screen::Ready : Screen::NeedDisc;
     // When muOS forces this screen alongside --iso, keep the selected image in
     // the first-run field too; the user only needs to confirm extraction once.
-    if (!cfg_.paths.iso.empty())
+    if (!cfg_.paths.iso.empty()) {
         std::snprintf(path_buffer_, sizeof(path_buffer_), "%s", cfg_.paths.iso.c_str());
+        copy_disc_ = false;  // muOS already selected an image in the app folder; do not duplicate it.
+    }
     std::fprintf(stderr, "launcher: %s (user data %s)\n", screen_ == Screen::Ready ? "settings screen" : "first run: no game files",
                  cfg_.paths.user_data.c_str());
     if (!scripted_drop_.empty()) {
@@ -290,7 +317,21 @@ Launcher::Outcome Launcher::Run() {
             outcome_ = Outcome::Failed;
         }
     }
+    // Stop and join any first-run worker before freeing the state it references.
+    // The Play path then enters the game with the UI model and its temporary
+    // controller/session allocations already released.
+    if (worker_.joinable()) {
+        if (extract_) extract_->cancel.store(true);
+        worker_.join();
+    }
     CloseWindow();
+    settings_.reset();
+    extract_.reset();
+    std::vector<std::string>().swap(controllers_);
+    std::vector<void*>().swap(controller_handles_);
+    std::string().swap(image_path_);
+    std::string().swap(last_extract_summary_);
+    std::string().swap(verify_message_);
     return outcome_;
 }
 
@@ -546,7 +587,7 @@ void Launcher::DrawReady() {
         ImGui::Spacing();
         if (ImGui::Button("SAVE STATES", ImVec2(118, 34))) page_ = 3;
         ImGui::SameLine();
-        if (ImGui::Button("MOD / FIXES", ImVec2(118, 34))) page_ = 4;
+        if (ImGui::Button("FIXES", ImVec2(118, 34))) page_ = 4;
         ImGui::SameLine();
         if (ImGui::Button("GAME DATA", ImVec2(118, 34))) page_ = 5;
 
