@@ -816,8 +816,8 @@ void GlDevice::FinishMipChain(SurfaceId id, int authored_levels, bool synthesize
     if (synthesize_tail) {
         // GLES has no glGetTexLevelParameteriv. Mip dimensions are deterministic.
         const int mip_shift = std::min(authored_levels, 30);
-        const GLint cw = std::max(1, static_cast<int>(s.desc.width) >> mip_shift);
-        const GLint ch = std::max(1, static_cast<int>(s.desc.height) >> mip_shift);
+        GLint cw = std::max(1, static_cast<int>(s.desc.width) >> mip_shift);
+        GLint ch = std::max(1, static_cast<int>(s.desc.height) >> mip_shift);
         if (cw > 0 && ch > 0) {
             std::vector<uint8_t> cur(static_cast<size_t>(cw) * ch * 4);
             GLuint fbo = 0;
