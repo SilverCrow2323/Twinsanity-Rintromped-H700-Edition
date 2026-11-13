@@ -24,13 +24,13 @@ flowchart TD
 
 ## ✅ CI evidence — 13 November 2026
 
-Commit `70a603d490a7b9977509874720551c5280bc9f43` passed all four H700 workflow jobs: host checks, AArch64 renderer/SDL compile, production shader smoke on Mesa and AArch64 diagnostic packaging. The generated `.muxapp` was retrieved and inspected: correct `TwinsanityRintromped/` root, three ELF64/AArch64 diagnostics, and no game ISO. This establishes a repeatable diagnostic build; it does **not** establish Mali shader success or a playable game.
+Commit `6a94f3951589e7617b870f79837253da9f77d09c` passed the H700 host checks, AArch64 renderer/SDL cross-compile and production shader smoke on Mesa. The ZIP-based diagnostic `.muxapp` has already been generated and inspected on earlier green runs: the archive root is exactly `TwinsanityRintromped/`, with three ELF64/AArch64 diagnostics and no game ISO. The current run is extending the gate to a full AArch64 game runner with FFmpeg 6.1.2 statically linked under the minimal LGPL recipe, followed by a complete muOS `.muxapp`. Those full-game jobs are **in progress**, not yet passed. Nothing in CI establishes Mali shader success or playable gameplay on the physical device.
 
 | Stage | Exit criteria | State |
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
-| 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; diagnostic shader executable links against ARM64 EGL/GLES | **Passed in CI** (`70a603d4`) |
-| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed**; physical Mali run pending |
+| 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; diagnostic shader executable links against ARM64 EGL/GLES | **Passed in CI** (`6a94f395`) |
+| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed** (`6a94f395`); physical Mali run pending |
 | 4 · GS surfaces | FBO, depth/stencil, textures, mipmaps and readback validated | Pending |
 | 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
 | 6 · Game boot | Game reaches title and first interactive scene | Pending |
@@ -49,8 +49,11 @@ Commit `70a603d490a7b9977509874720551c5280bc9f43` passed all four H700 workflow 
 - [x] Cross-compile the selected real NativeEE renderer and SDL source units for AArch64 against ARM64 GLES/SDL headers.
 - [x] Build and link the NativeEE shader diagnostic executable against the ARM64 EGL/GLES sysroot.
 - [x] Keep desktop, Windows and Vita paths covered by their separate build workflows.
-- [ ] Link the full application and NativeEE runtime against the actual muOS sysroot.
+- [ ] Link the complete game + NativeEE runner for AArch64 against a Bullseye-compatible sysroot; the current lane also checks GLIBC 2.31.
+- [x] Add a pinned FFmpeg 6.1.2 cross-build using the engine's minimal static LGPL MPEG-1/2 + parser + swscale recipe; archive and licence checks run before packaging.
+- [x] Add a second ZIP-based full-game muxapp packaging job, dependent on the full runner and the three hardware diagnostics.
 - [x] Make the renderer compile and Mesa shader smoke gates blocking in CI.
+- [ ] Finish the full-runner static FFmpeg build/link and inspect the resulting full muxapp artifact.
 
 ## 3–4 — Production shaders and GS surfaces
 
