@@ -97,7 +97,7 @@ bool GameFolder::HasSettings(const std::string& folder) {
 
 std::string GameFolder::EnsureWritableDataDirectory(const std::string& preferred, const std::string& fallback) {
     namespace fs = std::filesystem;
-    static std::atomic<uint64_t> sequence{0};
+    static std::atomic<std::uint64_t> sequence{0};
     const auto prepare = [](const std::string& candidate) -> std::string {
         if (candidate.empty()) return {};
         std::error_code ec;
