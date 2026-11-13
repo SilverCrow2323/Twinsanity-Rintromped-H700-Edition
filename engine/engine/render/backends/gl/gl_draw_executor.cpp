@@ -152,21 +152,30 @@ bool GlDrawExecutor::BindPs2Program(const Step& s, bool again, bool mesh, uint32
     (void)tex_w;
     (void)tex_h;
     (void)first;
-    // the fast program while every uniform it folds holds its constant, else the full one (both hold every value the
-    // uniform cache sent: it names the program it writes)
+    // the fast program while every uniform it folds holds its constant, else the full one.
+    // On GLES, setters have queued dirty values: upload only to the selected program,
+    // after it is bound, rather than switching programs once per uniform.
     const GlShaderLibrary& sh = dev_.Shaders();
+    GlUniformCache& u = dev_.Uniforms();
     if (sh.Ps2FastProgram()) {
         bool fast = sh.Ps2FastEnabled();
         if (fast) {
             int n = 0;
             const GlShaderLibrary::FastConstant* fc = GlShaderLibrary::FastConstants(&n);
             const GlUniformLocations& L = sh.Locations();
-            const GlUniformCache& u = dev_.Uniforms();
             for (int i = 0; i < n && fast; ++i) fast = u.Holds1i(L.*(fc[i].field), fc[i].value);
         }
         dev_.State().UseProgram(fast ? sh.Ps2FastProgram() : sh.Ps2Program());
         if (fast) Census().draws_ps2_fast++;
         else Census().draws_ps2_full++;
+#if PS2R_HOST_GLES
+        u.Sync(fast ? 1 : 0);
+#endif
+    } else {
+        // BindForUniforms() left the full PS2 program bound when no fast program exists.
+#if PS2R_HOST_GLES
+        u.Sync(0);
+#endif
     }
     return false;
 #endif
