@@ -144,7 +144,7 @@ jobs:
           sudo apt-get update
       - name: Install AArch64 compiler and target GLES / SDL headers
         run: |
-          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu cmake ninja-build libsdl2-dev libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu cmake ninja-build libsdl2-dev:arm64 libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64
       - name: Configure the real engine renderer for GLES 3.2
         run: |
           cmake -S porting/h700/renderer -B build/h700-gles -G Ninja \
