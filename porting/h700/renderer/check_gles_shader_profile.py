@@ -42,6 +42,7 @@ def main() -> int:
         'option(PS2R_GLES ',
         "add_compile_definitions(PS2R_USE_GLES=1)",
         "list(APPEND TE_ENGINE_FORWARDED_ARGS -DPS2R_GLES=ON)",
+        "FFmpeg::avcodec FFmpeg::swscale FFmpeg::avutil m pthread",
     ), "top-level H700 CMake profile")
     require_tokens(ENGINE_CMAKE, (
         'option(PS2R_GLES ',
