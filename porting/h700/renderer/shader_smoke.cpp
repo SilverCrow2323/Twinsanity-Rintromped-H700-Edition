@@ -1,4 +1,9 @@
 // Compile and link NativeEE's production shader library in a real GLES context.
+// Include NativeEE's platform abstraction before EGL/GLES headers: some GLES
+// platform headers expose macros whose names overlap the platform API types.
+#include "engine/render/backends/gl/gl_shader_library.h"
+#include "engine/render/backends/gl/gl_uniform_cache.h"
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl32.h>
@@ -6,9 +11,6 @@
 #include <cstdio>
 #include <initializer_list>
 #include <utility>
-
-#include "engine/render/backends/gl/gl_shader_library.h"
-#include "engine/render/backends/gl/gl_uniform_cache.h"
 
 namespace {
 
