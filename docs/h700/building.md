@@ -35,7 +35,7 @@ cmake --build build/h700-gles \
   --target h700_gles_compile_check --parallel 2
 ~~~
 
-The target is called h700_gles_compile_check. For an AArch64 cross build, install the arm64 SDL2 development package as well as the GLES target headers/libraries. CMake adds the generated SDL2 multiarch config header from `/usr/include/aarch64-linux-gnu` only when `CMAKE_SYSTEM_PROCESSOR=aarch64`; native Mesa runs use the host SDL2 headers. A successful build means the selected engine source files compile against the installed GLES/SDL headers. It does not prove that the linked device libraries export every symbol or that the shaders render correctly.
+The isolated renderer CMake project requires CMake 3.18 or newer (Bullseye provides 3.18.4); do not raise this minimum without adding a feature that actually requires a newer CMake. The target is called h700_gles_compile_check. For an AArch64 cross build, install the arm64 SDL2 development package as well as the GLES target headers/libraries. CMake adds the generated SDL2 multiarch config header from `/usr/include/aarch64-linux-gnu` only when `CMAKE_SYSTEM_PROCESSOR=aarch64`; native Mesa runs use the host SDL2 headers. A successful build means the selected engine source files compile against the installed GLES/SDL headers. It does not prove that the linked device libraries export every symbol or that the shaders render correctly.
 
 ## Full project configure
 
