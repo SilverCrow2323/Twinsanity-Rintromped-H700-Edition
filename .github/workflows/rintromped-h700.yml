@@ -76,9 +76,9 @@ jobs:
             dpkg --add-architecture arm64 &&
             rm -f /etc/apt/sources.list &&
             printf "%s\\n" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
               > /etc/apt/sources.list &&
             apt-get -o Acquire::Check-Valid-Until=false update &&
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 &&
@@ -129,9 +129,9 @@ jobs:
             dpkg --add-architecture arm64 &&
             rm -f /etc/apt/sources.list &&
             printf "%s\\n" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
-              "deb [check-valid-until=no] https://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian-security/ bullseye-security main contrib non-free" \
+              "deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-archive/20261003T165950Z/debian/ bullseye-updates main contrib non-free" \
               > /etc/apt/sources.list &&
             apt-get -o Acquire::Check-Valid-Until=false update &&
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
