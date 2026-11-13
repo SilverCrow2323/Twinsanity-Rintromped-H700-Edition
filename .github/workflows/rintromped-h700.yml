@@ -73,8 +73,18 @@ jobs:
       - name: Cross-build with Debian Bullseye sysroot
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
-            dpkg --add-architecture arm64 &&
-            apt-get update &&
+            set -eu
+            dpkg --add-architecture arm64
+            # Bullseye LTS ended 2026-08-31; its live security index now points
+            # at packages removed from deb.debian.org. Pin to the final snapshot
+            # while retaining the Debian 11 / GLIBC 2.31 build baseline.
+            rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.sources
+            cat > /etc/apt/sources.list <<EOF
+          deb [check-valid-until=no] http://archive.debian.org/debian bullseye main
+          deb [check-valid-until=no] http://archive.debian.org/debian bullseye-updates main
+          deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260831T000000Z/ bullseye-security main
+          EOF
+            apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 &&
             chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
             ./scripts/build-probe.sh &&
