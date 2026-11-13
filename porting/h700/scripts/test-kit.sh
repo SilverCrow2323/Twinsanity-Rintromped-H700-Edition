@@ -109,4 +109,11 @@ if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=
     exit 1
 fi
 
+
+# The cross renderer compile must use the AArch64 SDL development package and
+# its multiarch generated config header, not only the host amd64 SDL headers.
+grep -q 'libsdl2-dev:arm64' "$WORKFLOW"
+grep -q 'SDL2/_real_SDL_config.h' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+grep -q 'TE_SDL2_TARGET_CONFIG_INCLUDE_DIR' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
