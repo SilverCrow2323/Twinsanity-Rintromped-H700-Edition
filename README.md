@@ -20,15 +20,17 @@
 <blockquote>
 <strong>Hardware graphics preflight: PASS.</strong> The physical H700 successfully initialised EGL 1.4, created an OpenGL ES 3.2 context on the Mali-G31, and presented SDL frames through muOS's <code>mali</code> video driver.
 
-<strong>This is not yet a playable game build.</strong> The engine's GLES renderer is being adapted and compiled independently before the first engine-rendered frame can be claimed.
+<strong>This is not yet a playable game build.</strong> The real NativeEE renderer/SDL source units now cross-compile for AArch64, production shaders pass the Mesa GLES smoke test, and a verified diagnostic `.muxapp` is available. Mali shader execution, GS surfaces, first engine frame and gameplay remain pending.
 </blockquote>
 
 | Milestone | Status |
 |---|---|
 | H700 EGL / GLES 3.2 | <strong>Passed on device</strong> |
 | SDL window and buffer presentation | <strong>Passed on device</strong> |
-| Dedicated Linux GLES build profile | Added · compile validation pending |
-| Real renderer compile gate | CI job queued |
+| Dedicated Linux GLES build profile | Added · CI validated |
+| Real renderer compile gate | AArch64 cross-compile passed |
+| Production shader smoke | Mesa GLES 3.2 passed · Mali device run pending |
+| H700 diagnostic `.muxapp` | Built, ELF-verified and archive-layout checked |
 | First NativeEE-rendered frame | Pending |
 | Game boot and gameplay | Pending |
 
