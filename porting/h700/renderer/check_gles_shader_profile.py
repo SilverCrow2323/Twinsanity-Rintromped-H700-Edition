@@ -84,7 +84,12 @@ def main() -> int:
         "tw-rintromped-h700-gles-shader-smoke",
         "gles-shader-report.txt",
         "SHADER_RC",
-    ), "device shader smoke launcher/report")
+        "twinsanityevolved",
+        "disc-image.txt",
+        "game.iso",
+        'SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-mali}"',
+        'exec "$APP_DIR/$GAME_BIN"',
+    ), "device game/preflight launcher and ISO-preserving hand-off")
     require_tokens(WORKFLOW, (
         "dpkg --add-architecture arm64",
         "libegl1-mesa-dev:arm64",
