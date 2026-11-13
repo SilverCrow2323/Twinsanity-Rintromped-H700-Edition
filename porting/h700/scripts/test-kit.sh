@@ -21,6 +21,20 @@ bash -n "$ROOT/scripts/build-ffmpeg-static.sh"
 sh -n "$ROOT/scripts/package-full-muxapp.sh"
 python3 -c "from pathlib import Path; compile(Path('tools/gl_api_inventory.py').read_text(encoding='utf-8'), 'tools/gl_api_inventory.py', 'exec')"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT HUP INT TERM
+# X11 defines the global macro None as 0. The platform API must not use that
+# token as an enum member because EGL includes Xlib before platform.h.
+cat > "$TMP/platform-header-x11.cpp" <<'EOF'
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#define None 0
+#include "engine/platform/platform.h"
+static_assert(static_cast<int>(ps2r::platform::MapFlags::NoFlags) == 0);
+static_assert(static_cast<int>(ps2r::platform::Prot::NoProtection) == 0);
+int main() { return 0; }
+EOF
+c++ -std=c++17 -Wall -Wextra -Werror -I"$ROOT/../../engine" \\
+  "$TMP/platform-header-x11.cpp" -o "$TMP/platform-header-x11"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/egl_gles_probe.c -ldl -o "$TMP/probe-host"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/sdl_gles_probe.c -ldl -o "$TMP/sdl-probe-host"
 set +e
