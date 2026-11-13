@@ -31,6 +31,8 @@ The physical test confirms SDL → EGL → GLES 3.2 on the documented muOS/Mali-
 
 This validates the cross-compilation, shader-smoke, ELF/GLIBC and packaging gates. It does **not** prove that the production shaders behave correctly on Mali or that the game has rendered its first NativeEE frame on the handheld.
 
+The original desktop renderer targets **OpenGL 4.1**. The H700 GLES 3.2 path is a dedicated port and adapter layer; the successful cross-compile and Mesa smoke do not establish full OpenGL 4.1 feature equivalence or validate the production renderer on Mali. That compatibility boundary remains open until the first NativeEE frame and the device render-target/shader matrix pass.
+
 ## ⏳ What is not validated yet
 
 - A NativeEE-rendered frame from the game's actual renderer.
