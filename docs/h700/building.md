@@ -62,11 +62,19 @@ The H700 workflow now contains separate validation lanes:
 
 | Job | Purpose |
 |---|---|
-| host-checks | Shell, probe, packaging and host safety checks |
-| gles-renderer-compile | Cross-compiles renderer and SDL objects against GLES headers |
-| aarch64-package | Builds and packages the hardware diagnostic utility |
+| host-checks | Shell, probe, archive layout and host safety checks |
+| gles-renderer-compile | Cross-compiles the real NativeEE renderer and SDL source objects with the ARM64 Debian GLES/SDL development headers |
+| gles-shader-mesa-smoke | Builds and runs the real `GlShaderLibrary::Build()` under headless Mesa GLES 3.2; this is a blocking CI gate |
+| aarch64-package | Cross-builds the EGL, SDL and NativeEE shader diagnostics, checks ELF64/AArch64 and GLIBC, then produces the muOS `.muxapp` artifact |
 
 The diagnostic package is not the game binary. The build artifact must never be described as playable until the renderer and game runtime milestones have passed.
+
+
+## Verified H700 diagnostic artifact
+
+The H700 workflow passed on commit `70a603d490a7b9977509874720551c5280bc9f43` (13 November 2026). Its artifact, `twinsanity-rintromped-h700-preflight`, contains `Twinsanity-Rintromped-H700-Preflight.muxapp` plus the three standalone ELF diagnostics. All three are ELF64/AArch64 and require at most `GLIBC_2.17` in the inspected build. The installable archive has `TwinsanityRintromped/` directly at its root and does not contain a game image.
+
+The diagnostic package validates the hardware and production shader entry points only. It is not the full TwinsanityEvolved application and does not boot the game. For physical validation, install it using the [muOS installation guide](install.md) and collect every file under `MUOS/application/TwinsanityRintromped/logs/`, including `gles-shader-report.txt`.
 
 ## Debugging a compile failure
 
@@ -93,4 +101,4 @@ cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
 EGL_PLATFORM=surfaceless LIBGL_ALWAYS_SOFTWARE=1 ./build/mesa-gles/h700_gles_shader_smoke
 ~~~
 
-The Mesa job is intentionally non-blocking while the new harness is stabilised. A pass proves that the production shader library compiles and links under Mesa GLES; it is not proof of Mali driver behavior or correct game images. The same shader smoke should later run on the physical H700.
+The Mesa job is a **blocking CI gate**. A pass proves that the production shader library compiles and links under Mesa GLES; it is not proof of Mali driver behavior or correct game images. The same shader smoke is also included in the AArch64 `.muxapp` so that it can run on the physical H700. Its output is written to `logs/gles-shader-report.txt`.
