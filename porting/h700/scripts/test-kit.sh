@@ -33,8 +33,7 @@ static_assert(static_cast<int>(ps2r::platform::MapFlags::NoFlags) == 0);
 static_assert(static_cast<int>(ps2r::platform::Prot::NoProtection) == 0);
 int main() { return 0; }
 EOF
-c++ -std=c++17 -Wall -Wextra -Werror -I"$ROOT/../../engine" \\
-  "$TMP/platform-header-x11.cpp" -o "$TMP/platform-header-x11"
+c++ -std=c++17 -Wall -Wextra -Werror -I"$ROOT/../../engine" "$TMP/platform-header-x11.cpp" -o "$TMP/platform-header-x11"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/egl_gles_probe.c -ldl -o "$TMP/probe-host"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/sdl_gles_probe.c -ldl -o "$TMP/sdl-probe-host"
 set +e
