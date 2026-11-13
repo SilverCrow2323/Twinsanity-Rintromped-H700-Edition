@@ -70,6 +70,42 @@ if [ ! -x "$DEST/wabt/bin/wasm2c$EXE" ]; then
   if [ "$WABT_FROM_SOURCE" = 1 ]; then
     # No binary release for this host: build wasm2c / wasm-objdump / wasm-validate from the pinned source.
     tar -xJf "$DEST/$WABT_TGZ" -C "$DEST/wabt.tmp" --strip-components=1
+    # WABT 1.0.42 uses std::bit_cast (C++20). Bullseye's GCC 10 libstdc++
+    # does not provide it, so add the equivalent trivially-copyable memcpy
+    # fallback while preserving std::bit_cast on newer standard libraries.
+    python3 - "$DEST/wabt.tmp/include/wabt/common.h" <<'PYWABT'
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+source = path.read_text(encoding="utf-8")
+old = """template <typename Dst, typename Src>
+Dst WABT_VECTORCALL Bitcast(const Src& value) {
+  return std::bit_cast<Dst>(value);
+}"""
+new = """template <typename Dst, typename Src>
+Dst WABT_VECTORCALL Bitcast(const Src& value) {
+#if defined(__cpp_lib_bit_cast) && __cpp_lib_bit_cast >= 201806L
+  return std::bit_cast<Dst>(value);
+#else
+  static_assert(sizeof(Dst) == sizeof(Src),
+                "Bitcast source and destination must have equal size");
+  static_assert(std::is_trivially_copyable<Dst>::value,
+                "Bitcast destination must be trivially copyable");
+  static_assert(std::is_trivially_copyable<Src>::value,
+                "Bitcast source must be trivially copyable");
+  Dst result;
+  std::memcpy(static_cast<void*>(&result),
+              static_cast<const void*>(&value), sizeof(Dst));
+  return result;
+#endif
+}"""
+if old in source:
+    source = source.replace(old, new, 1)
+elif new not in source:
+    raise SystemExit("WABT common.h Bitcast implementation no longer matches the pinned source")
+path.write_text(source, encoding="utf-8")
+PYWABT
     if ! cmake -S "$DEST/wabt.tmp" -B "$DEST/wabt.tmp/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
           -DBUILD_TOOLS=ON -DBUILD_LIBWASM=OFF -DWITH_EXCEPTIONS=OFF -DUSE_INTERNAL_SHA256=ON > "$DEST/wabt.tmp/configure.log" 2>&1; then
       echo "fetch_toolchain: WABT configure failed; last 100 lines:" >&2
