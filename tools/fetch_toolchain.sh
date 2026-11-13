@@ -71,7 +71,7 @@ if [ ! -x "$DEST/wabt/bin/wasm2c$EXE" ]; then
     # No binary release for this host: build wasm2c / wasm-objdump / wasm-validate from the pinned source.
     tar -xJf "$DEST/$WABT_TGZ" -C "$DEST/wabt.tmp" --strip-components=1
     cmake -S "$DEST/wabt.tmp" -B "$DEST/wabt.tmp/build" -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=OFF \
-          -DBUILD_TOOLS=ON -DBUILD_LIBWASM=OFF -DWITH_EXCEPTIONS=OFF > "$DEST/wabt.tmp/configure.log" 2>&1
+          -DBUILD_TOOLS=ON -DBUILD_LIBWASM=OFF -DWITH_EXCEPTIONS=OFF -DUSE_INTERNAL_SHA256=ON > "$DEST/wabt.tmp/configure.log" 2>&1
     cmake --build "$DEST/wabt.tmp/build" --target wasm2c wasm-objdump wasm-validate > "$DEST/wabt.tmp/build.log" 2>&1
     mkdir -p "$DEST/wabt.tmp/bin"
     cp "$DEST/wabt.tmp/build/wasm2c" "$DEST/wabt.tmp/build/wasm-objdump" "$DEST/wabt.tmp/build/wasm-validate" "$DEST/wabt.tmp/bin/"
