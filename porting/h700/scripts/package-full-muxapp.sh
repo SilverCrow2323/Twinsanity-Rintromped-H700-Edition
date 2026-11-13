@@ -86,6 +86,8 @@ The installed runner uses the device's SDL2, EGL and GLES runtime.
 H700 performance notes:
 - GLES enables adjacent blended-draw joining and shadow-volume draw grouping by default.
 - The batches preserve draw/state order and reduce repeated submissions to the Mali driver.
+- GLES uniform changes are batched for the selected draw program to reduce per-uniform driver state queries.
+- Set TE_GFX_UNIFORM_SYNC=0 before launching the runner to restore the conservative immediate uploader for A/B testing.
 - The first launch after installing this package automatically collects one low-overhead report. The marker is consumed automatically.
 - To collect another report later, create an empty file at:
     logs/performance-diagnostics.once
