@@ -168,4 +168,10 @@ if missing:
 print("AArch64 package job uses archived Bullseye and a fixed final security snapshot.")
 PY
 
+
+# Keep user-facing porting docs consistent with the required Mesa gate and pinned sysroot.
+grep -Fq 'required blocking CI gate' "$REPO_ROOT/docs/h700/building.md"
+! grep -Fq 'Mesa job is non-blocking' "$REPO_ROOT/docs/h700/building.md"
+grep -Fq '2026-08-31' "$REPO_ROOT/docs/h700/building.md"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
