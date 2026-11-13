@@ -195,11 +195,21 @@ void Launcher::DetectControllers() {
         if (SDL_InitSubSystem(SDL_INIT_GAMECONTROLLER) != 0) return;
         controllers_inited_ = true;
     }
+    SDL_GameControllerEventState(SDL_ENABLE);
+    SDL_JoystickEventState(SDL_ENABLE);
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
         if (!SDL_IsGameController(i)) continue;
         const char* name = SDL_GameControllerNameForIndex(i);
         controllers_.push_back(name ? name : "controller");
-        if (SDL_GameController* gc = SDL_GameControllerOpen(i)) controller_handles_.push_back(gc);
+        if (SDL_GameController* gc = SDL_GameControllerOpen(i)) {
+            controller_handles_.push_back(gc);
+            char* mapping = SDL_GameControllerMapping(gc);
+            std::fprintf(stderr, "[muos.launcher.input] controller %d: %s\\n", i, name ? name : "unknown");
+            if (mapping) {
+                std::fprintf(stderr, "[muos.launcher.input] mapping: %s\\n", mapping);
+                SDL_free(mapping);
+            }
+        }
     }
 }
 
@@ -303,7 +313,28 @@ void Launcher::PumpEvents() {
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         ImGui_ImplSDL2_ProcessEvent(&e);
-        if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)) {
+        if (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+            muos_menu_down_ = false;
+            muos_start_down_ = false;
+        } else if (e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERBUTTONUP) {
+            const bool down = e.type == SDL_CONTROLLERBUTTONDOWN;
+            static bool logged_buttons[SDL_CONTROLLER_BUTTON_MAX] = {};
+            const unsigned button = e.cbutton.button;
+            if (down && button < SDL_CONTROLLER_BUTTON_MAX && !logged_buttons[button]) {
+                logged_buttons[button] = true;
+                const char* name = SDL_GameControllerGetStringForButton(static_cast<SDL_GameControllerButton>(button));
+                std::fprintf(stderr, "[muos.launcher.input] first SDL button %u (%s), instance=%d\\n",
+                             button, name ? name : "unknown", e.cbutton.which);
+            }
+            if (button == SDL_CONTROLLER_BUTTON_GUIDE) muos_menu_down_ = down;
+            if (button == SDL_CONTROLLER_BUTTON_START) muos_start_down_ = down;
+            if (muos_menu_down_ && muos_start_down_ && !muos_exit_requested_) {
+                muos_exit_requested_ = true;
+                std::fprintf(stderr, "[muos.hotkey] MENU + START: leaving launcher for muOS\\n");
+                outcome_ = Outcome::Quit;
+                running_ = false;
+            }
+        } else if (e.type == SDL_QUIT || (e.type == SDL_WINDOWEVENT && e.window.event == SDL_WINDOWEVENT_CLOSE)) {
             running_ = false;
             outcome_ = Outcome::Quit;
         } else if (e.type == SDL_DROPFILE) {
