@@ -9,6 +9,7 @@ on:
     branches: [h700/porting]
     paths:
       - 'porting/h700/**'
+      - 'docs/h700/**'
       - 'CMakeLists.txt'
       - 'engine/CMakeLists.txt'
       - 'engine/cmake/**'
@@ -19,6 +20,7 @@ on:
   pull_request:
     paths:
       - 'porting/h700/**'
+      - 'docs/h700/**'
       - 'CMakeLists.txt'
       - 'engine/CMakeLists.txt'
       - 'engine/cmake/**'
