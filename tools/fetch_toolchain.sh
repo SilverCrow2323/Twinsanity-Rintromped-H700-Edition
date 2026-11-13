@@ -17,7 +17,7 @@ LIBCLANG_VERSION="18.1.1"
 
 uname_s="$(uname -s)"; uname_m="$(uname -m)"
 EXE=""
-WABT_FROM_SOURCE=0
+WABT_FROM_SOURCE="${WABT_FROM_SOURCE:-0}"
 case "$uname_s/$uname_m" in
   Darwin/arm64)   WASI_ARCH="arm64-macos";    WABT_ARCH="macos-arm64";  LIBCLANG_TAG="1-py2.py3-none-macosx_11_0_arm64" ;;
   Darwin/x86_64)  WASI_ARCH="x86_64-macos";   WABT_ARCH="";             LIBCLANG_TAG="py2.py3-none-macosx_10_9_x86_64"; WABT_FROM_SOURCE=1 ;;
