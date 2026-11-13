@@ -38,6 +38,56 @@ grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
 if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_BIN="$TMP/probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
+# Exercise the actual full-game launcher without muOS. The runner's CLI
+# requires --iso <path>; catch regressions where the launcher starts it bare.
+mkdir -p "$TMP/launcher-app/My Discs"
+printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
+cat > "$TMP/muos-func.sh" <<'EOF'
+SETUP_APP() { :; }
+EOF
+cat > "$TMP/launcher-app/twinsanityevolved" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
+printf '%s\n' "\${SDL_VIDEODRIVER:-}" > "$TW_H700_CAPTURE_DRIVER"
+EOF
+chmod 755 "$TMP/launcher-app/twinsanityevolved"
+printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh --dry-run
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--dry-run" ]
+[ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+
+# A broken saved selection must fall back to game.iso and repair the selection.
+rm -f "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" "$TMP/launcher-args.txt"
+printf '%s\n' 'missing.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\n' 'fallback disc bytes' > "$TMP/launcher-app/game.iso"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+[ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
+
+# No valid image must fail before invoking the game runner.
+rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-args.txt"
+set +e
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
+launch_rc=$?
+set -e
+[ "$launch_rc" -eq 2 ]
+[ ! -e "$TMP/launcher-args.txt" ]
+
 # Rebuild over an existing package and prove that obsolete ZIP entries are removed.
 python3 - "$TMP/fake-aarch64" <<'PY'
 import struct
