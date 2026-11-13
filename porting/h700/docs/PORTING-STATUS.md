@@ -1,6 +1,6 @@
 # H700 porting status
 
-**CI PASS on `h700/porting` head `e58a5fba` (run `43399059636`): full AArch64 runner and full muxapp built. Physical EGL/GLES preflight: PASS. First NativeEE frame and gameplay on Mali: NOT YET VALIDATED.**
+**CI PASS on `h700/porting` code commit `0ccac64106abd9c3dcd3b657ae8a405c23ecbe2e` (H700 run `43406895561`): all six jobs passed, including the complete AArch64 NativeEE runner and full muOS `.muxapp`. The production NativeEE shader programs compiled and linked on Mesa llvmpipe. Physical EGL/GLES preflight: PASS (12 November 2026). First NativeEE-rendered frame and gameplay on Mali: NOT YET VALIDATED.**
 
 ## Current status
 
@@ -18,7 +18,7 @@
 | Shader conversion adapter | Added | GLSL 410 core → ES 320; source-level regression guard |
 | GLES API adapters | Initial set added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
 | Renderer compile gate | **CI PASS** | NativeEE renderer and SDL source objects cross-compiled with AArch64 GCC and ARM64 GLES/SDL development headers |
-| Production shader smoke | **Mesa CI PASS** | Real `GlShaderLibrary::Build()` compiled/linked required programs under Mesa GLES; Mali execution still pending |
+| Production shader smoke | **Mesa CI PASS** | Real `GlShaderLibrary::Build()` compiled/linked required programs under Mesa llvmpipe; Mali execution remains a separate pending gate |
 | Full NativeEE application link | **AArch64 CI PASS** | `twinsanityevolved` linked as ELF64/AArch64; maximum required GLIBC symbol `GLIBC_2.30` |
 | Full muOS package | **CI PASS** | Full runner, probes and static FFmpeg licence payload packaged; exact root `TwinsanityRintromped/`, no ISO or disc selection bundled |
 | First NativeEE frame | Pending | Requires Mali shader report, GS surface validation and real engine composition root |
@@ -37,14 +37,37 @@
 ## CI lanes
 
 - [H700 build workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
+- [Launcher workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/launcher.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-Verified CI snapshot: current `h700/porting` commit `e58a5fba82bc4e1d4c382e11584f161894f9d5eb`, H700 run `43399059636` (13 November 2026), passed all six jobs: `host-checks`, `gles-renderer-compile`, `gles-shader-mesa-smoke`, `full-app-aarch64-link`, `aarch64-package` and `full-app-muxapp`. The full runner `twinsanityevolved` is ELF64/AArch64 and requires at most `GLIBC_2.30`, within Debian Bullseye GLIBC 2.31. The full `.muxapp` is 5,643,365 bytes; SHA-256 `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d`. It contains the single `TwinsanityRintromped/` root, `mux_launch.sh`, `mux_lang.ini`, the full runner, diagnostics and FFmpeg licence payload; it does not contain `game.iso` or `disc-image.txt`. GitHub uploaded `twinsanity-rintromped-h700-full-muxapp` (5,555,771 bytes; artifact ZIP digest `a8a0acc3b107941787e359b384758e96a09233ac072ed47ba4754e502f53a8ca`). The diagnostic probe ELFs require at most `GLIBC_2.17`. These are CI build/package results, not proof of compatibility with muOS's Mali EGL/GLES runtime or a playable game.
+### Verified full H700 build
+
+Exact tested code commit: `0ccac64106abd9c3dcd3b657ae8a405c23ecbe2e`  
+H700 run: [`43406895561`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43406895561) · 13 November 2026 · all six jobs passed:
+
+- `host-checks`
+- `gles-renderer-compile`
+- `gles-shader-mesa-smoke`
+- `aarch64-package`
+- `full-app-aarch64-link`
+- `full-app-muxapp`
+
+The full runner `twinsanityevolved` is ELF64/AArch64, 15,416,144 bytes, and requires at most `GLIBC_2.30`, within the Debian Bullseye GLIBC 2.31 baseline. The full `.muxapp` is 5,645,597 bytes; its SHA-256 is `70b53757bbb193f621fd3b081a59fa13461588849628c6e631903c333caef822`. The adjacent `.sha256` sidecar matches the downloaded archive byte-for-byte.
+
+The inner `.muxapp` is a valid ZIP archive with 18 entries and the single root `TwinsanityRintromped/`. It contains `twinsanityevolved`, `mux_launch.sh`, `mux_lang.ini`, diagnostic probes, `logs/performance-diagnostics.once`, the device inventory collector, release notes and FFmpeg/TwinsanityEvolved licence files. It contains neither `game.iso` nor `disc-image.txt`. The runner header identifies ELF64 little-endian AArch64.
+
+GitHub uploaded artifact `twinsanity-rintromped-h700-full-muxapp` (artifact ID `14028321169`, outer artifact size 5,560,771 bytes; expires 27 November 2026 at 10:16:45 UTC). The full runner artifact is `14028446148` and the preflight package is `14027229093`; both also have a 14-day retention.
+
+The production shader smoke ran on Mesa GLES 3.2 with software renderer llvmpipe and reported that all required NativeEE production shader programs compiled and linked. This is not a Mali result. Likewise, AArch64 compile/link and ZIP verification do not establish hardware runtime compatibility or gameplay.
+
+### Launcher matrix
+
+On code commit `0ccac64106abd9c3dcd3b657ae8a405c23ecbe2e`, launcher run [`43406902769`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43406902769) built Linux x86_64 AppImage and Windows x64 successfully. The macOS ARM64 job was cancelled before producing step logs; a job-only retry was requested on 13 November 2026. macOS remains unverified until that retry reports success.
 
 ## Next gates
 
 1. Install the full CI `.muxapp` on the physical H700 and collect `logs/gles-shader-report.txt`, `logs/game-launch.log` and the device inventory.
-2. Validate Mali shader compilation/linking and GS render targets, depth/stencil attachments, texture uploads/mips, copies and readback.
+2. Validate production shader compilation/linking on Mali-G31 and GS render targets, depth/stencil attachments, texture uploads/mips, copies and readback.
 3. Present the first NativeEE-rendered frame through the normal SDL application path; this remains the next blocking milestone.
 4. Verify detection of the user's own `game.iso` in `MUOS/application/TwinsanityRintromped/`; the package intentionally contains no disc image.
 5. Only after first frame, verify boot, controller mapping, audio/video, disc streaming and saves.
