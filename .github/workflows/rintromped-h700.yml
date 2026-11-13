@@ -152,6 +152,7 @@ jobs:
 
   full-app-aarch64-link:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     needs: [host-checks, gles-renderer-compile, gles-shader-mesa-smoke]
     steps:
       - uses: actions/checkout@v7
@@ -218,6 +219,7 @@ jobs:
 
   full-app-muxapp:
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     needs: [aarch64-package, full-app-aarch64-link]
     steps:
       - uses: actions/checkout@v7
