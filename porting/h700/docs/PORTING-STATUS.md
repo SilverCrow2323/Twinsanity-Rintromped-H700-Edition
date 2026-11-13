@@ -1,6 +1,6 @@
 # H700 porting status
 
-**Physical graphics preflight: PASS. GLES profile and initial adapters: implemented. Full renderer and gameplay: not yet validated.**
+**CI: full AArch64 runner and full muxapp build PASS (13 Nov 2026). Physical graphics preflight: PASS. First NativeEE frame and gameplay on Mali: NOT YET VALIDATED.**
 
 ## Current status
 
@@ -19,8 +19,10 @@
 | GLES API adapters | Initial set added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
 | Renderer compile gate | **CI PASS** | NativeEE renderer and SDL source objects cross-compiled with AArch64 GCC and ARM64 GLES/SDL development headers |
 | Production shader smoke | **Mesa CI PASS** | Real `GlShaderLibrary::Build()` compiled/linked required programs under Mesa GLES; Mali execution still pending |
+| Full NativeEE application link | **AArch64 CI PASS** | `twinsanityevolved` linked as ELF64/AArch64; maximum required GLIBC symbol `GLIBC_2.30` |
+| Full muOS package | **CI PASS** | Full runner, probes and static FFmpeg licence payload packaged; exact root `TwinsanityRintromped/`, no ISO or disc selection bundled |
 | First NativeEE frame | Pending | Requires Mali shader report, GS surface validation and real engine composition root |
-| Game runtime | Not available | No playable build yet |
+| Game runtime | **Build PASS / device pending** | Full AArch64 runner exists; no physical game boot, first frame, input, audio or video result yet |
 
 ## Physical device profile
 
@@ -37,16 +39,16 @@
 - [H700 build workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-Verified CI snapshot: commit `70a603d490a7b9977509874720551c5280bc9f43` passed `host-checks`, `gles-renderer-compile`, `gles-shader-mesa-smoke` and `aarch64-package` on 13 November 2026. The artifact contains three ELF64/AArch64 diagnostics; their maximum required GLIBC symbol is `GLIBC_2.17`. The shader smoke is linked against the Debian Bullseye ARM64 EGL/GLES sysroot and run under Mesa in CI. This does not prove compatibility with muOS's Mali EGL/GLES runtime or correct game images.
+Verified CI snapshot: current `h700/porting` commit `4726e851ad0367f0ef7644097a860558e2fd0e53`, H700 run `43374362800` (13 November 2026), passed `host-checks`, `gles-renderer-compile`, `gles-shader-mesa-smoke`, `full-app-aarch64-link`, `aarch64-package` and `full-app-muxapp`. The full runner `twinsanityevolved` is ELF64/AArch64 and requires at most `GLIBC_2.30`, within the Debian Bullseye GLIBC 2.31 baseline. The full `.muxapp` SHA-256 is `5abb1a27f06f1e2a0a5b9d96251fb0ad542e5148130b42e9cf99215162f7ad6c`; the workflow verified archive integrity, the single `TwinsanityRintromped/` root, diagnostics and licence payload. It does not contain `game.iso` or `disc-image.txt`. The diagnostic probe ELFs in the same run require at most `GLIBC_2.17`. These are CI build/package results, not proof of compatibility with muOS's Mali EGL/GLES runtime or a playable game.
 
 ## Next gates
 
-1. Install the CI `.muxapp` on the physical H700 and collect all four reports, especially `gles-shader-report.txt`.
-2. Resolve any Mali-only shader compile/link differences; keep Mesa and Mali evidence separate.
-3. Configure and link the full NativeEE application and game runner against an H700-compatible sysroot (not yet built by the diagnostic pipeline).
-4. Validate GS render targets, depth/stencil attachments, texture uploads/mips, copies and readback.
-5. Present the first NativeEE-rendered frame through the normal SDL application path.
-6. Only then begin game boot, input/audio, disc streaming, saves and performance work.
+1. Install the full CI `.muxapp` on the physical H700 and collect `logs/gles-shader-report.txt`, `logs/game-launch.log` and the device inventory.
+2. Validate Mali shader compilation/linking and GS render targets, depth/stencil attachments, texture uploads/mips, copies and readback.
+3. Present the first NativeEE-rendered frame through the normal SDL application path; this remains the next blocking milestone.
+4. Verify detection of the user's own `game.iso` in `MUOS/application/TwinsanityRintromped/`; the package intentionally contains no disc image.
+5. Only after first frame, verify boot, controller mapping, audio/video, disc streaming and saves.
+6. Measure frame pacing, stutter, thermals and sustained performance on the physical H700.
 
 ## Canonical documentation
 
