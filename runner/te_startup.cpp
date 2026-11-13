@@ -150,11 +150,22 @@ std::string DataDirectory() {
     const fs::path exe = game_folder.empty() ? fs::path() : fs::path(game_folder);
     const fs::path portable = exe.empty() ? fs::path() : exe / "userdata";
     const fs::path home = HomeDataDir();
-    // Create userdata before returning it. Merely checking that the application
-    // folder is writable leaves a missing userdata/ directory unusable by
-    // SettingsFile and the memory-card writer.
-    return ps2r::app::GameFolder::EnsureWritableDataDirectory(
-        portable.generic_string(), home.generic_string());
+    std::error_code ec;
+    // Preserve data from an earlier install: an existing portable userdata/
+    // directory wins, then an existing HOME data directory. Both are probed
+    // for actual write access; a stale/read-only directory is not selected.
+    if (!portable.empty() && fs::is_directory(portable, ec))
+        return ps2r::app::GameFolder::EnsureWritableDataDirectory(
+            portable.generic_string(), home.generic_string());
+    ec.clear();
+    if (!home.empty() && fs::is_directory(home, ec))
+        return ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
+    // A new portable install gets its own userdata/ directory, but create it
+    // before SettingsFile attempts to write ps2r.ini inside it.
+    if (!exe.empty() && !ps2r::app::GameFolder::EnsureWritableDataDirectory(exe.generic_string(), {}).empty())
+        return ps2r::app::GameFolder::EnsureWritableDataDirectory(
+            portable.generic_string(), home.generic_string());
+    return ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
 }
 
 ps2r::app::GameFolder::Resolved LocateFolders(const std::string& config_arg, const std::string& mc_dir_arg, const std::string& mods_dir_arg,
