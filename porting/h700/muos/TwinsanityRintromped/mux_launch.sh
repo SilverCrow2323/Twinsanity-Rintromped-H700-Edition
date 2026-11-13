@@ -92,7 +92,10 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
 
     # muOS may invoke application scripts with framework-specific positional
     # parameters. They are not game options: never forward them to NativeEE.
-    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    # --iso is a direct-run flag and suppresses the launcher unless --launcher is
+    # also present. Force the pre-launch UI while retaining the selected disc.
+    printf 'Launcher: forced single-screen UI before game start\n' >> "$APP_DIR/logs/game-launch.log"
+    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" --launcher >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
 
 export APP_DIR
