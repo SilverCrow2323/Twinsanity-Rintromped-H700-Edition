@@ -102,6 +102,10 @@ print("AArch64 multiarch apt sources route arm64 through Ubuntu Ports.")
 PY
 
 
+# The isolated GLES renderer project must stay compatible with Bullseye's CMake 3.18.4.
+grep -Fq 'cmake_minimum_required(VERSION 3.18)' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+! grep -Fq 'cmake_minimum_required(VERSION 3.21)' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+
 # The GLES mip synthesis loop rewrites cw/ch after each BoxHalve iteration.
 # They must remain mutable (Windows clang-cl and AArch64 GCC both enforce this).
 if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=' "$REPO_ROOT/engine/engine/render/backends/gl/gl_device.cpp"; then
