@@ -57,8 +57,13 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         printf 'Launching %s\n' "$GAME_BIN"
         printf 'Disc image: %s\n' "$DISC_PATH"
         printf 'SDL video driver: %s\n' "$SDL_VIDEODRIVER"
+        printf 'Runner argv[1]: --iso\n'
+        printf 'Runner argv[2]: %s\n' "$DISC_PATH"
+        printf 'Launcher arguments ignored: %s\n' "$#"
     } >> "$APP_DIR/logs/game-launch.log"
-    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    # muOS may invoke application scripts with framework-specific positional
+    # parameters. They are not game options: never forward them to NativeEE.
+    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
 
 export APP_DIR
