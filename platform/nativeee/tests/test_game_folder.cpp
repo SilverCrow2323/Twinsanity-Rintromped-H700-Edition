@@ -55,6 +55,28 @@ int main() {
     const fs::path root = fs::temp_directory_path() / ("te_game_folder_" + std::to_string(::time(nullptr)) + "_" + std::to_string(std::rand()));
     const fs::path data = root / "home" / ".twinsanityevolved";
 
+    // --- data directories: create the preferred path before callers write ps2r.ini or memory cards
+    {
+        const fs::path preferred = root / "application" / "userdata";
+        const fs::path fallback = root / "home-fallback" / ".twinsanityevolved";
+        CHECK(GameFolder::EnsureWritableDataDirectory(G(preferred), G(fallback)) == G(preferred));
+        CHECK(fs::is_directory(preferred));
+        size_t probe_files = 0;
+        for (const auto& entry : fs::directory_iterator(preferred))
+            if (entry.path().filename().string().find(".twinsanityevolved-write-test-") == 0) ++probe_files;
+        CHECK(probe_files == 0);
+
+        // A regular file cannot be used as a directory: the writable fallback must be created instead.
+        const fs::path blocked = root / "not-a-directory";
+        { std::ofstream out(blocked); out << "not a directory"; }
+        CHECK(GameFolder::EnsureWritableDataDirectory(G(blocked), G(fallback)) == G(fallback));
+        CHECK(fs::is_directory(fallback));
+
+        const fs::path also_blocked = root / "also-not-a-directory";
+        { std::ofstream out(also_blocked); out << "not a directory"; }
+        CHECK(GameFolder::EnsureWritableDataDirectory(G(blocked), G(also_blocked)).empty());
+    }
+
     // --- portable: ps2r.ini beside the executable
     {
         const fs::path game = root / "game";
