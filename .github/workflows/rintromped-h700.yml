@@ -8,7 +8,7 @@ concurrency:
 
 on:
   push:
-    branches: [h700/porting]
+    branches: [h700/porting, 'fix/**']
     paths:
       - 'porting/h700/**'
       - 'CMakeLists.txt'
