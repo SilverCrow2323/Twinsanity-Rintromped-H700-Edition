@@ -9,6 +9,7 @@ on:
     branches: [h700/porting]
     paths:
       - 'porting/h700/**'
+      - 'docs/h700/**'
       - 'CMakeLists.txt'
       - 'engine/CMakeLists.txt'
       - 'engine/cmake/**'
@@ -19,6 +20,7 @@ on:
   pull_request:
     paths:
       - 'porting/h700/**'
+      - 'docs/h700/**'
       - 'CMakeLists.txt'
       - 'engine/CMakeLists.txt'
       - 'engine/cmake/**'
@@ -85,7 +87,7 @@ jobs:
           deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260831T000000Z/ bullseye-security main
           EOF
             apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 update
-            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 &&
+            DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
             chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
             ./scripts/build-probe.sh &&
             cmake -S renderer -B dist/gles-smoke-build -G Ninja -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu &&

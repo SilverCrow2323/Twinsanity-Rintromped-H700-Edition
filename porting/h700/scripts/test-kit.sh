@@ -136,7 +136,17 @@ for required in (
         raise SystemExit("AArch64 SDL config guard is incomplete: " + required)
 if "libsdl2-dev:arm64" not in workflow:
     raise SystemExit("Renderer compile workflow is missing libsdl2-dev:arm64")
-print("SDL target configuration is conditional on AArch64 cross-compilation.")
+workflow_lines = workflow.splitlines()
+package_start = next((i for i, line in enumerate(workflow_lines) if line == "  aarch64-package:"), -1)
+if package_start < 0:
+    raise SystemExit("AArch64 package job is missing")
+package_end = next((i for i in range(package_start + 1, len(workflow_lines))
+                    if workflow_lines[i].startswith("  ") and not workflow_lines[i].startswith("    ")),
+                   len(workflow_lines))
+package_job = "\\n".join(workflow_lines[package_start:package_end])
+if "libsdl2-dev:arm64" not in package_job:
+    raise SystemExit("AArch64 package sysroot is missing libsdl2-dev:arm64")
+print("SDL target configuration and AArch64 package headers are present.")
 PY
 
 
