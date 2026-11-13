@@ -1,6 +1,6 @@
 # H700 porting status
 
-**CI: full AArch64 runner and full muxapp build PASS (13 Nov 2026). Physical graphics preflight: PASS. First NativeEE frame and gameplay on Mali: NOT YET VALIDATED.**
+**CI PASS on `h700/porting` head `e58a5fba` (run `43399059636`): full AArch64 runner and full muxapp built. Physical EGL/GLES preflight: PASS. First NativeEE frame and gameplay on Mali: NOT YET VALIDATED.**
 
 ## Current status
 
@@ -39,7 +39,7 @@
 - [H700 build workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-Verified CI snapshot: current `h700/porting` commit `4726e851ad0367f0ef7644097a860558e2fd0e53`, H700 run `43374362800` (13 November 2026), passed `host-checks`, `gles-renderer-compile`, `gles-shader-mesa-smoke`, `full-app-aarch64-link`, `aarch64-package` and `full-app-muxapp`. The full runner `twinsanityevolved` is ELF64/AArch64 and requires at most `GLIBC_2.30`, within the Debian Bullseye GLIBC 2.31 baseline. The full `.muxapp` SHA-256 is `5abb1a27f06f1e2a0a5b9d96251fb0ad542e5148130b42e9cf99215162f7ad6c`; the workflow verified archive integrity, the single `TwinsanityRintromped/` root, diagnostics and licence payload. It does not contain `game.iso` or `disc-image.txt`. The diagnostic probe ELFs in the same run require at most `GLIBC_2.17`. These are CI build/package results, not proof of compatibility with muOS's Mali EGL/GLES runtime or a playable game.
+Verified CI snapshot: current `h700/porting` commit `e58a5fba82bc4e1d4c382e11584f161894f9d5eb`, H700 run `43399059636` (13 November 2026), passed all six jobs: `host-checks`, `gles-renderer-compile`, `gles-shader-mesa-smoke`, `full-app-aarch64-link`, `aarch64-package` and `full-app-muxapp`. The full runner `twinsanityevolved` is ELF64/AArch64 and requires at most `GLIBC_2.30`, within Debian Bullseye GLIBC 2.31. The full `.muxapp` is 5,643,365 bytes; SHA-256 `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d`. It contains the single `TwinsanityRintromped/` root, `mux_launch.sh`, `mux_lang.ini`, the full runner, diagnostics and FFmpeg licence payload; it does not contain `game.iso` or `disc-image.txt`. GitHub uploaded `twinsanity-rintromped-h700-full-muxapp` (5,555,771 bytes; artifact ZIP digest `a8a0acc3b107941787e359b384758e96a09233ac072ed47ba4754e502f53a8ca`). The diagnostic probe ELFs require at most `GLIBC_2.17`. These are CI build/package results, not proof of compatibility with muOS's Mali EGL/GLES runtime or a playable game.
 
 ## Next gates
 
