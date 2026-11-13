@@ -2,7 +2,7 @@
 
 This directory contains the H700-specific development tools, hardware probes, packaging scripts and renderer validation harness.
 
-> **Hardware milestone reached:** a physical muOS Andromeda H700 device passed EGL 1.4, GLES 3.2 and SDL window presentation on the Mali-G31. The NativeEE game renderer is still being adapted; no playable H700 build is available yet.
+> **CI release-candidate milestone reached:** the full AArch64 game runner now links with static LGPL FFmpeg and is packaged as a ZIP-based muOS `.muxapp`. A physical muOS Andromeda H700 has passed EGL 1.4, GLES 3.2 and SDL window presentation on Mali-G31; full-game boot and gameplay on that device are still unverified.
 
 ## Start here
 
@@ -12,7 +12,7 @@ This directory contains the H700-specific development tools, hardware probes, pa
 |---|---|
 | device/ | EGL/GLES and SDL/GLES hardware probes, plus system inventory |
 | renderer/ | Compile-only CMake gate for the real engine GL backend and SDL platform sources |
-| scripts/ | Build, package and host-side checks for the diagnostic app |
+| scripts/ | Build, package and host-side checks for diagnostics and the full-game candidate |
 | muos/ | muOS Application Runner entry point and language metadata |
 | docs/ | API compatibility audit, test protocol and development notes |
 | tools/ | Source-level GL API inventory tools |
@@ -20,7 +20,7 @@ This directory contains the H700-specific development tools, hardware probes, pa
 
 ## Important distinction
 
-The preflight .muxapp is a diagnostic application. It does not start the NativeEE engine, parse game.iso, or run game code. See the [installation guide](../../docs/h700/install.md) before using it.
+The H700 artifacts now include both a diagnostic-only preflight `.muxapp` and a full-game candidate `.muxapp`. Both are ZIP archives renamed to `.muxapp`; neither includes the user's ISO. The full runner is CI-built, but its first boot and gameplay still need physical Mali-G31 validation. See the [installation guide](../../docs/h700/install.md) before installing either artifact.
 
 ## Core commands
 
