@@ -80,12 +80,12 @@ The diagnostic package validates the hardware and production shader entry points
 
 ## Verified full AArch64 runner and muxapp
 
-The current `h700/porting` head `4726e851ad0367f0ef7644097a860558e2fd0e53` passed H700 workflow run `43374362800` on 13 November 2026. In addition to the renderer and Mesa gates, the run passed `full-app-aarch64-link` and `full-app-muxapp`.
+The current `h700/porting` head `e58a5fba82bc4e1d4c382e11584f161894f9d5eb` passed H700 workflow run `43399059636` on 13 November 2026. All six jobs passed: host preflight, AArch64 NativeEE renderer compile, Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
 
 - Runner: `twinsanityevolved`, ELF64/AArch64, maximum required GLIBC symbol `GLIBC_2.30` (within the Bullseye GLIBC 2.31 baseline).
-- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; SHA-256 `5abb1a27f06f1e2a0a5b9d96251fb0ad542e5148130b42e9cf99215162f7ad6c`.
-- The package builder verifies the ELF architecture, GLIBC ceiling, absence of dynamic FFmpeg and desktop OpenGL dependencies, ZIP integrity, the exact `TwinsanityRintromped/` root and required launcher/runtime/licence files.
-- The user's `game.iso` and `disc-image.txt` are explicitly excluded. The launcher selects the user's ISO from `MUOS/application/TwinsanityRintromped/` and has host regression tests for saved selection, fallback to `game.iso`, and missing-image failure.
+- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; size 5,643,365 bytes; SHA-256 `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d`.
+- GitHub full-muxapp artifact ZIP: 5,555,771 bytes; digest `a8a0acc3b107941787e359b384758e96a09233ac072ed47ba4754e502f53a8ca`.
+- The package has exactly one root, `TwinsanityRintromped/`, includes `mux_launch.sh` and `mux_lang.ini`, and excludes the user's `game.iso` and `disc-image.txt`.
 
 This is a successful **cross-build and packaging milestone**, not a physical boot or a playable-game certification. The first NativeEE frame, Mali shader execution, controller, audio, video, disc streaming and sustained performance still require real H700 testing.
 
