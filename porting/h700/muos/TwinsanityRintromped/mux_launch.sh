@@ -74,6 +74,22 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         printf 'Runner argv[2]: %s\n' "$DISC_PATH"
         printf 'Launcher arguments ignored: %s\n' "$#"
     } >> "$APP_DIR/logs/game-launch.log"
+
+    # Record the global hotkey plumbing before handing control to NativeEE.
+    # SETUP_APP writes the foreground_process consumed by muOS's Force Quit
+    # action; muhotkey itself is a separate system daemon, not an SDL event
+    # handler owned by this game process.
+    HOTKEY_PIDS="$(pgrep -x muhotkey 2>/dev/null || true)"
+    FOREGROUND_PROCESS="$(GET_VAR "config" "system/foreground_process" 2>/dev/null || true)"
+    {
+        printf 'muOS foreground_process: %s\n' "$FOREGROUND_PROCESS"
+        if [ -n "$HOTKEY_PIDS" ]; then
+            printf 'muOS muhotkey daemon PID(s): %s\n' "$HOTKEY_PIDS"
+        else
+            printf 'WARNING: muhotkey daemon not visible at game handoff\n'
+        fi
+    } >> "$APP_DIR/logs/game-launch.log"
+
     # muOS may invoke application scripts with framework-specific positional
     # parameters. They are not game options: never forward them to NativeEE.
     exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" >> "$APP_DIR/logs/game-launch.log" 2>&1
