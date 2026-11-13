@@ -70,9 +70,17 @@ jobs:
       - uses: actions/checkout@v7
       - name: Install host packaging and ELF tools
         run: sudo apt-get update && sudo apt-get install -y binutils file zip python3
+      - name: Download and verify pinned CMake 3.31.12
+        run: |
+          curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz -o "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz"
+          echo "0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c  $RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz" | sha256sum --check
       - name: Cross-build with Debian Bullseye sysroot
         run: |
-          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz:/tmp/cmake.tar.gz:ro" -w /src/porting/h700 debian:bullseye-slim sh -lc '
+            mkdir -p /opt/cmake &&
+            tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 &&
+            export PATH=/opt/cmake/bin:$PATH &&
+            cmake --version | grep -q "3.31.12" &&
             dpkg --add-architecture arm64 &&
             rm -f /etc/apt/sources.list &&
             printf "%s\\n" \
@@ -123,9 +131,17 @@ jobs:
     needs: host-checks
     steps:
       - uses: actions/checkout@v7
+      - name: Download and verify pinned CMake 3.31.12
+        run: |
+          curl -fsSL https://github.com/Kitware/CMake/releases/download/v3.31.12/cmake-3.31.12-linux-x86_64.tar.gz -o "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz"
+          echo "0dc2e9a6860f06bf10bd8fadc03e35d9eeb4df46e33763a7e480e987758f385c  $RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz" | sha256sum --check
       - name: Cross-compile renderer and SDL against ARM64 GLES / SDL development packages
         run: |
-          docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src debian:bullseye-slim sh -lc '
+          docker run --rm -v "$GITHUB_WORKSPACE:/src" -v "$RUNNER_TEMP/cmake-3.31.12-linux-x86_64.tar.gz:/tmp/cmake.tar.gz:ro" -w /src debian:bullseye-slim sh -lc '
+            mkdir -p /opt/cmake &&
+            tar -xzf /tmp/cmake.tar.gz -C /opt/cmake --strip-components=1 &&
+            export PATH=/opt/cmake/bin:$PATH &&
+            cmake --version | grep -q "3.31.12" &&
             dpkg --add-architecture arm64 &&
             rm -f /etc/apt/sources.list &&
             printf "%s\\n" \
