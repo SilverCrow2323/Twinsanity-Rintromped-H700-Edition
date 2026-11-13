@@ -7,11 +7,12 @@
 ## Install
 
 1. Download the latest successful H700 CI artifact named twinsanity-rintromped-h700-preflight.
-2. Extract the artifact and copy Twinsanity-Rintromped-H700-Preflight.muxapp into the ARCHIVE folder on SD1.
-3. Open **Applications → Archive Manager** in muOS.
-4. Install the archive.
-5. Launch **Twinsanity Rintromped** from Applications.
-6. During the SDL test, the display should briefly show a sequence of solid colours.
+2. Extract the GitHub Actions artifact ZIP once. Inside it, copy Twinsanity-Rintromped-H700-Preflight.muxapp into the ARCHIVE folder on SD1.
+3. Keep the `.muxapp` extension: the file itself is a normal ZIP archive renamed to `.muxapp`. Do **not** extract it or wrap it in another folder/archive.
+4. Open **Applications → Archive Manager** in muOS.
+5. Install the archive.
+6. Launch **Twinsanity Rintromped** from Applications.
+7. During the SDL test, the display should briefly show a sequence of solid colours.
 
 ## Archive layout
 
