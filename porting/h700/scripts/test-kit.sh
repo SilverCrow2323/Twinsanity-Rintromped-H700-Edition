@@ -116,4 +116,10 @@ grep -q 'libsdl2-dev:arm64' "$WORKFLOW"
 grep -q 'SDL2/_real_SDL_config.h' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
 grep -q 'TE_SDL2_TARGET_CONFIG_INCLUDE_DIR' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
 
+
+# Cross-compiled SDL sources must not resolve the host amd64-generated config.
+grep -q 'libsdl2-dev:arm64' "$WORKFLOW"
+grep -q 'SDL2/_real_SDL_config.h' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+grep -q 'TE_SDL2_TARGET_CONFIG_INCLUDE_DIR' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
