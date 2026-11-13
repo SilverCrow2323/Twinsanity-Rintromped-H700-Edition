@@ -1,9 +1,13 @@
 #!/bin/sh
 # HELP: Twinsanity Rintromped - H700 Edition
 # GRID: Twinsanity Rintromped
-. /opt/muos/script/var/func.sh || exit 1
 
-APP_DIR="/run/muos/storage/application/TwinsanityRintromped"
+# The two overrides keep the launcher testable on a host; muOS uses its normal
+# paths and SETUP_APP implementation.
+MUOS_FUNC_SH="${TW_H700_MUOS_FUNC_SH:-/opt/muos/script/var/func.sh}"
+. "$MUOS_FUNC_SH" || exit 1
+
+APP_DIR="${TW_H700_APP_DIR:-/run/muos/storage/application/TwinsanityRintromped}"
 GAME_BIN="twinsanityevolved"
 APP_BIN="tw-rintromped-h700-probe"
 SDL_BIN="tw-rintromped-h700-sdl-probe"
@@ -19,21 +23,26 @@ cd "$APP_DIR" || exit 1
 mkdir -p logs
 
 if [ "$APP_BIN" = "$GAME_BIN" ]; then
-    # NativeEE reads the user's disc-image.txt beside the executable. muOS has no
-    # zenity/kdialog picker, so seed it from game.iso only when the saved selection
-    # is absent or points to a file that no longer exists. Never alter the ISO.
+    # NativeEE requires --iso <image>. The launcher stores the user's selection
+    # beside the executable and passes its resolved path explicitly; merely
+    # writing disc-image.txt is not enough for the runner's command-line parser.
+    # If the saved path is missing, seed it from game.iso without touching it.
     DISC_OK=0
     DISC_IMAGE=""
+    DISC_PATH=""
     if [ -s "$APP_DIR/disc-image.txt" ]; then
         IFS= read -r DISC_IMAGE < "$APP_DIR/disc-image.txt" || true
         case "$DISC_IMAGE" in
-            /*) [ -f "$DISC_IMAGE" ] && DISC_OK=1 ;;
-            "") DISC_OK=0 ;;
-            *)  [ -f "$APP_DIR/$DISC_IMAGE" ] && DISC_OK=1 ;;
+            /*) DISC_PATH="$DISC_IMAGE" ;;
+            "") DISC_PATH="" ;;
+            *)  DISC_PATH="$APP_DIR/$DISC_IMAGE" ;;
         esac
+        [ -f "$DISC_PATH" ] && DISC_OK=1
     fi
     if [ "$DISC_OK" -ne 1 ] && [ -f "$APP_DIR/game.iso" ]; then
-        printf '%s\n' "game.iso" > "$APP_DIR/.disc-image.txt.tmp"
+        DISC_IMAGE="game.iso"
+        DISC_PATH="$APP_DIR/$DISC_IMAGE"
+        printf '%s\n' "$DISC_IMAGE" > "$APP_DIR/.disc-image.txt.tmp"
         mv -f "$APP_DIR/.disc-image.txt.tmp" "$APP_DIR/disc-image.txt"
         DISC_OK=1
     fi
@@ -44,7 +53,12 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
 
     # The physical preflight selected SDL's Mali backend on this muOS build.
     export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-mali}"
-    exec "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    {
+        printf 'Launching %s\n' "$GAME_BIN"
+        printf 'Disc image: %s\n' "$DISC_PATH"
+        printf 'SDL video driver: %s\n' "$SDL_VIDEODRIVER"
+    } >> "$APP_DIR/logs/game-launch.log"
+    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
 
 export APP_DIR
