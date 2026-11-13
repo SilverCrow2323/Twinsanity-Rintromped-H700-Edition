@@ -445,7 +445,7 @@ set(TE_ENGINE_FORWARDED_ARGS "")
 foreach(var CMAKE_C_COMPILER_LAUNCHER CMAKE_CXX_COMPILER_LAUNCHER CMAKE_TOOLCHAIN_FILE CMAKE_SYSROOT
             CMAKE_FIND_ROOT_PATH CMAKE_SYSTEM_PROCESSOR CMAKE_C_COMPILER_TARGET CMAKE_CXX_COMPILER_TARGET
             VCPKG_TARGET_TRIPLET CMAKE_LINKER CMAKE_PREFIX_PATH CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET
-            PS2R_GLES_INCLUDE_DIR PS2R_GLES_LIBRARY)
+            PS2R_GLES_INCLUDE_DIR PS2R_GLES_LIBRARY FFMPEG_INCLUDE_DIR FFMPEG_AVCODEC_LIBRARY FFMPEG_AVUTIL_LIBRARY FFMPEG_SWSCALE_LIBRARY)
     if(DEFINED ${var} AND NOT "${${var}}" STREQUAL "")
         string(REPLACE ";" "|" _fwd "${${var}}")   # ExternalProject LIST_SEPARATOR below
         list(APPEND TE_ENGINE_FORWARDED_ARGS "-D${var}=${_fwd}")
@@ -613,7 +613,7 @@ elseif(PS2R_GLES)
 include("${TE_ENGINE}/cmake/OpenGlDependency.cmake")
 include("${TE_ENGINE}/cmake/FindFFmpeg.cmake")
 set(TE_HAVE_SDL_INPUT 1)
-target_link_libraries(nativeee_libs INTERFACE Threads::Threads SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::avutil FFmpeg::swscale)
+target_link_libraries(nativeee_libs INTERFACE Threads::Threads SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::swscale FFmpeg::avutil m)
 else()
 find_package(OpenGL REQUIRED)
 # FFmpeg (libavcodec / libavutil / libswscale): the movies' MPEG-2 video decoder (ps2r_ipu, behind ps2e_movie). The
