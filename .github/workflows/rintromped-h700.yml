@@ -175,20 +175,20 @@ jobs:
               > /etc/apt/sources.list &&
             apt-get -o Acquire::Check-Valid-Until=false update &&
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-              ca-certificates curl git unzip xz-utils python3 make ninja-build g++ pkg-config file binutils \
+              ca-certificates curl git unzip xz-utils python3 perl make ninja-build g++ pkg-config file binutils \
               gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
-              libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 \
-              libavcodec-dev:arm64 libavutil-dev:arm64 libswscale-dev:arm64 &&
+              libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 &&
             WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh &&
+            FFMPEG_JOBS=2 bash porting/h700/scripts/build-ffmpeg-static.sh build/h700-full-aarch64/third_party/ffmpeg &&
             cmake -S . -B build/h700-full-aarch64 -G Ninja \
               -DCMAKE_TOOLCHAIN_FILE=/src/porting/h700/toolchains/aarch64-linux-gnu.cmake \
               -DPS2R_GLES=ON \
               -DPS2R_GLES_INCLUDE_DIR=/usr/include \
               -DPS2R_GLES_LIBRARY=/usr/lib/aarch64-linux-gnu/libGLESv2.so \
-              -DFFMPEG_INCLUDE_DIR=/usr/include/aarch64-linux-gnu \
-              -DFFMPEG_AVCODEC_LIBRARY=/usr/lib/aarch64-linux-gnu/libavcodec.so \
-              -DFFMPEG_AVUTIL_LIBRARY=/usr/lib/aarch64-linux-gnu/libavutil.so \
-              -DFFMPEG_SWSCALE_LIBRARY=/usr/lib/aarch64-linux-gnu/libswscale.so \
+              -DFFMPEG_INCLUDE_DIR=/src/build/h700-full-aarch64/third_party/ffmpeg/include \
+              -DFFMPEG_AVCODEC_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavcodec.a \
+              -DFFMPEG_AVUTIL_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavutil.a \
+              -DFFMPEG_SWSCALE_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libswscale.a \
               -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu &&
             cmake --build build/h700-full-aarch64 --target twinsanityevolved --parallel 2 &&
             test -x build/h700-full-aarch64/twinsanityevolved &&
@@ -198,5 +198,8 @@ jobs:
             max=$(readelf --version-info build/h700-full-aarch64/twinsanityevolved | grep -o "GLIBC_[0-9.]*" | sort -Vu | tail -n 1 || true) &&
             echo "full runner maximum required GLIBC symbol: $max" &&
             test -z "$max" || test "$(printf "%s\\n" "$max" GLIBC_2.31 | sort -V | tail -n 1)" = "GLIBC_2.31" &&
-            readelf -d build/h700-full-aarch64/twinsanityevolved | grep NEEDED
+            readelf -d build/h700-full-aarch64/twinsanityevolved | grep NEEDED &&
+            if readelf -d build/h700-full-aarch64/twinsanityevolved | grep -Eq "libav(codec|util|swscale).*\\.so"; then echo "FFmpeg must be statically linked for muOS" >&2; exit 1; fi &&
+            strings build/h700-full-aarch64/twinsanityevolved | grep -q -- "--enable-decoder=mpeg2video" &&
+            ! strings build/h700-full-aarch64/twinsanityevolved | grep -Eq -- "--enable-gpl|--enable-nonfree|--enable-version3"
           '
