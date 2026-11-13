@@ -108,10 +108,16 @@ std::string g_watch;   // the instance logged with the probe lines
 uint64_t g_watch_last = 0;
 
 float InstField(const probe::Instance& i, const probe::State& s, const std::string& field) {
-    if (field == "x") return i.x; if (field == "y") return i.y; if (field == "z") return i.z;
-    if (field == "xmin") return i.min_x; if (field == "xmax") return i.max_x;
-    if (field == "ymin") return i.min_y; if (field == "ymax") return i.max_y;
-    if (field == "zmin") return i.min_z; if (field == "zmax") return i.max_z;
+    if (field == "x") return i.x;
+    if (field == "y") return i.y;
+    if (field == "z") return i.z;
+    if (field == "xmin") return i.min_x;
+    if (field == "xmax") return i.max_x;
+    if (field == "ymin") return i.min_y;
+    if (field == "ymax") return i.max_y;
+    if (field == "zmin") return i.min_z;
+    if (field == "zmax") return i.max_z;
+
     const float dx = i.x - s.x, dz = i.z - s.z;   // dist
     return std::sqrt(dx * dx + dz * dz);
 }
