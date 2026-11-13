@@ -9,7 +9,13 @@ grep -q 'zip -qr "$TMP_ARCHIVE" TwinsanityRintromped' scripts/package-muxapp.sh
 grep -q 'mv -f "$TMP_ARCHIVE" "$OUT_ABS"' scripts/package-muxapp.sh
 if grep -q 'application/TwinsanityRintromped' scripts/package-muxapp.sh; then echo 'Legacy nested muxapp layout detected' >&2; exit 1; fi
 if grep -R -n -F '\${' scripts device muos --exclude=test-kit.sh; then echo 'Found escaped shell expansion' >&2; exit 1; fi
-for f in scripts/*.sh muos/TwinsanityRintromped/*.sh device/*.sh; do [ -f "$f" ] && sh -n "$f"; done
+for f in scripts/*.sh muos/TwinsanityRintromped/*.sh device/*.sh; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    scripts/build-ffmpeg-static.sh) bash -n "$f" ;;
+    *) sh -n "$f" ;;
+  esac
+done
 bash -n "$ROOT/../../tools/fetch_toolchain.sh"
 bash -n "$ROOT/scripts/build-ffmpeg-static.sh"
 sh -n "$ROOT/scripts/package-full-muxapp.sh"
@@ -94,7 +100,7 @@ p = sys.argv[1]
 if not zipfile.is_zipfile(p):
     raise SystemExit("Full muxapp is not a ZIP archive renamed to .muxapp")
 with open(p, "rb") as stream:
-    if stream.read(4) != b"PK\\x03\\x04":
+    if stream.read(4) != b"PK\x03\x04":
         raise SystemExit("Full muxapp ZIP signature is invalid")
 with zipfile.ZipFile(p) as archive:
     if archive.testzip() is not None:
