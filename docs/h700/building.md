@@ -20,7 +20,7 @@ Host prerequisites on Ubuntu:
 sudo apt-get update
 sudo apt-get install -y \
   g++-aarch64-linux-gnu cmake ninja-build \
-  libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev
+  libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64
 ~~~
 
 Configure and compile:
@@ -35,7 +35,7 @@ cmake --build build/h700-gles \
   --target h700_gles_compile_check --parallel 2
 ~~~
 
-The target is called h700_gles_compile_check. A successful build means the selected engine source files compile against the installed GLES/SDL headers. It does not prove that the linked device libraries export every symbol or that the shaders render correctly.
+The target is called h700_gles_compile_check. For an AArch64 cross build, install the arm64 SDL2 development package as well as the GLES target headers/libraries. CMake adds the generated SDL2 multiarch config header from `/usr/include/aarch64-linux-gnu` only when `CMAKE_SYSTEM_PROCESSOR=aarch64`; native Mesa runs use the host SDL2 headers. A successful build means the selected engine source files compile against the installed GLES/SDL headers. It does not prove that the linked device libraries export every symbol or that the shaders render correctly.
 
 ## Full project configure
 
@@ -63,8 +63,9 @@ The H700 workflow now contains separate validation lanes:
 | Job | Purpose |
 |---|---|
 | host-checks | Shell, probe, packaging and host safety checks |
-| gles-renderer-compile | Cross-compiles renderer and SDL objects against GLES headers |
-| aarch64-package | Builds and packages the hardware diagnostic utility |
+| gles-renderer-compile | Cross-compiles renderer and SDL objects against AArch64 GLES/SDL headers |
+| gles-shader-mesa-smoke | **Required blocking gate**; builds and runs the production shader library on Mesa llvmpipe |
+| aarch64-package | Builds, ELF-checks and packages the hardware diagnostic utility against the GLIBC 2.31 baseline |
 
 The diagnostic package is not the game binary. The build artifact must never be described as playable until the renderer and game runtime milestones have passed.
 
@@ -93,4 +94,8 @@ cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
 EGL_PLATFORM=surfaceless LIBGL_ALWAYS_SOFTWARE=1 ./build/mesa-gles/h700_gles_shader_smoke
 ~~~
 
-The Mesa job is intentionally non-blocking while the new harness is stabilised. A pass proves that the production shader library compiles and links under Mesa GLES; it is not proof of Mali driver behavior or correct game images. The same shader smoke should later run on the physical H700.
+The Mesa production shader smoke is a **required blocking CI gate**. A pass proves that the production shader library compiles, links and runs in a Mesa EGL/GLES context; it is software-driver evidence only, not proof of Mali driver behavior or correct game images. The same shader smoke must also run on the physical H700 before claiming hardware shader support.
+
+### Reproducible AArch64 package sysroot
+
+The diagnostic package job retains Debian 11 / Bullseye as its cross-build sysroot so generated AArch64 binaries are checked against the GLIBC 2.31 compatibility ceiling. Bullseye LTS ended on 31 August 2026; therefore CI uses Debian Archive for the Bullseye base/update repositories and a fixed 31 August 2026 snapshot for the final Bullseye security index. The snapshot is a build-time reproducibility input only, not a recommendation to deploy an unsupported Debian host or a claim of ongoing Bullseye security maintenance. Do not silently switch this job to a newer GLIBC baseline: validate the resulting ELF symbol versions against the muOS target first.
