@@ -110,16 +110,33 @@ if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=
 fi
 
 
-# The cross renderer compile must use the AArch64 SDL development package and
-# its multiarch generated config header, not only the host amd64 SDL headers.
-grep -q 'libsdl2-dev:arm64' "$WORKFLOW"
-grep -q 'SDL2/_real_SDL_config.h' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
-grep -q 'TE_SDL2_TARGET_CONFIG_INCLUDE_DIR' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+# Target SDL configuration is required only for cross-compiling the SDL platform objects.
+# Native Mesa shader smoke must remain independent of arm64 headers.
+python3 - "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt" "$WORKFLOW" <<'PY'
+from pathlib import Path
+import re
+import sys
 
-
-# Cross-compiled SDL sources must not resolve the host amd64-generated config.
-grep -q 'libsdl2-dev:arm64' "$WORKFLOW"
-grep -q 'SDL2/_real_SDL_config.h' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
-grep -q 'TE_SDL2_TARGET_CONFIG_INCLUDE_DIR' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+cmake = Path(sys.argv[1]).read_text(encoding="utf-8")
+workflow = Path(sys.argv[2]).read_text(encoding="utf-8")
+match = re.search(
+    r'if\\(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"\\)(.*?)endif\\(\\)',
+    cmake,
+    re.DOTALL,
+)
+if not match:
+    raise SystemExit("AArch64-only SDL config include guard is missing")
+block = match.group(1)
+for required in (
+    "find_path(TE_SDL2_TARGET_CONFIG_INCLUDE_DIR",
+    "SDL2/_real_SDL_config.h",
+    "target_include_directories(h700_sdl_gles_compile PRIVATE",
+):
+    if required not in block:
+        raise SystemExit("AArch64 SDL config guard is incomplete: " + required)
+if "libsdl2-dev:arm64" not in workflow:
+    raise SystemExit("Renderer compile workflow is missing libsdl2-dev:arm64")
+print("SDL target configuration is conditional on AArch64 cross-compilation.")
+PY
 
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
