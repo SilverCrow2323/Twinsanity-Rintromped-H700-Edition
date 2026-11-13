@@ -63,7 +63,7 @@ void HandleMuosExitHotkey(const SDL_Event& event) {
 
     if (g_muos_menu_down && g_muos_start_down && !g_muos_exit_requested) {
         g_muos_exit_requested = true;
-        std::fprintf(stderr, "[muos.hotkey] MENU + START: requesting clean exit\\n");
+        std::fprintf(stderr, "[muos.hotkey] MENU + START: requesting clean exit\n");
         te::RequestExit(0);
     }
 }
@@ -369,7 +369,7 @@ bool Install(Pads& pads, const Settings& settings) {
                         te::RequestExit(0);
                     }
                     HandleMuosExitHotkey(e);
-                    g_input->HandleEvent(e);
+                g_input->HandleEvent(e);
                 }
             }
 #else
