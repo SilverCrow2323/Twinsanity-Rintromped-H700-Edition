@@ -24,18 +24,18 @@ flowchart TD
 
 ## ✅ CI evidence — 13 November 2026
 
-Commit `6a94f3951589e7617b870f79837253da9f77d09c` passed the H700 host checks, AArch64 renderer/SDL cross-compile and production shader smoke on Mesa. The ZIP-based diagnostic `.muxapp` has already been generated and inspected on earlier green runs: the archive root is exactly `TwinsanityRintromped/`, with three ELF64/AArch64 diagnostics and no game ISO. The current run is extending the gate to a full AArch64 game runner with FFmpeg 6.1.2 statically linked under the minimal LGPL recipe, followed by a complete muOS `.muxapp`. Those full-game jobs are **in progress**, not yet passed. Nothing in CI establishes Mali shader success or playable gameplay on the physical device.
+Commit `9e2b6b82ad0ea2c43fa9d5203c000074a14259de` passed all six H700 workflow jobs: host checks, production shader smoke on Mesa, AArch64 renderer/SDL compile, diagnostic package, full game/NativeEE AArch64 link and full-game muOS `.muxapp` packaging. The full runner is ELF64/AArch64, requires GLIBC up to 2.30, and has no dynamic FFmpeg dependency: FFmpeg 6.1.2's minimal MPEG-1/2 decoder + parser + swscale subset is statically linked with the LGPL v2.1+ recipe. The generated full `.muxapp` was downloaded and inspected: valid ZIP, correct `TwinsanityRintromped/` root, executable runner and three diagnostics, licence files present, no ISO or disc-selection file. This is a **CI-built release candidate**, not proof of a successful boot or playable gameplay on Mali-G31; physical-device validation remains the next gate.
 
 | Stage | Exit criteria | State |
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
-| 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; diagnostic shader executable links against ARM64 EGL/GLES | **Passed in CI** (`6a94f395`) |
-| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed** (`6a94f395`); physical Mali run pending |
+| 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; full runner links against ARM64 GLES and static LGPL FFmpeg | **Passed in CI** (`9e2b6b82`) |
+| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed** (`9e2b6b82`); physical Mali run pending |
 | 4 · GS surfaces | FBO, depth/stencil, textures, mipmaps and readback validated | Pending |
 | 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
 | 6 · Game boot | Game reaches title and first interactive scene | Pending |
 | 7 · Runtime systems | Controls, audio, ISO streaming, saves and clean exit | Pending |
-| 8 · Release | Stable frame pacing, thermals, install/update and docs | Pending |
+| 8 · Release | Stable frame pacing, thermals, install/update and docs | **CI candidate packaged**; physical validation pending |
 
 ## 1 — Hardware preflight · PASSED
 
@@ -49,11 +49,13 @@ Commit `6a94f3951589e7617b870f79837253da9f77d09c` passed the H700 host checks, A
 - [x] Cross-compile the selected real NativeEE renderer and SDL source units for AArch64 against ARM64 GLES/SDL headers.
 - [x] Build and link the NativeEE shader diagnostic executable against the ARM64 EGL/GLES sysroot.
 - [x] Keep desktop, Windows and Vita paths covered by their separate build workflows.
-- [ ] Link the complete game + NativeEE runner for AArch64 against a Bullseye-compatible sysroot; the current lane also checks GLIBC 2.31.
-- [x] Add a pinned FFmpeg 6.1.2 cross-build using the engine's minimal static LGPL MPEG-1/2 + parser + swscale recipe; archive and licence checks run before packaging.
-- [x] Add a second ZIP-based full-game muxapp packaging job, dependent on the full runner and the three hardware diagnostics.
-- [x] Make the renderer compile and Mesa shader smoke gates blocking in CI.
-- [ ] Finish the full-runner static FFmpeg build/link and inspect the resulting full muxapp artifact.
+- [x] Link the complete game + NativeEE runner for AArch64 against the Bullseye-compatible sysroot; CI checks GLIBC 2.31 baseline (runner requires up to GLIBC 2.30).
+- [x] Build pinned FFmpeg 6.1.2 for AArch64 with the minimal static LGPL MPEG-1/2 + parser + swscale recipe.
+- [x] Verify no dynamic FFmpeg libraries remain in the runner and retain the FFmpeg licence/build proof in the app archive.
+- [x] Package the full runner and the three hardware diagnostics into a ZIP-based muOS `.muxapp`; verify root layout, executable modes, archive integrity and absence of user disc data.
+- [x] Make renderer compile, Mesa shader smoke, full AArch64 link and full package gates blocking in CI.
+- [ ] Run the packaged production shader smoke on the physical Mali-G31 and inspect its report.
+- [ ] Boot the full-game candidate from the user's own ISO and validate title screen, controls, audio, streaming, saves and clean exit.
 
 ## 3–4 — Production shaders and GS surfaces
 
@@ -74,11 +76,11 @@ Commit `6a94f3951589e7617b870f79837253da9f77d09c` passed the H700 host checks, A
 - [ ] Record GPU/API, shader results, frame time and memory footprint.
 - [ ] Validate the captured image before moving to game boot.
 
-## 6–8 — Game runtime and release
+## 6–8 — Game runtime and release candidate
 
-Only after the first NativeEE frame is correct should the project proceed to game boot, controller mapping, audio, disc streaming, save data and performance work.
+The full-game `.muxapp` now exists as a reproducible CI artifact. The next test is on the physical H700: run the diagnostic preflight first, then install the full-game candidate and record whether the runner reaches the first NativeEE frame, the game's title screen and an interactive scene.
 
-The final release gate includes repeatable cold boot, stable gameplay, clean shutdown, upgrade-safe muOS packaging, user-data preservation, clear troubleshooting guides and a reproducible CI artifact.
+The final stable-release gate still includes repeatable cold boot, correct rendering, controller mapping, audio, disc streaming, save/load, clean shutdown, stable frame pacing/thermals, upgrade-safe muOS packaging, user-data preservation, clear troubleshooting guides and a reproducible CI artifact.
 
 ## Definition of done
 
