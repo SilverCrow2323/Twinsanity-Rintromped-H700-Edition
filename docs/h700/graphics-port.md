@@ -35,6 +35,21 @@ The first three graphics layers are confirmed on the physical device. NativeEE i
 
 See the [device profile](device-profile.md) for the full environment and extension inventory.
 
+## 🧪 First full-runner attempt · 13 November 2026
+
+The first physical launch of the full NativeEE runner passed the launcher-to-runner hand-off and reached game initialisation:
+
+- The runner received `--iso` with the expected `game.iso` path.
+- The disc detector identified the supplied PAL image as `SLES-52568`; the retail ELF was loaded.
+- muOS gamepad input and the SDL audio device initialised.
+- SDL created an OpenGL ES 3.2 context on the Mali-G31.
+
+The first production PS2 vertex shader then failed on Mali because the embedded raw-string source had a leading newline before `#version`. Mesa had accepted that source layout, while the Mali compiler correctly required `#version` on the first line. The GLES converter now removes leading whitespace, verifies that `#version` is first, and only then rewrites the source to GLSL ES 3.20. The production shader smoke passes on Mesa after this change; a fresh run on the physical Mali driver is still required.
+
+The same log exposed a separate first-run storage issue: `userdata/` was selected before it existed, so writing `ps2r.ini.tmp` failed. The runner now creates and write-probes its data directory, with a fallback to the per-user data path. Host regression tests cover both a missing directory and an unusable preferred path.
+
+**What this proves:** the real runner, disc loader, input/audio initialisation and Mali context are now reached. **What it does not prove:** a successful Mali shader compile, a visible NativeEE frame, a title screen or playable gameplay.
+
 ## 🧩 Compatibility work in the engine
 
 | Desktop assumption | H700 adaptation | Evidence state |
