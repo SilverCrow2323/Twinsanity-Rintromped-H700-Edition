@@ -17,8 +17,9 @@
 | SDL context selection | Added | Requests ES 3.2 and rejects lower returned versions |
 | Shader conversion adapter | Added | GLSL 410 core → ES 320; source-level regression guard |
 | GLES API adapters | Initial set added | Uniforms, depth clear, mip dimensions, draw buffers, map flags |
-| Renderer compile gate | CI queued | AArch64 object compile against GLES and SDL headers |
-| Production shader smoke | Added | Real `GlShaderLibrary` EGL/GLES test; Mesa job is non-blocking during bring-up |
+| Renderer compile gate | CI PASS (recorded combined run) | Actual GL renderer and SDL platform objects cross-compiled for AArch64 against GLES/target SDL2 headers; link/runtime still pending |
+| Production shader smoke | **Blocking CI PASS (recorded combined run)** | Real `GlShaderLibrary` EGL/GLES test completed on Mesa llvmpipe; physical Mali shader execution still pending |
+| AArch64 diagnostic package | CI pending (recorded combined run) | Debian 11 cross sysroot is pinned to archived Bullseye base/update packages plus the 2026-08-31 final security snapshot to preserve GLIBC 2.31; ELF/package result not yet confirmed |
 | First NativeEE frame | Pending | Requires compile, Mali shader and surface validation |
 | Game runtime | Not available | No playable build yet |
 
@@ -37,7 +38,9 @@
 - [H700 build workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-The renderer compile job is a compile-only gate. A green result proves that the selected translation units compile against GLES headers; it does not prove target linking, shader execution, image correctness or gameplay.
+The renderer compile job is a compile-only gate. A green result proves that the selected translation units compile against GLES/SDL2 headers; it does not prove target linking, shader execution, image correctness or gameplay. The production Mesa shader-smoke job is a required blocking CI gate. A green Mesa run is not a physical Mali-G31 test.
+
+The AArch64 package job uses a pinned Debian 11 build sysroot because the target compatibility gate caps GLIBC at 2.31. Bullseye LTS ended on 31 August 2026, so CI resolves its base/update packages from Debian Archive and the final security index from a fixed 2026-08-31 snapshot. This snapshot is only a CI build input and does not claim that Bullseye remains supported or security-maintained.
 
 ## Next gates
 

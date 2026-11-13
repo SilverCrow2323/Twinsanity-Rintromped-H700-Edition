@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.18)
 project(TwinsanityH700GlesCompile LANGUAGES CXX)
 
 # Compile-only gate for the real engine GL backend against the target's GLES API.
@@ -50,6 +50,15 @@ target_include_directories(h700_sdl_gles_compile PRIVATE
     "${TE_GLES_INCLUDE_DIR}"
     "${TE_SDL2_INCLUDE_DIR}"
 )
+# Only the cross-compiled SDL objects need the AArch64-generated SDL config.
+# The native Mesa shader-smoke job uses the host SDL2 headers and has no arm64
+# multiarch package installed.
+if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")
+    find_path(TE_SDL2_TARGET_CONFIG_INCLUDE_DIR NAMES SDL2/_real_SDL_config.h
+        PATHS /usr/include/aarch64-linux-gnu NO_DEFAULT_PATH REQUIRED)
+    target_include_directories(h700_sdl_gles_compile PRIVATE
+        "${TE_SDL2_TARGET_CONFIG_INCLUDE_DIR}")
+endif()
 target_compile_definitions(h700_sdl_gles_compile PRIVATE PS2R_USE_GLES=1)
 target_compile_options(h700_sdl_gles_compile PRIVATE -Wall -Wextra -Werror)
 

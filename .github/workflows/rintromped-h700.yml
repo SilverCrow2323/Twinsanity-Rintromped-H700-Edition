@@ -73,8 +73,18 @@ jobs:
       - name: Cross-build with Debian Bullseye sysroot
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/src" -w /src/porting/h700 debian:bullseye-slim sh -lc '
-            dpkg --add-architecture arm64 &&
-            apt-get update &&
+            set -eu
+            dpkg --add-architecture arm64
+            # Bullseye LTS ended 2026-08-31; its live security index now points
+            # at packages removed from deb.debian.org. Pin to the final snapshot
+            # while retaining the Debian 11 / GLIBC 2.31 build baseline.
+            rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.sources
+            cat > /etc/apt/sources.list <<EOF
+          deb [check-valid-until=no] http://archive.debian.org/debian bullseye main
+          deb [check-valid-until=no] http://archive.debian.org/debian bullseye-updates main
+          deb [check-valid-until=no] http://snapshot.debian.org/archive/debian-security/20260831T000000Z/ bullseye-security main
+          EOF
+            apt-get -o Acquire::Check-Valid-Until=false -o Acquire::Retries=3 update
             DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu binutils libc6-dev-arm64-cross file cmake ninja-build libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 &&
             chmod +x scripts/*.sh device/*.sh muos/TwinsanityRintromped/*.sh &&
             ./scripts/build-probe.sh &&
@@ -117,11 +127,34 @@ jobs:
     needs: host-checks
     steps:
       - uses: actions/checkout@v7
+      - name: Configure amd64 and Ubuntu Ports AArch64 package sources
+        run: |
+          set -euxo pipefail
+          CODENAME="$(. /etc/os-release && printf '%s' "$VERSION_CODENAME")"
+          : "${CODENAME:?Ubuntu codename is required}"
+          sudo dpkg --add-architecture arm64
+          # Ubuntu 22.04's archive/security mirrors do not publish arm64 indices.
+          # Keep the host packages on amd64 and route target packages through Ports.
+          sudo tee /etc/apt/sources.list >/dev/null <<EOF
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu ${CODENAME} main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu ${CODENAME}-updates main restricted universe multiverse
+          deb [arch=amd64] http://archive.ubuntu.com/ubuntu ${CODENAME}-backports main restricted universe multiverse
+          deb [arch=amd64] http://security.ubuntu.com/ubuntu ${CODENAME}-security main restricted universe multiverse
+          EOF
+          sudo tee /etc/apt/sources.list.d/arm64-ports.list >/dev/null <<EOF
+          deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports ${CODENAME} main restricted universe multiverse
+          deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports ${CODENAME}-updates main restricted universe multiverse
+          deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports ${CODENAME}-backports main restricted universe multiverse
+          deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports ${CODENAME}-security main restricted universe multiverse
+          EOF
+          # Remove Deb822 Ubuntu entries: otherwise apt may still request arm64
+          # from security.ubuntu.com in parallel with the architecture-pinned lists.
+          sudo rm -f /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get clean
+          sudo apt-get update
       - name: Install AArch64 compiler and target GLES / SDL headers
         run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y g++-aarch64-linux-gnu cmake ninja-build libsdl2-dev libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64
+          sudo apt-get install -y --no-install-recommends g++-aarch64-linux-gnu cmake ninja-build libsdl2-dev:arm64 libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64
       - name: Configure the real engine renderer for GLES 3.2
         run: |
           cmake -S porting/h700/renderer -B build/h700-gles -G Ninja \

@@ -2,6 +2,7 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
@@ -68,4 +69,113 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
 print("Muxapp rebuild removes stale entries and preserves the required root layout.")
 PY
+
+# Keep Ubuntu 22.04 multiarch indices architecture-specific: amd64 mirrors do
+# not publish arm64 Packages files; arm64 must use ports.ubuntu.com.
+WORKFLOW="$REPO_ROOT/.github/workflows/rintromped-h700.yml"
+python3 - "$WORKFLOW" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(
+    r"^  gles-renderer-compile:\s*\n(.*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",
+    workflow,
+    re.MULTILINE | re.DOTALL,
+)
+if not match:
+    raise SystemExit("Missing gles-renderer-compile job")
+job = match.group(1)
+required = (
+    "dpkg --add-architecture arm64",
+    "deb [arch=amd64] http://archive.ubuntu.com/ubuntu",
+    "deb [arch=amd64] http://security.ubuntu.com/ubuntu",
+    "deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports",
+    "sudo rm -f /etc/apt/sources.list.d/ubuntu.sources",
+    "sudo apt-get update",
+)
+missing = [value for value in required if value not in job]
+if missing:
+    raise SystemExit("AArch64 apt source configuration incomplete: " + ", ".join(missing))
+print("AArch64 multiarch apt sources route arm64 through Ubuntu Ports.")
+PY
+
+
+# The isolated GLES renderer project must stay compatible with Bullseye's CMake 3.18.4.
+grep -Fq 'cmake_minimum_required(VERSION 3.18)' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+! grep -Fq 'cmake_minimum_required(VERSION 3.21)' "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt"
+
+# The GLES mip synthesis loop rewrites cw/ch after each BoxHalve iteration.
+# They must remain mutable (Windows clang-cl and AArch64 GCC both enforce this).
+if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=' "$REPO_ROOT/engine/engine/render/backends/gl/gl_device.cpp"; then
+    echo "Generated mip dimensions cw/ch must be mutable" >&2
+    exit 1
+fi
+
+
+# Target SDL configuration is required only for cross-compiling the SDL platform objects.
+# Native Mesa shader smoke must remain independent of arm64 headers.
+python3 - "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt" "$WORKFLOW" <<'PY'
+from pathlib import Path
+import sys
+
+cmake = Path(sys.argv[1]).read_text(encoding="utf-8")
+workflow = Path(sys.argv[2]).read_text(encoding="utf-8")
+start = cmake.find('if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")')
+end = cmake.find("endif()", start)
+if start < 0 or end < 0:
+    raise SystemExit("AArch64-only SDL config include guard is missing")
+block = cmake[start:end]
+for required in (
+    "find_path(TE_SDL2_TARGET_CONFIG_INCLUDE_DIR",
+    "SDL2/_real_SDL_config.h",
+    "target_include_directories(h700_sdl_gles_compile PRIVATE",
+):
+    if required not in block:
+        raise SystemExit("AArch64 SDL config guard is incomplete: " + required)
+if "libsdl2-dev:arm64" not in workflow:
+    raise SystemExit("Renderer compile workflow is missing libsdl2-dev:arm64")
+print("SDL target configuration is conditional on AArch64 cross-compilation.")
+PY
+
+
+# Debian 11 Bullseye LTS ended on 2026-08-31. Keep the GLIBC 2.31 sysroot,
+# but use the immutable final security snapshot instead of dead live indexes.
+python3 - "$WORKFLOW" <<'PY'
+from pathlib import Path
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+lines = workflow.splitlines()
+start = next((i for i, line in enumerate(lines) if line == "  aarch64-package:"), -1)
+if start < 0:
+    raise SystemExit("AArch64 package job is missing")
+end = next(
+    (i for i in range(start + 1, len(lines))
+     if lines[i].startswith("  ") and not lines[i].startswith("    ")),
+    len(lines),
+)
+job = "\\n".join(lines[start:end])
+required = (
+    "debian:bullseye-slim",
+    "archive.debian.org/debian bullseye main",
+    "archive.debian.org/debian bullseye-updates main",
+    "snapshot.debian.org/archive/debian-security/20260831T000000Z/",
+    "bullseye-security main",
+    "Acquire::Check-Valid-Until=false",
+    "apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu",
+)
+missing = [value for value in required if value not in job]
+if missing:
+    raise SystemExit("Pinned Bullseye package sources are incomplete: " + ", ".join(missing))
+print("AArch64 package job uses archived Bullseye and a fixed final security snapshot.")
+PY
+
+
+# Keep user-facing porting docs consistent with the required Mesa gate and pinned sysroot.
+grep -Fq 'required blocking CI gate' "$REPO_ROOT/docs/h700/building.md"
+! grep -Fq 'Mesa job is non-blocking' "$REPO_ROOT/docs/h700/building.md"
+grep -Fq '2026-08-31' "$REPO_ROOT/docs/h700/building.md"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
