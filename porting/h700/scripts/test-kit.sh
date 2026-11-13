@@ -114,19 +114,15 @@ fi
 # Native Mesa shader smoke must remain independent of arm64 headers.
 python3 - "$REPO_ROOT/porting/h700/renderer/CMakeLists.txt" "$WORKFLOW" <<'PY'
 from pathlib import Path
-import re
 import sys
 
 cmake = Path(sys.argv[1]).read_text(encoding="utf-8")
 workflow = Path(sys.argv[2]).read_text(encoding="utf-8")
-match = re.search(
-    r'if\\(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64"\\)(.*?)endif\\(\\)',
-    cmake,
-    re.DOTALL,
-)
-if not match:
+start = cmake.find('if(CMAKE_SYSTEM_PROCESSOR STREQUAL "aarch64")')
+end = cmake.find("endif()", start)
+if start < 0 or end < 0:
     raise SystemExit("AArch64-only SDL config include guard is missing")
-block = match.group(1)
+block = cmake[start:end]
 for required in (
     "find_path(TE_SDL2_TARGET_CONFIG_INCLUDE_DIR",
     "SDL2/_real_SDL_config.h",
