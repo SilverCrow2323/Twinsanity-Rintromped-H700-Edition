@@ -820,6 +820,11 @@ if(TE_VITA)
 else()
 target_link_libraries(twinsanityevolved PRIVATE tegame "$<LINK_LIBRARY:WHOLE_ARCHIVE,te_platform_host>" te_disc_identity nativeee_libs te_seam_stubs)
 endif()
+# glibc before 2.34 keeps dladdr/dlopen in libdl rather than libc. CMAKE_DL_LIBS
+# is "dl" on Linux and empty on platforms where the symbols are provided elsewhere.
+if(CMAKE_DL_LIBS)
+    target_link_libraries(twinsanityevolved PRIVATE ${CMAKE_DL_LIBS})
+endif()
 add_dependencies(twinsanityevolved nativeee)
 
 if(TE_VITA)
