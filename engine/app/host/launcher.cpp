@@ -204,9 +204,9 @@ void Launcher::DetectControllers() {
         if (SDL_GameController* gc = SDL_GameControllerOpen(i)) {
             controller_handles_.push_back(gc);
             char* mapping = SDL_GameControllerMapping(gc);
-            std::fprintf(stderr, "[muos.launcher.input] controller %d: %s\\n", i, name ? name : "unknown");
+            std::fprintf(stderr, "[muos.launcher.input] controller %d: %s\n", i, name ? name : "unknown");
             if (mapping) {
-                std::fprintf(stderr, "[muos.launcher.input] mapping: %s\\n", mapping);
+                std::fprintf(stderr, "[muos.launcher.input] mapping: %s\n", mapping);
                 SDL_free(mapping);
             }
         }
@@ -323,14 +323,14 @@ void Launcher::PumpEvents() {
             if (down && button < SDL_CONTROLLER_BUTTON_MAX && !logged_buttons[button]) {
                 logged_buttons[button] = true;
                 const char* name = SDL_GameControllerGetStringForButton(static_cast<SDL_GameControllerButton>(button));
-                std::fprintf(stderr, "[muos.launcher.input] first SDL button %u (%s), instance=%d\\n",
+                std::fprintf(stderr, "[muos.launcher.input] first SDL button %u (%s), instance=%d\n",
                              button, name ? name : "unknown", e.cbutton.which);
             }
             if (button == SDL_CONTROLLER_BUTTON_GUIDE) muos_menu_down_ = down;
             if (button == SDL_CONTROLLER_BUTTON_START) muos_start_down_ = down;
             if (muos_menu_down_ && muos_start_down_ && !muos_exit_requested_) {
                 muos_exit_requested_ = true;
-                std::fprintf(stderr, "[muos.hotkey] MENU + START: leaving launcher for muOS\\n");
+                std::fprintf(stderr, "[muos.hotkey] MENU + START: leaving launcher for muOS\n");
                 outcome_ = Outcome::Quit;
                 running_ = false;
             }
@@ -348,6 +348,8 @@ void Launcher::PumpEvents() {
             settings_->OfferKey(SDL_GetScancodeName(e.key.keysym.scancode));
         } else if (e.type == SDL_KEYDOWN && settings_ && settings_->PadBindingArmed() && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE) {
             settings_->CancelBinding();   // Escape leaves the armed pad row as it was
+        } else if (e.type == SDL_KEYDOWN && e.key.keysym.scancode == SDL_SCANCODE_ESCAPE && page_ != 0) {
+            page_ = 0;
         } else if ((e.type == SDL_CONTROLLERBUTTONDOWN || e.type == SDL_CONTROLLERAXISMOTION) && settings_ && settings_->PadBindingArmed()) {
             // Press-to-bind from the pad: a button edge, or a trigger past 25 % travel.
             const std::string control = e.type == SDL_CONTROLLERBUTTONDOWN
@@ -438,8 +440,8 @@ void Launcher::DrawFrame() {
 
 void Launcher::DrawNeedDisc() {
     ImGui::Spacing();
-    ImGui::TextWrapped("No game files found under %s.", cfg_.paths.game_files.c_str());
-    ImGui::TextWrapped("This program ships no game data. Drop your own the title disc image (NTSC-U, SLUS-12345; .iso or "
+    ImGui::TextWrapped("No Crash Twinsanity game files found under %s.", cfg_.paths.game_files.c_str());
+    ImGui::TextWrapped("This application ships no game data. Drop your own Crash Twinsanity disc image (PAL SLES-52568 or NTSC-U SLUS-20909; .iso or "
                        ".bin) on this window, or type its path below. The image is verified (ISO9660 volume, SLUS_123.45 present, "
                        "ELF SHA-256 equal to the one this build was made from) before anything is written.");
     ImGui::Spacing();
@@ -557,11 +559,11 @@ void Launcher::DrawReady() {
     }
 
     ImGui::BeginChild("twinsanity-settings-overlay", ImVec2(0, 0), true);
-    if (ImGui::Button("< BACK", ImVec2(86, 32))) page_ = 0;
+    if (ImGui::Button("< BACK", ImVec2(70, 32))) page_ = 0;
     ImGui::SameLine();
     for (int i = 1; i < 6; ++i) {
         if (i > 1) ImGui::SameLine();
-        if (ImGui::Button(kPages[i], ImVec2(94, 32))) page_ = i;
+        if (ImGui::Button(kPages[i], ImVec2(80, 32))) page_ = i;
     }
     ImGui::Separator();
     switch (page_) {
