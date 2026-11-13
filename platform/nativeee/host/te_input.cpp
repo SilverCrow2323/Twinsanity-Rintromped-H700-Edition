@@ -40,6 +40,33 @@ namespace {
 #if TE_HAVE_SDL_INPUT
 ps2r::platform::sdl::InputSystem* g_input = nullptr;
 bool g_events_inited = false;
+
+// muOS exposes its physical MENU key through SDL's GUIDE controller button.
+// MENU + START is configured by muOS for RetroArch, but standalone SDL apps
+// must honour the same exit chord themselves.
+bool g_muos_menu_down = false;
+bool g_muos_start_down = false;
+bool g_muos_exit_requested = false;
+
+void HandleMuosExitHotkey(const SDL_Event& event) {
+    if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+        g_muos_menu_down = false;
+        g_muos_start_down = false;
+        return;
+    }
+
+    if (event.type != SDL_CONTROLLERBUTTONDOWN && event.type != SDL_CONTROLLERBUTTONUP) return;
+
+    const bool down = event.type == SDL_CONTROLLERBUTTONDOWN;
+    if (event.cbutton.button == SDL_CONTROLLER_BUTTON_GUIDE) g_muos_menu_down = down;
+    if (event.cbutton.button == SDL_CONTROLLER_BUTTON_START) g_muos_start_down = down;
+
+    if (g_muos_menu_down && g_muos_start_down && !g_muos_exit_requested) {
+        g_muos_exit_requested = true;
+        std::fprintf(stderr, "[muos.hotkey] MENU + START: requesting clean exit\\n");
+        te::RequestExit(0);
+    }
+}
 #endif
 #if TE_HAVE_SDL_INPUT && defined(__vita__)
 // ---- THE VITA CONTROLLER READ STRAIGHT FROM sceCtrl ------------------------------------------------------------
@@ -341,6 +368,7 @@ bool Install(Pads& pads, const Settings& settings) {
                         std::fprintf(stderr, "[te.gfx] window closed: exit\n");
                         te::RequestExit(0);
                     }
+                    HandleMuosExitHotkey(e);
                     g_input->HandleEvent(e);
                 }
             }
@@ -354,7 +382,8 @@ bool Install(Pads& pads, const Settings& settings) {
                     std::fprintf(stderr, "[te.gfx] window closed: exit\n");
                     te::RequestExit(0);
                 }
-                g_input->HandleEvent(e);
+                HandleMuosExitHotkey(e);
+                    g_input->HandleEvent(e);
             }
 #endif
         }
@@ -441,7 +470,7 @@ bool Pumping() { return g_installed && g_pump_owned; }
 
 
 #if TE_HAVE_SDL_INPUT
-void HandleSdlEvent(const SDL_Event& event) { if (g_input) g_input->HandleEvent(event); }
+void HandleSdlEvent(const SDL_Event& event) { HandleMuosExitHotkey(event); if (g_input) g_input->HandleEvent(event); }
 #endif
 
 std::string Sources() {
