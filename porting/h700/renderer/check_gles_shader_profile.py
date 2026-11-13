@@ -121,7 +121,7 @@ def main() -> int:
     ), "pinned WABT source-build option")
     require_tokens(WORKFLOW, (
         "WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh",
-        "g++ ninja-build",
+        "ninja-build g++",
     ), "Bullseye-native WABT build dependencies")
     workflow_lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
     full_job_start = next(i for i, line in enumerate(workflow_lines)
