@@ -27,11 +27,9 @@ On 12 November 2026, the diagnostic package was run on a physical muOS Andromeda
 
 ## 🔍 What this result means
 
-The hardware and firmware are no longer the first unknown. We now have a confirmed SDL → EGL → GLES 3.2 path for the tested device.
+The physical test confirms SDL → EGL → GLES 3.2 on the documented muOS/Mali-G31 device. Separately, CI on head `e58a5fba` passed the real NativeEE GLES renderer/SDL AArch64 compile and the production shader library smoke under Mesa. The complete `twinsanityevolved` runner linked as ELF64/AArch64 with a maximum required `GLIBC_2.30`, and the full muOS package was built and inspected.
 
-The original Linux renderer still requests **OpenGL 4.1** and uses GLSL 4.10 core constructs. These are not interchangeable with GLES 3.2. A dedicated H700 renderer profile and source adapters are being developed.
-
-The implementation currently includes an explicit GLES profile, context selection, shader-source conversion and initial API compatibility adapters. They still need a successful compile, device shader validation and output comparison.
+This validates the cross-compilation, shader-smoke, ELF/GLIBC and packaging gates. It does **not** prove that the production shaders behave correctly on Mali or that the game has rendered its first NativeEE frame on the handheld.
 
 ## ⏳ What is not validated yet
 
@@ -49,12 +47,13 @@ The implementation currently includes an explicit GLES profile, context selectio
 
 ~~~mermaid
 flowchart TD
-    A["EGL / GLES / SDL preflight"] -->|PASS| B["NativeEE GLES compile"]
-    B --> C["Shader + render-target tests"]
-    C --> D["First engine-rendered frame"]
-    D --> E["Game boot and title"]
-    E --> F["Controls · audio · disc streaming"]
-    F --> G["Performance and release"]
+    A["EGL / GLES / SDL physical preflight · PASS"] --> B["NativeEE GLES renderer compile · CI PASS"]
+    B --> C["Production shader smoke on Mesa · CI PASS"]
+    C --> D["Full AArch64 runner + muOS muxapp · CI PASS"]
+    D --> E["First NativeEE-rendered frame on Mali · pending"]
+    E --> F["Game boot and title"]
+    F --> G["Controls · audio · disc streaming"]
+    G --> H["Performance and release"]
 ~~~
 
 ## Where to follow progress
@@ -70,4 +69,6 @@ flowchart TD
 
 ## What to use today
 
-Use a published desktop build on a supported PC, or the PS Vita package on compatible Vita hardware. The H700 preflight archive is a diagnostic tool, not a game launcher. Your own game ISO remains separate user data and is not read by the current diagnostic package.
+A full H700 candidate `.muxapp` is available from [H700 workflow run 43399059636](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43399059636). The package SHA-256 is `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d` (5,643,365 bytes). It has the exact `TwinsanityRintromped/` root and contains `mux_launch.sh` and `mux_lang.ini`; it excludes `game.iso` and `disc-image.txt`.
+
+This is a CI build candidate, not a published release and not proof of a playable game. For physical testing, install the candidate and place your own ISO at `MUOS/application/TwinsanityRintromped/game.iso`. Collect `logs/gles-shader-report.txt` and `logs/game-launch.log`; the first NativeEE frame, boot, controls, audio/video and performance remain pending.
