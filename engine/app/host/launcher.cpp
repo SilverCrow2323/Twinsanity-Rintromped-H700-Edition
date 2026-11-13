@@ -236,6 +236,10 @@ Launcher::Outcome Launcher::Run() {
     settings_ = std::make_unique<LauncherSettings>(cfg_, UserData::SettingsFile(cfg_), cfg_.paths.user_data);
     DetectControllers();
     screen_ = FirstRun::GameFilesPresent(cfg_, title_) ? Screen::Ready : Screen::NeedDisc;
+    // When muOS forces this screen alongside --iso, keep the selected image in
+    // the first-run field too; the user only needs to confirm extraction once.
+    if (!cfg_.paths.iso.empty())
+        std::snprintf(path_buffer_, sizeof(path_buffer_), "%s", cfg_.paths.iso.c_str());
     std::fprintf(stderr, "launcher: %s (user data %s)\n", screen_ == Screen::Ready ? "settings screen" : "first run: no game files",
                  cfg_.paths.user_data.c_str());
     if (!scripted_drop_.empty()) {
@@ -415,7 +419,8 @@ void Launcher::DrawFrame() {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(display);
     ImGui::Begin("launcher", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove |
-                                     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings);
+                                     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoSavedSettings |
+                                     ImGuiWindowFlags_NoBackground);
     ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 1.0f), "CRASH TWINSANITY");
     ImGui::SameLine();
     ImGui::TextDisabled("// RINTROMPED H700");
@@ -522,7 +527,7 @@ void Launcher::DrawReady() {
         }
 
         ImGui::Spacing();
-        ImGui::BeginDisabled(disc_missing || stamp.state == GameFilesStamp::State::Mismatch);
+        ImGui::BeginDisabled(disc_missing);
         if (ImGui::Button("START GAME", ImVec2(180, 52))) {
             outcome_ = Outcome::Play;
             running_ = false;
