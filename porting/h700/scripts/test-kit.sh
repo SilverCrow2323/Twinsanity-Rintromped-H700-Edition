@@ -156,6 +156,16 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
 print("Muxapp rebuild removes stale entries and preserves the required root layout.")
 PY
+# Protect the SDL event hand-off: ps2e_draw_pump runs before the pad sampler
+# and must not swallow controller events (especially MENU + START).
+DRAW_SOURCE="$ROOT/../../engine/engine/platform/ps2e/ps2e_draw.cpp"
+LAUNCHER_SOURCE="$ROOT/../../engine/app/host/launcher.cpp"
+grep -q 'SDL_PushEvent(&forwarded)' "$DRAW_SOURCE"
+grep -q 'SDL_CONTROLLERBUTTONDOWN' "$DRAW_SOURCE"
+grep -q 'SDL_WINDOWEVENT_FOCUS_LOST' "$DRAW_SOURCE"
+grep -q 'SDL_GameControllerAddMapping(mapping.c_str())' "$LAUNCHER_SOURCE"
+grep -q 'settings_.reset()' "$LAUNCHER_SOURCE"
+
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
 # GitHub Actions artifact downloads may restore files as 0644; the packager must
 # accept regular ELF files and set executable mode on the staged application copy.
