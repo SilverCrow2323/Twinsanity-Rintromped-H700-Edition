@@ -23,7 +23,7 @@ This page is the working contract between the upstream desktop renderer and the 
 | glDrawBuffer | Desktop entry point | Use glDrawBuffers with GL_NONE for the depth/stencil-only FBO | Compile gate; FBO completeness test pending |
 | GL_MAP_UNSYNCHRONIZED_BIT | Not a GLES 3.2 map flag | Omit it; preserve WRITE + FLUSH_EXPLICIT | Compile gate; streaming stress test pending |
 | GL_TIME_ELAPSED desktop query path | Not directly portable | Disabled in the first GLES profile | Deferred; implement through EXT_disjoint_timer_query |
-| GLSL 410 core | Desktop shader profile | Rewrite to #version 320 es and insert highp defaults | Source adapter added; device shader compilation pending |
+| GLSL 410 core | Desktop shader profile | Trim leading source whitespace, require #version on line 1, then rewrite to #version 320 es and insert highp defaults | Mesa production smoke passes; Mali first-run failure identified and fixed in source; physical Mali retest pending |
 | noperspective | Not a GLES 3.2 core interpolation qualifier | Remove only from v_texcoord; the engine path sets gl_Position.w = 1.0 | Source rationale recorded; visual comparison pending |
 | glClipControl | Not used by the Linux H700 path | Keep platform-specific desktop/Windows branch out of H700 build | Compile gate |
 | Program binary APIs | Not in the current H700 path | Vita shader cache remains behind PS2R_HOST_VITA | Compile gate |
