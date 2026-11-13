@@ -136,7 +136,14 @@ for required in (
         raise SystemExit("AArch64 SDL config guard is incomplete: " + required)
 if "libsdl2-dev:arm64" not in workflow:
     raise SystemExit("Renderer compile workflow is missing libsdl2-dev:arm64")
-print("SDL target configuration is conditional on AArch64 cross-compilation.")
+package_start = workflow.find("  aarch64-package:")
+package_end = workflow.find("\\n  gles-renderer-compile:", package_start)
+if package_start < 0 or package_end < 0:
+    raise SystemExit("AArch64 package job boundary is missing")
+package_job = workflow[package_start:package_end]
+if "libsdl2-dev:arm64" not in package_job:
+    raise SystemExit("AArch64 package sysroot is missing libsdl2-dev:arm64")
+print("SDL target configuration and AArch64 package headers are present.")
 PY
 
 
