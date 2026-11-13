@@ -18,6 +18,8 @@ PACKAGE_SCRIPT = ROOT / "porting/h700/scripts/package-muxapp.sh"
 LAUNCHER = ROOT / "porting/h700/muos/TwinsanityRintromped/mux_launch.sh"
 WORKFLOW = ROOT / ".github/workflows/rintromped-h700.yml"
 FULL_APP_TOOLCHAIN = ROOT / "porting/h700/toolchains/aarch64-linux-gnu.cmake"
+FULL_APP_FFMPEG = ROOT / "porting/h700/scripts/build-ffmpeg-static.sh"
+FULL_APP_PACKAGER = ROOT / "porting/h700/scripts/package-full-muxapp.sh"
 FETCH_TOOLCHAIN = ROOT / "tools/fetch_toolchain.sh"
 
 RAW = re.compile(r'R"([A-Za-z0-9_]*)\((.*?)\)\1"', re.DOTALL)
@@ -106,14 +108,47 @@ def main() -> int:
         "aarch64-linux-gnu-g++",
         "CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY",
     ), "full application AArch64 toolchain")
+    require_tokens(FULL_APP_FFMPEG, (
+        "FFMPEG_JOBS",
+        "ffmpeg-6.1.2.tar.xz",
+        "3b624649725ecdc565c903ca6643d41f33bd49239922e45c9b1442c63dca4e38",
+        "--enable-cross-compile",
+        "--arch=aarch64",
+        "--target-os=linux",
+        "--disable-gpl",
+        "--enable-decoder=mpeg2video",
+        "ff_mpeg2video_decoder",
+        "FFmpeg-COPYING.LGPLv2.1.txt",
+        "FFmpeg-BUILD-CONFIGURATION.txt",
+    ), "pinned static LGPL FFmpeg AArch64 builder")
+    require_tokens(FULL_APP_PACKAGER, (
+        "twinsanityevolved",
+        "PK\\\\x03\\\\x04",
+        "AArch64",
+        "GLIBC_2.31",
+        "libav(codec|util|swscale)",
+        "licenses/FFmpeg-COPYING.LGPLv2.1.txt",
+        "licenses/FFmpeg-BUILD-CONFIGURATION.txt",
+        "game.iso",
+        "disc-image.txt",
+        'zip -X -qr "$TMP_ARCHIVE" TwinsanityRintromped',
+        'mv -f "$TMP_ARCHIVE" "$OUT_ABS"',
+    ), "full installable game muxapp packager")
     require_tokens(WORKFLOW, (
         "full-app-aarch64-link:",
         "tools/fetch_toolchain.sh",
+        "FFMPEG_JOBS=2 bash porting/h700/scripts/build-ffmpeg-static.sh",
         "-DPS2R_GLES=ON",
+        "-DFFMPEG_AVCODEC_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavcodec.a",
+        "-DFFMPEG_AVUTIL_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libavutil.a",
+        "-DFFMPEG_SWSCALE_LIBRARY=/src/build/h700-full-aarch64/third_party/ffmpeg/lib/libswscale.a",
         "build/h700-full-aarch64 --target twinsanityevolved",
-        "libavcodec-dev:arm64",
-        "libswscale-dev:arm64",
-    ), "full application AArch64 configure/build gate")
+        "FFmpeg must be statically linked for muOS",
+        "full-app-muxapp:",
+        "twinsanity-rintromped-h700-full-runner",
+        "twinsanity-rintromped-h700-full-muxapp",
+        "package-full-muxapp.sh",
+    ), "full application static-FFmpeg build and game muxapp gate")
     require_tokens(FETCH_TOOLCHAIN, (
         'WABT_FROM_SOURCE="${WABT_FROM_SOURCE:-0}"',
         'WABT_TGZ="wabt-${WABT_VERSION}.tar.xz"',
