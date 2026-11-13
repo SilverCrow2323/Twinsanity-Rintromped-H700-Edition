@@ -18,6 +18,7 @@ PACKAGE_SCRIPT = ROOT / "porting/h700/scripts/package-muxapp.sh"
 LAUNCHER = ROOT / "porting/h700/muos/TwinsanityRintromped/mux_launch.sh"
 WORKFLOW = ROOT / ".github/workflows/rintromped-h700.yml"
 FULL_APP_TOOLCHAIN = ROOT / "porting/h700/toolchains/aarch64-linux-gnu.cmake"
+FETCH_TOOLCHAIN = ROOT / "tools/fetch_toolchain.sh"
 
 RAW = re.compile(r'R"([A-Za-z0-9_]*)\((.*?)\)\1"', re.DOTALL)
 VERSION = re.compile(r"^\s*#version\s+(\d+)\s+(\w+)\s*$", re.MULTILINE)
@@ -113,6 +114,15 @@ def main() -> int:
         "libavcodec-dev:arm64",
         "libswscale-dev:arm64",
     ), "full application AArch64 configure/build gate")
+    require_tokens(FETCH_TOOLCHAIN, (
+        'WABT_FROM_SOURCE="${WABT_FROM_SOURCE:-0}"',
+        'WABT_TGZ="wabt-${WABT_VERSION}.tar.xz"',
+        'cmake --build "$DEST/wabt.tmp/build" --target wasm2c wasm-objdump wasm-validate',
+    ), "pinned WABT source-build option")
+    require_tokens(WORKFLOW, (
+        "WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh",
+        "g++ ninja-build",
+    ), "Bullseye-native WABT build dependencies")
     workflow_lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
     full_job_start = next(i for i, line in enumerate(workflow_lines)
                           if line.strip() == "full-app-aarch64-link:")
