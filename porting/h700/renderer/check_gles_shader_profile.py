@@ -17,6 +17,7 @@ SHADER_CMAKE = ROOT / "porting/h700/renderer/CMakeLists.txt"
 PACKAGE_SCRIPT = ROOT / "porting/h700/scripts/package-muxapp.sh"
 LAUNCHER = ROOT / "porting/h700/muos/TwinsanityRintromped/mux_launch.sh"
 WORKFLOW = ROOT / ".github/workflows/rintromped-h700.yml"
+FULL_APP_TOOLCHAIN = ROOT / "porting/h700/toolchains/aarch64-linux-gnu.cmake"
 
 RAW = re.compile(r'R"([A-Za-z0-9_]*)\((.*?)\)\1"', re.DOTALL)
 VERSION = re.compile(r"^\s*#version\s+(\d+)\s+(\w+)\s*$", re.MULTILINE)
@@ -91,6 +92,30 @@ def main() -> int:
         "h700_gles_shader_smoke",
         "tw-rintromped-h700-gles-shader-smoke",
     ), "AArch64 production shader package gate")
+
+    require_tokens(FULL_APP_TOOLCHAIN, (
+        "set(CMAKE_SYSTEM_NAME Linux)",
+        "set(CMAKE_SYSTEM_PROCESSOR aarch64)",
+        "aarch64-linux-gnu-gcc",
+        "aarch64-linux-gnu-g++",
+        "CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY",
+    ), "full application AArch64 toolchain")
+    require_tokens(WORKFLOW, (
+        "full-app-aarch64-link:",
+        "tools/fetch_toolchain.sh",
+        "-DPS2R_GLES=ON",
+        "build/h700-full-aarch64 --target twinsanityevolved",
+        "libavcodec-dev:arm64",
+        "libswscale-dev:arm64",
+    ), "full application AArch64 configure/build gate")
+    workflow_lines = WORKFLOW.read_text(encoding="utf-8").splitlines()
+    full_job_start = next(i for i, line in enumerate(workflow_lines)
+                          if line.strip() == "full-app-aarch64-link:")
+    malformed = [i + 1 for i, line in enumerate(workflow_lines[full_job_start:], full_job_start)
+                 if re.search(r"\\{2,}$", line)]
+    if malformed:
+        raise SystemExit("FAIL: full-app workflow has doubled shell continuations on lines "
+                         + ", ".join(map(str, malformed)))
 
     shader_text = SHADERS.read_text(encoding="utf-8")
     adapter_text = ADAPTER.read_text(encoding="utf-8")
