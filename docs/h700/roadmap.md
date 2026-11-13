@@ -22,11 +22,15 @@ flowchart TD
 
 ## 📍 Current progress
 
+## ✅ CI evidence — 13 November 2026
+
+Commit `70a603d490a7b9977509874720551c5280bc9f43` passed all four H700 workflow jobs: host checks, AArch64 renderer/SDL compile, production shader smoke on Mesa and AArch64 diagnostic packaging. The generated `.muxapp` was retrieved and inspected: correct `TwinsanityRintromped/` root, three ELF64/AArch64 diagnostics, and no game ISO. This establishes a repeatable diagnostic build; it does **not** establish Mali shader success or a playable game.
+
 | Stage | Exit criteria | State |
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
-| 2 · GLES compile + link | Renderer and SDL units compile; target libraries resolve | CI validation pending |
-| 3 · Production shaders | NativeEE shader library builds on Mali-G31 | Device smoke packaged; Mali run pending |
+| 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; diagnostic shader executable links against ARM64 EGL/GLES | **Passed in CI** (`70a603d4`) |
+| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed**; physical Mali run pending |
 | 4 · GS surfaces | FBO, depth/stencil, textures, mipmaps and readback validated | Pending |
 | 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
 | 6 · Game boot | Game reaches title and first interactive scene | Pending |
@@ -42,16 +46,18 @@ flowchart TD
 
 ## 2 — GLES compile and link
 
-- [ ] Make the dedicated `PS2R_GLES` profile compile the complete NativeEE renderer.
-- [ ] Resolve every desktop-only symbol with a narrow GLES adapter or explicit fallback.
-- [ ] Cross-link against the intended AArch64/muOS runtime libraries.
-- [ ] Keep desktop, Windows and Vita compile paths unchanged.
-- [ ] Make the compile/link gate blocking in CI.
+- [x] Cross-compile the selected real NativeEE renderer and SDL source units for AArch64 against ARM64 GLES/SDL headers.
+- [x] Build and link the NativeEE shader diagnostic executable against the ARM64 EGL/GLES sysroot.
+- [x] Keep desktop, Windows and Vita paths covered by their separate build workflows.
+- [ ] Link the full application and NativeEE runtime against the actual muOS sysroot.
+- [x] Make the renderer compile and Mesa shader smoke gates blocking in CI.
 
 ## 3–4 — Production shaders and GS surfaces
 
-- [ ] Execute the real `GlShaderLibrary::Build()` on the Mali-G31.
-- [ ] Compile every shader branch and report the failing source/program by name.
+- [x] Execute the real `GlShaderLibrary::Build()` under Mesa GLES 3.2 in blocking CI.
+- [x] Package the same NativeEE shader smoke as an AArch64 executable in the muOS diagnostic `.muxapp`.
+- [ ] Execute the packaged `GlShaderLibrary::Build()` on the Mali-G31 and inspect `logs/gles-shader-report.txt`.
+- [ ] Confirm every required shader program on the device and resolve any Mali-specific compiler differences.
 - [ ] Test color, depth and stencil FBO combinations.
 - [ ] Test texture uploads, mip tails, filtering and supported formats.
 - [ ] Test copies, readback alignment and synchronization.
