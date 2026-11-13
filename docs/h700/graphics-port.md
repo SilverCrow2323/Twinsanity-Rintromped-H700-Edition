@@ -132,3 +132,9 @@ The device advertises `GL_EXT_disjoint_timer_query`. The desktop query implement
 > **MUST KNOW!!** The current H700 build is not playable. The diagnostic probes do not load `game.iso`, execute the game renderer or validate gameplay.
 
 [Back to the H700 hub](README.md) · [Compatibility matrix](compatibility-matrix.md) · [Roadmap](roadmap.md)
+
+## H700 runtime batching and performance diagnostics
+
+The H700 GLES profile enables two conservative batching paths by default: adjacent blended draws with identical fixed-function state are joined in order, and consecutive shadow-volume count draws are grouped by stencil state. The environment overrides `TE_GFX_JOIN_BLENDED=0` and `TE_GFX_GROUP_VOLUMES=0` remain available for A/B comparison. These changes do not alter the title simulation rate or the internal render scale.
+
+For a one-shot device measurement, create an empty `logs/performance-diagnostics.once` file in the installed application directory. On the next launch the muOS script consumes the marker and enables the NativeEE CPU sampler at 2 ms intervals plus the frame/build/render census every 120 presents. Reports are appended to `logs/game-launch.log`; ordinary launches do not run the sampler.

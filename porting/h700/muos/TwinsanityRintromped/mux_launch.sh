@@ -22,6 +22,19 @@ SETUP_APP "$APP_BIN" ""
 cd "$APP_DIR" || exit 1
 mkdir -p logs
 
+# A one-shot opt-in: create logs/performance-diagnostics.once to collect low-overhead
+# CPU samples plus the renderer/build timing census for the next game launch only.
+PERF_MARKER="$APP_DIR/logs/performance-diagnostics.once"
+if [ -f "$PERF_MARKER" ]; then
+    rm -f "$PERF_MARKER"
+    export TE_PROF=1
+    export TE_PROF_US=2000
+    export TE_PROF_EVERY=120
+    export TE_PROF_ROWS=12
+    export TE_GFX_SUMMARY_EVERY=120
+    printf 'Performance diagnostics: one-shot CPU/render profiler enabled (2 ms sampling, 120 presents/report)\\n' >> "$APP_DIR/logs/game-launch.log"
+fi
+
 if [ "$APP_BIN" = "$GAME_BIN" ]; then
     # NativeEE requires --iso <image>. The launcher stores the user's selection
     # beside the executable and passes its resolved path explicitly; merely

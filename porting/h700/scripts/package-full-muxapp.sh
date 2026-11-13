@@ -80,6 +80,15 @@ Diagnostic reports are written to:
   MUOS/application/TwinsanityRintromped/logs/
 
 The installed runner uses the device's SDL2, EGL and GLES runtime.
+
+H700 performance notes:
+- GLES enables adjacent blended-draw joining and shadow-volume draw grouping by default.
+- The batches preserve draw/state order and reduce repeated submissions to the Mali driver.
+- To collect a one-shot low-overhead report, create an empty file at:
+    logs/performance-diagnostics.once
+  Then launch the game. The marker is consumed automatically. The resulting
+  logs/game-launch.log includes CPU samples and frame/build/render timings.
+
 FFmpeg's MPEG-1/2 decoder, MPEG video parser and swscale are linked
 statically; see licenses/ for the LGPL v2.1+ texts and build proof.
 EOF

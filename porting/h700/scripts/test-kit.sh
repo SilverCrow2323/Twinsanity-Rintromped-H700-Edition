@@ -49,6 +49,9 @@ cat > "$TMP/launcher-app/twinsanityevolved" <<'EOF'
 #!/bin/sh
 printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
 printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
+if [ -n "${TW_H700_CAPTURE_PERF:-}" ]; then
+  printf '%s\n' "${TE_PROF:-}" "${TE_PROF_US:-}" "${TE_PROF_EVERY:-}" "${TE_GFX_SUMMARY_EVERY:-}" > "$TW_H700_CAPTURE_PERF"
+fi
 EOF
 chmod 755 "$TMP/launcher-app/twinsanityevolved"
 printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
@@ -61,6 +64,22 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
 [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
 [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+
+# The one-shot performance marker enables bounded diagnostics, removes itself
+# before the runner starts, and is inert on ordinary launches.
+mkdir -p "$TMP/launcher-app/logs"
+: > "$TMP/launcher-app/logs/performance-diagnostics.once"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+TW_H700_APP_DIR="$TMP/launcher-app" \\
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \\
+  sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(sed -n '1p' "$TMP/launcher-perf.txt")" = "1" ]
+[ "$(sed -n '2p' "$TMP/launcher-perf.txt")" = "2000" ]
+[ "$(sed -n '3p' "$TMP/launcher-perf.txt")" = "120" ]
+[ "$(sed -n '4p' "$TMP/launcher-perf.txt")" = "120" ]
+[ ! -e "$TMP/launcher-app/logs/performance-diagnostics.once" ]
 
 # A broken saved selection must fall back to game.iso and repair the selection.
 rm -f "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" "$TMP/launcher-args.txt"
