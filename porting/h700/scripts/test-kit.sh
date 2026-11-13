@@ -2,6 +2,7 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
@@ -68,4 +69,44 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
 print("Muxapp rebuild removes stale entries and preserves the required root layout.")
 PY
+
+# Keep Ubuntu 22.04 multiarch indices architecture-specific: amd64 mirrors do
+# not publish arm64 Packages files; arm64 must use ports.ubuntu.com.
+WORKFLOW="$REPO_ROOT/.github/workflows/rintromped-h700.yml"
+python3 - "$WORKFLOW" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+match = re.search(
+    r"^  gles-renderer-compile:\s*\n(.*?)(?=^  [A-Za-z0-9_-]+:\s*$|\Z)",
+    workflow,
+    re.MULTILINE | re.DOTALL,
+)
+if not match:
+    raise SystemExit("Missing gles-renderer-compile job")
+job = match.group(1)
+required = (
+    "dpkg --add-architecture arm64",
+    "deb [arch=amd64] http://archive.ubuntu.com/ubuntu",
+    "deb [arch=amd64] http://security.ubuntu.com/ubuntu",
+    "deb [arch=arm64] https://ports.ubuntu.com/ubuntu-ports",
+    "sudo rm -f /etc/apt/sources.list.d/ubuntu.sources",
+    "sudo apt-get update",
+)
+missing = [value for value in required if value not in job]
+if missing:
+    raise SystemExit("AArch64 apt source configuration incomplete: " + ", ".join(missing))
+print("AArch64 multiarch apt sources route arm64 through Ubuntu Ports.")
+PY
+
+
+# The GLES mip synthesis loop rewrites cw/ch after each BoxHalve iteration.
+# They must remain mutable (Windows clang-cl and AArch64 GCC both enforce this).
+if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=' "$REPO_ROOT/engine/engine/render/backends/gl/gl_device.cpp"; then
+    echo "Generated mip dimensions cw/ch must be mutable" >&2
+    exit 1
+fi
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
