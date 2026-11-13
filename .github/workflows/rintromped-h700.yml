@@ -117,17 +117,18 @@ jobs:
     needs: host-checks
     steps:
       - uses: actions/checkout@v7
-      - name: Install AArch64 compiler and target GLES / SDL headers
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y g++-aarch64-linux-gnu cmake ninja-build libsdl2-dev libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64
+      - name: Install AArch64 compiler and architecture-neutral GLES / SDL headers
+        run: sudo apt-get update && sudo apt-get install -y g++-aarch64-linux-gnu cmake ninja-build libegl1-mesa-dev libgles2-mesa-dev libsdl2-dev
       - name: Configure the real engine renderer for GLES 3.2
         run: |
+          # This gate compiles AArch64 object files only. GLES/EGL headers are
+          # architecture-neutral; host libraries satisfy CMake discovery but
+          # are never linked into a target binary in this job.
           cmake -S porting/h700/renderer -B build/h700-gles -G Ninja \
             -DCMAKE_SYSTEM_NAME=Linux \
             -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
             -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-            -DCMAKE_LIBRARY_PATH=/usr/lib/aarch64-linux-gnu
+            -DTE_GLES_LIBRARY=/usr/lib/x86_64-linux-gnu/libGLESv2.so \
+            -DTE_EGL_LIBRARY=/usr/lib/x86_64-linux-gnu/libEGL.so
       - name: Compile renderer and SDL platform objects against GLES headers
         run: cmake --build build/h700-gles --target h700_gles_compile_check --parallel 2
