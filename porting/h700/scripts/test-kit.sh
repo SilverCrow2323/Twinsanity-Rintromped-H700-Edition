@@ -39,7 +39,8 @@ if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
 # Exercise the actual full-game launcher without muOS. The runner's CLI
-# requires --iso <path>; catch regressions where the launcher starts it bare.
+# requires --iso <path>; the prelaunch screen is force-enabled with --launcher
+# because --iso otherwise marks this as a direct/harness-style invocation.
 mkdir -p "$TMP/launcher-app/My Discs"
 printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 cat > "$TMP/muos-func.sh" <<'EOF'
@@ -62,7 +63,8 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
 [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
 
 # The one-shot performance marker enables bounded diagnostics, removes itself
@@ -92,6 +94,7 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--launcher" ]
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # No valid image must fail before invoking the game runner.
