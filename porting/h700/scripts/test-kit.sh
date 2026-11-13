@@ -56,7 +56,7 @@ import zipfile
 if not zipfile.is_zipfile(sys.argv[1]):
     raise SystemExit("Muxapp is not a ZIP archive renamed to .muxapp")
 with open(sys.argv[1], "rb") as stream:
-    if stream.read(4) != b"PK\\x03\\x04":
+    if stream.read(4) != b"PK\x03\x04":
         raise SystemExit("Muxapp does not start with the ZIP local-file signature")
 with zipfile.ZipFile(sys.argv[1]) as archive:
     if archive.testzip() is not None:
