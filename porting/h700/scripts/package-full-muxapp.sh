@@ -12,7 +12,7 @@ DEVICE_SCRIPT="$ROOT/porting/h700/device/collect-system-info.sh"
 FFMPEG_LICENSE_DIR=${FFMPEG_LICENSE_DIR:-"$ROOT/build/h700-full-aarch64/third_party/ffmpeg/share/licenses"}
 
 for item in "$GAME_BIN" "$PROBE_BIN" "$SDL_BIN" "$SHADER_BIN"; do
-  [ -x "$item" ] || { echo "Missing executable required by full muxapp: $item" >&2; exit 1; }
+  [ -f "$item" ] || { echo "Missing binary required by full muxapp: $item" >&2; exit 1; }
 done
 for item in "$LAUNCHER" "$LANG_FILE" "$DEVICE_SCRIPT"; do
   [ -f "$item" ] || { echo "Missing application file: $item" >&2; exit 1; }
