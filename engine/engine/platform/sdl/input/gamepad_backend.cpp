@@ -139,6 +139,13 @@ void GamepadBackend::TryOpenDeviceIndex(int device_index) {
     const char* name = SDL_GameControllerName(gc);
     std::fprintf(stderr, "input: gamepad connected: %s (instance %d)%s\n", name ? name : "?", pad.instance_id,
                  generic ? " [generic mapping]" : "");
+    char* active_mapping = SDL_GameControllerMapping(gc);
+    if (active_mapping) {
+        std::fprintf(stderr, "[muos.input] SDL active controller mapping: %s\n", active_mapping);
+        SDL_free(active_mapping);
+    } else {
+        std::fprintf(stderr, "[muos.input] SDL active controller mapping: unavailable (%s)\n", SDL_GetError());
+    }
 
     // Reconnect-by-GUID: a pad matching the persisted preference is selected
     // when the selection is Auto.
