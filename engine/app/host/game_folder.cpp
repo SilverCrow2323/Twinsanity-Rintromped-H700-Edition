@@ -2,6 +2,10 @@
 #include "app/host/game_folder.h"
 
 #include <cstdio>
+#include <atomic>
+#include <chrono>
+#include <filesystem>
+#include <fstream>
 
 namespace ps2r::app {
 
@@ -88,6 +92,37 @@ bool GameFolder::HasSettings(const std::string& folder) {
     if (!f) return false;
     std::fclose(f);
     return true;
+}
+
+std::string GameFolder::EnsureWritableDataDirectory(const std::string& preferred, const std::string& fallback) {
+    namespace fs = std::filesystem;
+    static std::atomic<uint64_t> sequence{0};
+    const auto prepare = [](const std::string& candidate) -> std::string {
+        if (candidate.empty()) return {};
+        std::error_code ec;
+        const fs::path dir(candidate);
+        fs::create_directories(dir, ec);
+        if (ec || !fs::is_directory(dir, ec) || ec) return {};
+
+        const auto stamp = std::chrono::steady_clock::now().time_since_epoch().count();
+        const fs::path probe = dir / (".twinsanityevolved-write-test-" + std::to_string(stamp) + "-" +
+                                      std::to_string(sequence.fetch_add(1)));
+        {
+            std::ofstream out(probe, std::ios::binary | std::ios::trunc);
+            if (!out.is_open()) return {};
+            out << "write test";
+            if (!out) {
+                out.close();
+                fs::remove(probe, ec);
+                return {};
+            }
+        }
+        fs::remove(probe, ec);
+        return dir.generic_string();
+    };
+
+    if (const std::string selected = prepare(preferred); !selected.empty()) return selected;
+    return prepare(fallback);
 }
 
 GameFolder::Resolved GameFolder::Locate(const Inputs& in) {
