@@ -2,7 +2,13 @@
 # Host-only checks; these are not an H700 runtime test.
 set -eu
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+REPO_ROOT=$(CDPATH= cd -- "$ROOT/../.." && pwd)
 cd "$ROOT"
+# Generated mip dimensions are updated while halving levels; they must stay mutable.
+if grep -Eq '^[[:space:]]*const[[:space:]]+GLint[[:space:]]+(cw|ch)[[:space:]]*=' "$REPO_ROOT/engine/engine/render/backends/gl/gl_device.cpp"; then
+    echo "Generated mip dimensions cw/ch must be mutable" >&2
+    exit 1
+fi
 # Guard the muOS archive root: the app directory must be the first path component.
 grep -q 'APP="$STAGE/TwinsanityRintromped"' scripts/package-muxapp.sh
 grep -q 'zip -qr "$TMP_ARCHIVE" TwinsanityRintromped' scripts/package-muxapp.sh
