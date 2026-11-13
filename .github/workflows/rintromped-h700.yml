@@ -10,11 +10,15 @@ on:
     paths:
       - 'porting/h700/**'
       - 'CMakeLists.txt'
-      - 'engine/CMakeLists.txt'
-      - 'engine/cmake/**'
-      - 'engine/engine/platform/host/platform.h'
-      - 'engine/engine/platform/sdl/**'
-      - 'engine/engine/render/backends/gl/**'
+      - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'engine/**'
+      - 'game/**'
+      - 'games/**'
+      - 'platform/**'
+      - 'runner/**'
+      - 'launcher/discs/**'
+      - 'tools/**'
       - '.github/workflows/rintromped-h700.yml'
   workflow_dispatch:
 
@@ -175,7 +179,7 @@ jobs:
               gcc-aarch64-linux-gnu g++-aarch64-linux-gnu binutils-aarch64-linux-gnu libc6-dev-arm64-cross \
               libegl1-mesa-dev:arm64 libgles2-mesa-dev:arm64 libsdl2-dev:arm64 \
               libavcodec-dev:arm64 libavutil-dev:arm64 libswscale-dev:arm64 &&
-            WABT_FROM_SOURCE=1 WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh &&
+            WABT_FROM_SOURCE=1 ./tools/fetch_toolchain.sh &&
             cmake -S . -B build/h700-full-aarch64 -G Ninja \
               -DCMAKE_TOOLCHAIN_FILE=/src/porting/h700/toolchains/aarch64-linux-gnu.cmake \
               -DPS2R_GLES=ON \
