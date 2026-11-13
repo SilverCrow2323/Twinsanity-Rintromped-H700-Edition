@@ -58,13 +58,13 @@ void LogMuosButtonEventOnce(const SDL_Event& event) {
         if (button >= SDL_CONTROLLER_BUTTON_MAX || g_muos_controller_button_seen[button]) return;
         g_muos_controller_button_seen[button] = true;
         const char* name = SDL_GameControllerGetStringForButton(static_cast<SDL_GameControllerButton>(button));
-        std::fprintf(stderr, "[muos.input] SDL controller button %u (%s), instance=%d\\n",
+        std::fprintf(stderr, "[muos.input] SDL controller button %u (%s), instance=%d\n",
                      button, name ? name : "unknown", event.cbutton.which);
     } else if (event.type == SDL_JOYBUTTONDOWN) {
         const unsigned button = event.jbutton.button;
         if (button >= 64 || g_muos_joystick_button_seen[button]) return;
         g_muos_joystick_button_seen[button] = true;
-        std::fprintf(stderr, "[muos.input] SDL raw joystick button %u, instance=%d\\n",
+        std::fprintf(stderr, "[muos.input] SDL raw joystick button %u, instance=%d\n",
                      button, event.jbutton.which);
     }
 }
