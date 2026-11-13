@@ -20,6 +20,7 @@ Retrieve the files from:
 MUOS/application/TwinsanityRintromped/logs/
 ├── muos-device-report.txt
 ├── egl-gles-report.txt
+├── gles-shader-report.txt
 └── sdl-window-report.txt
 ~~~
 
@@ -27,6 +28,7 @@ MUOS/application/TwinsanityRintromped/logs/
 |---|---|
 | muos-device-report.txt | muOS/kernel, hardware model, framebuffer/GPU/input/audio nodes, runtime libraries and environment |
 | egl-gles-report.txt | EGL initialisation, vendor/version/extensions, pbuffer creation, GLES renderer/version and limits |
+| gles-shader-report.txt | NativeEE production shader program IDs, compile/link status, and driver diagnostics |
 | sdl-window-report.txt | SDL2 library and video driver, window/context result, GLES version and buffer swaps |
 
 ## 03 · Interpret the result
@@ -38,7 +40,7 @@ MUOS/application/TwinsanityRintromped/logs/
 | GLES 3.2 reported | The actual context version, not merely the requested version |
 | Probe failure | A diagnostic result; retain the complete error text |
 
-Neither report proves that the game's OpenGL 4.1 renderer, GLSL 4.10 shaders or a gameplay level works.
+A successful shader report proves the selected NativeEE production shader programs compile and link in the context used by that run. It does not prove the Mali driver behaves identically to Mesa, that GS surfaces are correct, or that a gameplay level works.
 
 ## 04 · Share safely
 
@@ -48,4 +50,4 @@ Include the three reports, device model, muOS version and package build identifi
 
 The physical H700 test supplied on 12 November 2026 passed EGL, GLES 3.2, SDL window creation and six visible buffer swaps.
 
-The next test is the **NativeEE renderer**: compile its real source files against GLES, validate production shaders and render targets, then present the first engine-rendered frame. Follow the [build guide](../../../docs/h700/building.md) and [compatibility matrix](../../../docs/h700/compatibility-matrix.md).
+CI has now passed the AArch64 renderer/SDL compile gate and the production shader smoke on Mesa; it also produced an AArch64 diagnostic `.muxapp`. The next test is on the physical **Mali-G31**: install this package and return all four reports, especially `gles-shader-report.txt`. After that we validate GS surfaces, then present the first engine-rendered frame. Follow the [build guide](../../../docs/h700/building.md) and [compatibility matrix](../../../docs/h700/compatibility-matrix.md).
