@@ -143,11 +143,16 @@ from pathlib import Path
 import sys
 
 workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
-start = workflow.find("  aarch64-package:")
-end = workflow.find("\\n  gles-renderer-compile:", start)
-if start < 0 or end < 0:
+lines = workflow.splitlines()
+start = next((i for i, line in enumerate(lines) if line == "  aarch64-package:"), -1)
+if start < 0:
     raise SystemExit("AArch64 package job is missing")
-job = workflow[start:end]
+end = next(
+    (i for i in range(start + 1, len(lines))
+     if lines[i].startswith("  ") and not lines[i].startswith("    ")),
+    len(lines),
+)
+job = "\\n".join(lines[start:end])
 required = (
     "debian:bullseye-slim",
     "archive.debian.org/debian bullseye main",
