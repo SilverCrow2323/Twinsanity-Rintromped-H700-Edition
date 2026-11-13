@@ -16,16 +16,6 @@ on:
       - 'engine/engine/platform/sdl/**'
       - 'engine/engine/render/backends/gl/**'
       - '.github/workflows/rintromped-h700.yml'
-  pull_request:
-    paths:
-      - 'porting/h700/**'
-      - 'CMakeLists.txt'
-      - 'engine/CMakeLists.txt'
-      - 'engine/cmake/**'
-      - 'engine/engine/platform/host/platform.h'
-      - 'engine/engine/platform/sdl/**'
-      - 'engine/engine/render/backends/gl/**'
-      - '.github/workflows/rintromped-h700.yml'
   workflow_dispatch:
 
 permissions:
