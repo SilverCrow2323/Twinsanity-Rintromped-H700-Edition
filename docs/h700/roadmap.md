@@ -22,6 +22,12 @@ flowchart TD
 
 ## 📍 Current progress
 
+## 🧪 Physical full-runner bring-up — 13 November 2026
+
+The full runner was installed and launched on the H700 using the user's existing disc image. The launcher passed `--iso` correctly; NativeEE identified the PAL `SLES-52568` image, loaded the retail ELF, initialised the muOS gamepad and SDL audio, and created an ES 3.2 context on the Mali-G31. The first PS2 vertex shader then failed because the raw GLSL source contained a leading newline before `#version`. This is now fixed in the GLES source normaliser and the production shader library passes the Mesa GLES smoke. A separate first-run `userdata/` creation bug was fixed and covered by host regression tests.
+
+**Milestone boundary:** actual game-runner startup and disc/ELF initialisation are now demonstrated on hardware; the first NativeEE-rendered frame, title screen and gameplay have **not** yet been demonstrated. The rebuilt full-game `.muxapp` must pass a fresh physical Mali shader run before the next milestone is marked complete.
+
 ## ✅ CI evidence — 13 November 2026
 
 Commit `9e2b6b82ad0ea2c43fa9d5203c000074a14259de` passed all six H700 workflow jobs: host checks, production shader smoke on Mesa, AArch64 renderer/SDL compile, diagnostic package, full game/NativeEE AArch64 link and full-game muOS `.muxapp` packaging. The full runner is ELF64/AArch64, requires GLIBC up to 2.30, and has no dynamic FFmpeg dependency: FFmpeg 6.1.2's minimal MPEG-1/2 decoder + parser + swscale subset is statically linked with the LGPL v2.1+ recipe. The generated full `.muxapp` was downloaded and inspected: valid ZIP, correct `TwinsanityRintromped/` root, executable runner and three diagnostics, licence files present, no ISO or disc-selection file. This is a **CI-built release candidate**, not proof of a successful boot or playable gameplay on Mali-G31; physical-device validation remains the next gate.
