@@ -637,6 +637,11 @@ int ps2e_draw_pump(ps2e_draw* d) {
             }
         }
     }
+    // This window pump runs immediately before the game's pad sampler at VBlank.
+    // Consume window management events here, but hand input events back to SDL's
+    // queue so te_input can sample them in the same boundary (including MENU+START).
+    static thread_local std::vector<SDL_Event> input_events;
+    input_events.clear();
     SDL_Event e;
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) quit = 1;
@@ -649,6 +654,32 @@ int ps2e_draw_pump(ps2e_draw* d) {
                     d->drawable_w = w;
                     d->drawable_h = h;
                 }
+            }
+            if (e.window.event == SDL_WINDOWEVENT_FOCUS_LOST || e.window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
+                input_events.push_back(e);
+            continue;
+        }
+        switch (e.type) {
+            case SDL_KEYDOWN: case SDL_KEYUP: case SDL_TEXTINPUT: case SDL_TEXTEDITING:
+            case SDL_MOUSEMOTION: case SDL_MOUSEBUTTONDOWN: case SDL_MOUSEBUTTONUP: case SDL_MOUSEWHEEL:
+            case SDL_CONTROLLERAXISMOTION: case SDL_CONTROLLERBUTTONDOWN: case SDL_CONTROLLERBUTTONUP:
+            case SDL_CONTROLLERDEVICEADDED: case SDL_CONTROLLERDEVICEREMOVED: case SDL_CONTROLLERDEVICEREMAPPED:
+            case SDL_JOYAXISMOTION: case SDL_JOYBALLMOTION: case SDL_JOYHATMOTION:
+            case SDL_JOYBUTTONDOWN: case SDL_JOYBUTTONUP: case SDL_JOYDEVICEADDED: case SDL_JOYDEVICEREMOVED:
+                input_events.push_back(e);
+                break;
+            default:
+                break;
+        }
+    }
+    for (const SDL_Event& input : input_events) {
+        SDL_Event forwarded = input;
+        if (SDL_PushEvent(&forwarded) < 0) {
+            static bool warned = false;
+            if (!warned) {
+                std::fprintf(stderr, "[ps2e_draw] could not forward SDL input events to the pad sampler: %s\\n",
+                             SDL_GetError());
+                warned = true;
             }
         }
     }
