@@ -69,11 +69,11 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
 # before the runner starts, and is inert on ordinary launches.
 mkdir -p "$TMP/launcher-app/logs"
 : > "$TMP/launcher-app/logs/performance-diagnostics.once"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-TW_H700_APP_DIR="$TMP/launcher-app" \\
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
-TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \\
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-perf.txt")" = "1" ]
 [ "$(sed -n '2p' "$TMP/launcher-perf.txt")" = "2000" ]

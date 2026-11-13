@@ -32,7 +32,7 @@ if [ -f "$PERF_MARKER" ]; then
     export TE_PROF_EVERY=120
     export TE_PROF_ROWS=12
     export TE_GFX_SUMMARY_EVERY=120
-    printf 'Performance diagnostics: one-shot CPU/render profiler enabled (2 ms sampling, 120 presents/report)\\n' >> "$APP_DIR/logs/game-launch.log"
+    printf 'Performance diagnostics: one-shot CPU/render profiler enabled (2 ms sampling, 120 presents/report)\n' >> "$APP_DIR/logs/game-launch.log"
 fi
 
 if [ "$APP_BIN" = "$GAME_BIN" ]; then
