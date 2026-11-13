@@ -8,6 +8,9 @@ get_filename_component(TE_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../.." ABSOLUTE)
 find_path(TE_GLES_INCLUDE_DIR NAMES GLES3/gl32.h REQUIRED)
 find_path(TE_EGL_INCLUDE_DIR NAMES EGL/egl.h REQUIRED)
 find_path(TE_SDL2_INCLUDE_DIR NAMES SDL.h PATH_SUFFIXES SDL2 REQUIRED)
+# The target SDL2 package stores its generated config in the AArch64 multiarch include tree.
+find_path(TE_SDL2_TARGET_CONFIG_INCLUDE_DIR NAMES SDL2/_real_SDL_config.h
+    PATHS /usr/include/aarch64-linux-gnu NO_DEFAULT_PATH REQUIRED)
 find_library(TE_GLES_LIBRARY NAMES GLESv2 REQUIRED)
 find_library(TE_EGL_LIBRARY NAMES EGL REQUIRED)
 
@@ -48,6 +51,7 @@ target_include_directories(h700_sdl_gles_compile PRIVATE
     "${TE_ROOT}/engine"
     "${TE_ROOT}"
     "${TE_GLES_INCLUDE_DIR}"
+    "${TE_SDL2_TARGET_CONFIG_INCLUDE_DIR}"
     "${TE_SDL2_INCLUDE_DIR}"
 )
 target_compile_definitions(h700_sdl_gles_compile PRIVATE PS2R_USE_GLES=1)
