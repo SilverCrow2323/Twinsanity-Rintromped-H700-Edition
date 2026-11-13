@@ -52,6 +52,8 @@ TMP_ARCHIVE="$TMP_ARCHIVE_DIR/$(basename -- "$OUT")"
 trap 'rm -rf "$STAGE" "$TMP_ARCHIVE_DIR"' EXIT HUP INT TERM
 APP="$STAGE/TwinsanityRintromped"
 mkdir -p "$APP/device" "$APP/logs" "$APP/licenses"
+# The first installed launch automatically collects one low-overhead performance report.
+: > "$APP/logs/performance-diagnostics.once"
 cp "$GAME_BIN" "$APP/twinsanityevolved"
 cp "$PROBE_BIN" "$APP/tw-rintromped-h700-probe"
 cp "$SDL_BIN" "$APP/tw-rintromped-h700-sdl-probe"
@@ -84,10 +86,10 @@ The installed runner uses the device's SDL2, EGL and GLES runtime.
 H700 performance notes:
 - GLES enables adjacent blended-draw joining and shadow-volume draw grouping by default.
 - The batches preserve draw/state order and reduce repeated submissions to the Mali driver.
-- To collect a one-shot low-overhead report, create an empty file at:
+- The first launch after installing this package automatically collects one low-overhead report. The marker is consumed automatically.
+- To collect another report later, create an empty file at:
     logs/performance-diagnostics.once
-  Then launch the game. The marker is consumed automatically. The resulting
-  logs/game-launch.log includes CPU samples and frame/build/render timings.
+  Then launch the game. The resulting logs/game-launch.log includes CPU samples and frame/build/render timings.
 
 FFmpeg's MPEG-1/2 decoder, MPEG video parser and swscale are linked
 statically; see licenses/ for the LGPL v2.1+ texts and build proof.
@@ -123,6 +125,7 @@ with zipfile.ZipFile(path) as archive:
         "TwinsanityRintromped/tw-rintromped-h700-gles-shader-smoke",
         "TwinsanityRintromped/device/collect-system-info.sh",
         "TwinsanityRintromped/README.txt",
+        "TwinsanityRintromped/logs/performance-diagnostics.once",
         "TwinsanityRintromped/licenses/FFmpeg-COPYING.LGPLv2.1.txt",
         "TwinsanityRintromped/licenses/FFmpeg-BUILD-CONFIGURATION.txt",
     }
