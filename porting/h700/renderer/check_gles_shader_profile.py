@@ -123,7 +123,7 @@ def main() -> int:
     ), "pinned static LGPL FFmpeg AArch64 builder")
     require_tokens(FULL_APP_PACKAGER, (
         "twinsanityevolved",
-        "PK\\\\x03\\\\x04",
+        "PK\\x03\\x04",
         "AArch64",
         "GLIBC_2.31",
         "libav(codec|util|swscale)",
