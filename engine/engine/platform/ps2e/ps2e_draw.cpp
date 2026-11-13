@@ -677,7 +677,7 @@ int ps2e_draw_pump(ps2e_draw* d) {
         if (SDL_PushEvent(&forwarded) < 0) {
             static bool warned = false;
             if (!warned) {
-                std::fprintf(stderr, "[ps2e_draw] could not forward SDL input events to the pad sampler: %s\\n",
+                std::fprintf(stderr, "[ps2e_draw] could not forward SDL input events to the pad sampler: %s\n",
                              SDL_GetError());
                 warned = true;
             }
