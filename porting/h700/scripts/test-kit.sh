@@ -135,4 +135,32 @@ if "libsdl2-dev:arm64" not in workflow:
 print("SDL target configuration is conditional on AArch64 cross-compilation.")
 PY
 
+
+# Debian 11 Bullseye LTS ended on 2026-08-31. Keep the GLIBC 2.31 sysroot,
+# but use the immutable final security snapshot instead of dead live indexes.
+python3 - "$WORKFLOW" <<'PY'
+from pathlib import Path
+import sys
+
+workflow = Path(sys.argv[1]).read_text(encoding="utf-8")
+start = workflow.find("  aarch64-package:")
+end = workflow.find("\\n  gles-renderer-compile:", start)
+if start < 0 or end < 0:
+    raise SystemExit("AArch64 package job is missing")
+job = workflow[start:end]
+required = (
+    "debian:bullseye-slim",
+    "archive.debian.org/debian bullseye main",
+    "archive.debian.org/debian bullseye-updates main",
+    "snapshot.debian.org/archive/debian-security/20260831T000000Z/",
+    "bullseye-security main",
+    "Acquire::Check-Valid-Until=false",
+    "apt-get install -y --no-install-recommends gcc-aarch64-linux-gnu",
+)
+missing = [value for value in required if value not in job]
+if missing:
+    raise SystemExit("Pinned Bullseye package sources are incomplete: " + ", ".join(missing))
+print("AArch64 package job uses archived Bullseye and a fixed final security snapshot.")
+PY
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
