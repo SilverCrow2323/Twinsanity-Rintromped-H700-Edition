@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.18)
 project(TwinsanityH700GlesCompile LANGUAGES CXX)
 
 # Compile-only gate for the real engine GL backend against the target's GLES API.
