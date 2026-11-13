@@ -20,6 +20,7 @@ WORKFLOW = ROOT / ".github/workflows/rintromped-h700.yml"
 FULL_APP_TOOLCHAIN = ROOT / "porting/h700/toolchains/aarch64-linux-gnu.cmake"
 FULL_APP_FFMPEG = ROOT / "porting/h700/scripts/build-ffmpeg-static.sh"
 FULL_APP_PACKAGER = ROOT / "porting/h700/scripts/package-full-muxapp.sh"
+FFMPEG_RECIPE = ROOT / "engine/tools/ci/ffmpeg_static.sh"
 FETCH_TOOLCHAIN = ROOT / "tools/fetch_toolchain.sh"
 
 RAW = re.compile(r'R"([A-Za-z0-9_]*)\((.*?)\)\1"', re.DOTALL)
@@ -115,12 +116,22 @@ def main() -> int:
         "--enable-cross-compile",
         "--arch=aarch64",
         "--target-os=linux",
-        "--disable-gpl",
-        "--enable-decoder=mpeg2video",
+        "FFmpeg-COPYING.LGPLv2.1.txt",
+        "FFmpeg-BUILD-CONFIGURATION.txt",
         "ff_mpeg2video_decoder",
         "FFmpeg-COPYING.LGPLv2.1.txt",
         "FFmpeg-BUILD-CONFIGURATION.txt",
     ), "pinned static LGPL FFmpeg AArch64 builder")
+    require_tokens(FFMPEG_RECIPE, (
+        "--disable-gpl",
+        "--disable-nonfree",
+        "--disable-version3",
+        "--enable-decoder=mpeg2video",
+        "--enable-decoder=mpeg1video",
+        "--enable-parser=mpegvideo",
+        "--enable-static",
+        "--disable-shared",
+    ), "shared minimal LGPL FFmpeg feature recipe")
     require_tokens(FULL_APP_PACKAGER, (
         "twinsanityevolved",
         "PK\\x03\\x04",
