@@ -10,6 +10,7 @@ grep -q 'mv -f "$TMP_ARCHIVE" "$OUT_ABS"' scripts/package-muxapp.sh
 if grep -q 'application/TwinsanityRintromped' scripts/package-muxapp.sh; then echo 'Legacy nested muxapp layout detected' >&2; exit 1; fi
 if grep -R -n -F '\${' scripts device muos --exclude=test-kit.sh; then echo 'Found escaped shell expansion' >&2; exit 1; fi
 for f in scripts/*.sh muos/TwinsanityRintromped/*.sh device/*.sh; do [ -f "$f" ] && sh -n "$f"; done
+bash -n "$ROOT/../../tools/fetch_toolchain.sh"
 python3 -c "from pathlib import Path; compile(Path('tools/gl_api_inventory.py').read_text(encoding='utf-8'), 'tools/gl_api_inventory.py', 'exec')"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 cc -std=c11 -O2 -Wall -Wextra -Werror device/egl_gles_probe.c -ldl -o "$TMP/probe-host"
