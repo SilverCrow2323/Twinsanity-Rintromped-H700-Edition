@@ -11,6 +11,8 @@ if grep -q 'application/TwinsanityRintromped' scripts/package-muxapp.sh; then ec
 if grep -R -n -F '\${' scripts device muos --exclude=test-kit.sh; then echo 'Found escaped shell expansion' >&2; exit 1; fi
 for f in scripts/*.sh muos/TwinsanityRintromped/*.sh device/*.sh; do [ -f "$f" ] && sh -n "$f"; done
 bash -n "$ROOT/../../tools/fetch_toolchain.sh"
+bash -n "$ROOT/scripts/build-ffmpeg-static.sh"
+sh -n "$ROOT/scripts/package-full-muxapp.sh"
 python3 -c "from pathlib import Path; compile(Path('tools/gl_api_inventory.py').read_text(encoding='utf-8'), 'tools/gl_api_inventory.py', 'exec')"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 cc -std=c11 -O2 -Wall -Wextra -Werror device/egl_gles_probe.c -ldl -o "$TMP/probe-host"
@@ -76,4 +78,39 @@ with zipfile.ZipFile(sys.argv[1]) as archive:
         raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
 print("Muxapp rebuild removes stale entries and preserves the required root layout.")
 PY
+# Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
+mkdir -p "$TMP/fake-ffmpeg/share/licenses"
+printf '%s\n' 'FFmpeg LGPL v2.1 text fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-COPYING.LGPLv2.1.txt"
+printf '%s\n' 'FFmpeg licence fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-LICENSE.md"
+printf '%s\n' 'configuration fixture: --enable-decoder=mpeg2video' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-BUILD-CONFIGURATION.txt"
+GAME_BIN="$TMP/fake-aarch64" PROBE_BIN="$TMP/fake-aarch64" \
+SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
+FFMPEG_LICENSE_DIR="$TMP/fake-ffmpeg/share/licenses" \
+  scripts/package-full-muxapp.sh "$TMP/full-muxapp.muxapp" >/dev/null
+python3 - "$TMP/full-muxapp.muxapp" <<'PY'
+import sys
+import zipfile
+p = sys.argv[1]
+if not zipfile.is_zipfile(p):
+    raise SystemExit("Full muxapp is not a ZIP archive renamed to .muxapp")
+with open(p, "rb") as stream:
+    if stream.read(4) != b"PK\\x03\\x04":
+        raise SystemExit("Full muxapp ZIP signature is invalid")
+with zipfile.ZipFile(p) as archive:
+    if archive.testzip() is not None:
+        raise SystemExit("Full muxapp contains a corrupt ZIP member")
+    names = set(archive.namelist())
+    roots = {name.split("/", 1)[0] for name in names if name}
+    if roots != {"TwinsanityRintromped"}:
+        raise SystemExit(f"Unexpected full muxapp root: {sorted(roots)}")
+    for name in ("TwinsanityRintromped/twinsanityevolved",
+                 "TwinsanityRintromped/mux_launch.sh",
+                 "TwinsanityRintromped/tw-rintromped-h700-gles-shader-smoke"):
+        if name not in names:
+            raise SystemExit("Full muxapp missing " + name)
+    if any(name.lower().endswith(("/game.iso", "/disc-image.txt")) for name in names):
+        raise SystemExit("Full muxapp must not contain user disc data or selection")
+print("Full muxapp ZIP package test passed.")
+PY
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
