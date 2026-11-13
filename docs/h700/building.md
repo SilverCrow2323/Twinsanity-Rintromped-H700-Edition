@@ -62,10 +62,12 @@ The H700 workflow now contains separate validation lanes:
 
 | Job | Purpose |
 |---|---|
-| host-checks | Shell, probe, archive layout and host safety checks |
+| host-checks | Shell, probe, archive layout, launcher and host safety checks |
 | gles-renderer-compile | Cross-compiles the real NativeEE renderer and SDL source objects with the ARM64 Debian GLES/SDL development headers |
 | gles-shader-mesa-smoke | Builds and runs the real `GlShaderLibrary::Build()` under headless Mesa GLES 3.2; this is a blocking CI gate |
-| aarch64-package | Cross-builds the EGL, SDL and NativeEE shader diagnostics, checks ELF64/AArch64 and GLIBC, then produces the muOS `.muxapp` artifact |
+| aarch64-package | Cross-builds the EGL, SDL and NativeEE shader diagnostics, checks ELF64/AArch64 and GLIBC, then produces the diagnostic muOS `.muxapp` |
+| full-app-aarch64-link | Builds and links the complete NativeEE application/runner with the H700 AArch64 toolchain and target sysroot |
+| full-app-muxapp | Combines the full runner, diagnostics and FFmpeg licence/build evidence into the installable full muOS `.muxapp`; verifies ZIP integrity and the single application root |
 
 The diagnostic package is not the game binary. The build artifact must never be described as playable until the renderer and game runtime milestones have passed.
 
@@ -75,6 +77,17 @@ The diagnostic package is not the game binary. The build artifact must never be 
 The H700 workflow passed on commit `70a603d490a7b9977509874720551c5280bc9f43` (13 November 2026). Its artifact, `twinsanity-rintromped-h700-preflight`, contains `Twinsanity-Rintromped-H700-Preflight.muxapp` plus the three standalone ELF diagnostics. All three are ELF64/AArch64 and require at most `GLIBC_2.17` in the inspected build. The installable archive has `TwinsanityRintromped/` directly at its root and does not contain a game image.
 
 The diagnostic package validates the hardware and production shader entry points only. It is not the full TwinsanityEvolved application and does not boot the game. For physical validation, install it using the [muOS installation guide](install.md) and collect every file under `MUOS/application/TwinsanityRintromped/logs/`, including `gles-shader-report.txt`.
+
+## Verified full AArch64 runner and muxapp
+
+The current `h700/porting` head `4726e851ad0367f0ef7644097a860558e2fd0e53` passed H700 workflow run `43374362800` on 13 November 2026. In addition to the renderer and Mesa gates, the run passed `full-app-aarch64-link` and `full-app-muxapp`.
+
+- Runner: `twinsanityevolved`, ELF64/AArch64, maximum required GLIBC symbol `GLIBC_2.30` (within the Bullseye GLIBC 2.31 baseline).
+- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; SHA-256 `5abb1a27f06f1e2a0a5b9d96251fb0ad542e5148130b42e9cf99215162f7ad6c`.
+- The package builder verifies the ELF architecture, GLIBC ceiling, absence of dynamic FFmpeg and desktop OpenGL dependencies, ZIP integrity, the exact `TwinsanityRintromped/` root and required launcher/runtime/licence files.
+- The user's `game.iso` and `disc-image.txt` are explicitly excluded. The launcher selects the user's ISO from `MUOS/application/TwinsanityRintromped/` and has host regression tests for saved selection, fallback to `game.iso`, and missing-image failure.
+
+This is a successful **cross-build and packaging milestone**, not a physical boot or a playable-game certification. The first NativeEE frame, Mali shader execution, controller, audio, video, disc streaming and sustained performance still require real H700 testing.
 
 ## Debugging a compile failure
 
