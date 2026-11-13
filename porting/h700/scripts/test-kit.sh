@@ -56,10 +56,10 @@ TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
 TW_H700_APP_DIR="$TMP/launcher-app" \
 TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
 TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh --dry-run
+  sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--dry-run" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
 [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
 
 # A broken saved selection must fall back to game.iso and repair the selection.
