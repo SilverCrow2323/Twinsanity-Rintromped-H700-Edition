@@ -27,7 +27,15 @@ for n in SDL_VIDEODRIVER SDL_AUDIODRIVER EGL_PLATFORM GBM_BACKEND DISPLAY WAYLAN
 done
 section LIBRARIES
 for d in /usr/lib /usr/lib/aarch64-linux-gnu /lib /lib/aarch64-linux-gnu /opt/muos/lib /opt/muos/share; do
-  [ -d "$d" ] && find "$d" -maxdepth 2 \( -name 'libSDL2*' -o -name 'libEGL*' -o -name 'libGLES*' -o -name 'libmali*' \) -print 2>/dev/null || true
+  [ -d "$d" ] && find "$d" -maxdepth 2 \\( \\
+    -name 'libSDL2*' -o -name 'libEGL*' -o -name 'libGLES*' -o -name 'libmali*' -o \\
+    -name 'libavcodec*' -o -name 'libavutil*' -o -name 'libswscale*' -o \\
+    -name 'libstdc++.so*' -o -name 'libgcc_s.so*' \\
+  \\) -print 2>/dev/null || true
 done
+if command -v ldconfig >/dev/null 2>&1; then
+  echo '--- ldconfig selected graphics / multimedia libraries'
+  ldconfig -p 2>/dev/null | grep -E 'lib(SDL2|EGL|GLESv2|mali|avcodec|avutil|swscale|stdc\\+\\+|gcc_s)\\.so' || true
+fi
 section END
 echo 'System inventory complete.'
