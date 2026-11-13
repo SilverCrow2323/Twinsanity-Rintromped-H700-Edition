@@ -613,7 +613,7 @@ elseif(PS2R_GLES)
 include("${TE_ENGINE}/cmake/OpenGlDependency.cmake")
 include("${TE_ENGINE}/cmake/FindFFmpeg.cmake")
 set(TE_HAVE_SDL_INPUT 1)
-target_link_libraries(nativeee_libs INTERFACE Threads::Threads SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::swscale FFmpeg::avutil m)
+target_link_libraries(nativeee_libs INTERFACE Threads::Threads SDL2::SDL2 OpenGL::GL FFmpeg::avcodec FFmpeg::swscale FFmpeg::avutil m pthread)
 else()
 find_package(OpenGL REQUIRED)
 # FFmpeg (libavcodec / libavutil / libswscale): the movies' MPEG-2 video decoder (ps2r_ipu, behind ps2e_movie). The
