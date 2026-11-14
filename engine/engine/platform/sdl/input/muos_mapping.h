@@ -51,16 +51,14 @@ inline std::string Version() {
 }
 
 inline bool IsAndromeda() {
-    const std::string version = Version();
-    char* end = nullptr;
-    const double numeric = std::strtod(version.c_str(), &end);
-    if (end != version.c_str() && numeric >= 2606.0) return true;
-    // The release metadata is the fallback when a vendor image formats its
-    // version file differently from the stock 2606.0 layout.
+    // Use the release codename rather than a numeric >= check: a future muOS
+    // release may change its input contract, and must not inherit this layout
+    // merely because its version number is newer than 2606.0.
+    if (Lower(Version()).find("andromeda") != std::string::npos) return true;
     std::ifstream os_file("/etc/os-release");
     std::string line;
     while (std::getline(os_file, line))
-        if (line.find("Andromeda") != std::string::npos) return true;
+        if (Lower(line).find("andromeda") != std::string::npos) return true;
     return false;
 }
 
