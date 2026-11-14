@@ -2,9 +2,12 @@
 
 ## 0.2.3-dev
 
-- Corrected the installable `.muxapp` layout: `TwinsanityRintromped/` is now the top-level archive directory, without an extra `application/` wrapper.
-- Tightened archive verification to reject the old nested layout and require launcher, language file, device helper and both diagnostic binaries at their direct paths.
-- The package remains diagnostics-only and does not contain, modify or replace a user-provided `game.iso`.
+- Corrected the installable `.muxapp` layout: `TwinsanityRintromped/` is the single top-level archive directory, without an extra `application/` wrapper.
+- Tightened archive verification to reject nested roots, require launcher/language/diagnostic assets and preserve the user's separately supplied `game.iso`.
+- Added the full NativeEE AArch64 application/runner link and a full-game candidate `.muxapp` alongside the diagnostic preflight package.
+- H700 run `43436273369` passed all six jobs on `bd57d0a9ac52f0959a561b8bea03452d015331c2`; the runner is ELF64/AArch64 and requires at most `GLIBC_2.30`.
+- The full package passed ZIP, root-layout and licence checks and excludes `game.iso` and `disc-image.txt`.
+- Physical first NativeEE frame, Mali rendering, game boot, controller, audio/video, disc streaming and gameplay remain unverified.
 
 ## 0.2.2-dev
 

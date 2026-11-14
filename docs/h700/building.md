@@ -80,14 +80,20 @@ The diagnostic package validates the hardware and production shader entry points
 
 ## Verified full AArch64 runner and muxapp
 
-The current `h700/porting` head `e58a5fba82bc4e1d4c382e11584f161894f9d5eb` passed H700 workflow run `43399059636` on 13 November 2026. All six jobs passed: host preflight, AArch64 NativeEE renderer compile, Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
+The exact `h700/porting` HEAD `bd57d0a9ac52f0959a561b8bea03452d015331c2` passed H700 workflow run [43436273369](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369) on 13 November 2026. All six jobs passed: host checks, GLES renderer compile, Mesa production shader smoke, diagnostic AArch64 package, full NativeEE application link and full muxapp package.
 
-- Runner: `twinsanityevolved`, ELF64/AArch64, maximum required GLIBC symbol `GLIBC_2.30` (within the Bullseye GLIBC 2.31 baseline).
-- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; size 5,643,365 bytes; SHA-256 `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d`.
-- GitHub full-muxapp artifact ZIP: 5,555,771 bytes; digest `a8a0acc3b107941787e359b384758e96a09233ac072ed47ba4754e502f53a8ca`.
-- The package has exactly one root, `TwinsanityRintromped/`, includes `mux_launch.sh` and `mux_lang.ini`, and excludes the user's `game.iso` and `disc-image.txt`.
+- Full runner: `twinsanityevolved`, ELF64/AArch64 PIE, maximum required GLIBC symbol `GLIBC_2.30` (within the Bullseye GLIBC 2.31 baseline); linked against SDL2 and GLESv2.
+- Inner full `.muxapp` SHA-256: `46a06be627dfa0578e8fd0869ddea0656f2cba01a67847c37d6f28c8653f315b`.
+- Actions full-muxapp artifact: ID `14043803800`, 5,560,771-byte uploaded ZIP, digest `6180ba47faee294f65a9cf2077e5921094766bd103ef08ae471f361d73b72084`.
+- Full runner artifact: ID `14043129263`, 5,636,884-byte uploaded ZIP, digest `cc0571c009aa7022bc78b1796b233d3399869465fcae2720cb3a031560517fbe`.
+- Preflight artifact: ID `14043388401`, 391,691-byte uploaded ZIP, digest `b5d3e2cdd082771ba6eeb6d164ace543d1517c4cb711c9b12d55a58cd40b69dc`.
 
-This is a successful **cross-build and packaging milestone**, not a physical boot or a playable-game certification. The first NativeEE frame, Mali shader execution, controller, audio, video, disc streaming and sustained performance still require real H700 testing.
+The inner package passed ZIP integrity, single-root layout and licence-payload checks. It contains exactly one root, `TwinsanityRintromped/`, with `mux_launch.sh`, `mux_lang.ini`, the full AArch64 runner and diagnostics. It excludes the user's `game.iso` and `disc-image.txt`.
+
+These are cross-build and packaging results only. The physical device has only the earlier EGL/GLES 3.2 + SDL colour-frame preflight documented above. No NativeEE first frame, game boot, controller, audio/video, disc streaming or sustained gameplay has been verified on Mali-G31.
+
+Full package: [Actions artifact 14043803800](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369/artifacts/14043803800).  
+Full runner: [Actions artifact 14043129263](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369/artifacts/14043129263).
 
 ## Debugging a compile failure
 
