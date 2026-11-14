@@ -2,7 +2,7 @@
 
 // MustardOS / muOS controller mapping bridge.
 // SETUP_APP() exports the active SDL GameController row and database path.
-// On Andromeda (2606.0+) that row is authoritative: it already reflects the
+// On muOS 2606.0 Andromeda that row is authoritative: it already reflects the
 // selected Retro/Modern layout, the board's muOS-Keys GUID and any remapping.
 #include <SDL.h>
 
