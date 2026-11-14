@@ -206,7 +206,7 @@ void Launcher::DetectControllers() {
         const auto muos_map = ps2r::platform::sdl::muos_mapping::Apply(i);
         bool generic_mapping = false;
         if (muos_map.added) {
-            std::fprintf(stderr, "[muos.launcher.input] muOS %s map: %s from %s (GUID %s)\\n",
+            std::fprintf(stderr, "[muos.launcher.input] muOS %s map: %s from %s (GUID %s)\n",
                          muos_map.andromeda ? "Andromeda" : "active",
                          muos_map.layout.c_str(), muos_map.source.c_str(), muos_map.guid.c_str());
         }
@@ -215,7 +215,7 @@ void Launcher::DetectControllers() {
             // controls, while the official DB assigns face buttons to b2-b5
             // and MENU/START/SELECT to b12/b11/b10.
             if (muos_map.andromeda && muos_map.muos_keys) {
-                std::fprintf(stderr, "[muos.launcher.input] refusing incorrect generic fallback for Andromeda muOS-Keys (%s)\\n",
+                std::fprintf(stderr, "[muos.launcher.input] refusing incorrect generic fallback for Andromeda muOS-Keys (%s)\n",
                              muos_map.guid.c_str());
                 continue;
             }
@@ -228,7 +228,7 @@ void Launcher::DetectControllers() {
                 "dpup:b11,dpdown:b12,dpleft:b13,dpright:b14,"
                 "leftx:a0,lefty:a1,rightx:a2,righty:a3,lefttrigger:a4,righttrigger:a5";
             if (SDL_GameControllerAddMapping(mapping.c_str()) < 0) {
-                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\\n",
+                std::fprintf(stderr, "[muos.launcher.input] generic mapping failed for %s (%s): %s\n",
                              joystick_name ? joystick_name : "unknown", guid, SDL_GetError());
                 continue;
             }
