@@ -166,6 +166,26 @@ grep -q 'SDL_WINDOWEVENT_FOCUS_LOST' "$DRAW_SOURCE"
 grep -q 'SDL_GameControllerAddMapping(mapping.c_str())' "$LAUNCHER_SOURCE"
 grep -q 'settings_.reset()' "$LAUNCHER_SOURCE"
 
+# muOS Andromeda (2606.0) supplies the selected Retro/Modern SDL row through
+# SETUP_APP. Both launcher and gameplay must install that row before SDL opens
+# muOS-Keys; never fall back to the old b0/b1 Xbox guess on Andromeda.
+MUOS_MAPPING_HEADER="$ROOT/../../engine/engine/platform/sdl/input/muos_mapping.h"
+GAMEPAD_SOURCE="$ROOT/../../engine/engine/platform/sdl/input/gamepad_backend.cpp"
+grep -q 'muos_mapping::Apply(i)' "$LAUNCHER_SOURCE"
+grep -q 'muos_mapping::Apply(device_index)' "$GAMEPAD_SOURCE"
+grep -q 'SDL_GAMECONTROLLERCONFIG_FILE' "$MUOS_MAPPING_HEADER"
+grep -q 'SDL_GAMECONTROLLERCONFIG' "$MUOS_MAPPING_HEADER"
+grep -q 'find("andromeda")' "$MUOS_MAPPING_HEADER"
+grep -q 'a:b2,b:b3,x:b4,y:b5' "$MUOS_MAPPING_HEADER"
+grep -q 'a:b3,b:b2,x:b5,y:b4' "$MUOS_MAPPING_HEADER"
+grep -q 'guide:b12,start:b11,back:b10' "$MUOS_MAPPING_HEADER"
+grep -q 'leftstick:b13,rightstick:b14' "$MUOS_MAPPING_HEADER"
+grep -q 'refusing generic map for Andromeda muOS-Keys' "$GAMEPAD_SOURCE"
+grep -q 'refusing incorrect generic fallback for Andromeda muOS-Keys' "$LAUNCHER_SOURCE"
+grep -q 'SETUP_APP "$APP_BIN" ""' "$ROOT/muos/TwinsanityRintromped/mux_launch.sh"
+grep -q 'SDL active mapping:' "$ROOT/muos/TwinsanityRintromped/mux_launch.sh"
+grep -q 'MUOS_INPUT' "$ROOT/device/collect-system-info.sh"
+
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
 # GitHub Actions artifact downloads may restore files as 0644; the packager must
 # accept regular ELF files and set executable mode on the staged application copy.
