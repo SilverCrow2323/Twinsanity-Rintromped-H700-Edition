@@ -210,10 +210,15 @@ void Launcher::DetectControllers() {
                          muos_map.andromeda ? "Andromeda" : "active",
                          muos_map.layout.c_str(), muos_map.source.c_str(), muos_map.guid.c_str());
         }
+        if (muos_map.andromeda && muos_map.muos_keys && !muos_map.added) {
+            std::fprintf(stderr, "[muos.launcher.input] Andromeda muOS-Keys map failed; refusing stale mapping (%s)\n",
+                         muos_map.guid.c_str());
+            continue;
+        }
         if (!SDL_IsGameController(i)) {
             // Never map Andromeda muOS-Keys as Xbox b0/b1: those are volume
             // controls, while the official DB assigns face buttons to b2-b5
-            // and MENU/START/SELECT to b12/b11/b10.
+            // and MENU/START/SELECT to b12/b11.
             if (muos_map.andromeda && muos_map.muos_keys) {
                 std::fprintf(stderr, "[muos.launcher.input] refusing incorrect generic fallback for Andromeda muOS-Keys (%s)\n",
                              muos_map.guid.c_str());
