@@ -110,7 +110,7 @@ void GamepadBackend::TryOpenDeviceIndex(int device_index) {
     // the H700's muOS-Keys GUID.
     const auto muos_map = muos_mapping::Apply(device_index);
     if (muos_map.added) {
-        std::fprintf(stderr, "[muos.input] muOS %s map: %s from %s (GUID %s)\\n",
+        std::fprintf(stderr, "[muos.input] muOS %s map: %s from %s (GUID %s)\n",
                      muos_map.andromeda ? "Andromeda" : "active",
                      muos_map.layout.c_str(), muos_map.source.c_str(), muos_map.guid.c_str());
     }
@@ -121,7 +121,7 @@ void GamepadBackend::TryOpenDeviceIndex(int device_index) {
         // those indexes are volume buttons, and the guide/start/select indexes
         // differ too. Never open that controller with a fabricated layout.
         if (muos_map.andromeda && muos_map.muos_keys) {
-            std::fprintf(stderr, "input: gamepad: refusing generic map for Andromeda muOS-Keys GUID %s\\n",
+            std::fprintf(stderr, "input: gamepad: refusing generic map for Andromeda muOS-Keys GUID %s\n",
                          muos_map.guid.c_str());
             return;
         }
@@ -135,7 +135,7 @@ void GamepadBackend::TryOpenDeviceIndex(int device_index) {
             "leftx:a0,lefty:a1,rightx:a2,righty:a3,"
             "lefttrigger:a4,righttrigger:a5";
         if (SDL_GameControllerAddMapping(mapping.c_str()) < 0) {
-            std::fprintf(stderr, "input: gamepad: no mapping for '%s' (%s) and the generic fallback failed: %s\\n",
+            std::fprintf(stderr, "input: gamepad: no mapping for '%s' (%s) and the generic fallback failed: %s\n",
                          jname ? jname : "?", guid, SDL_GetError());
             return;
         }
