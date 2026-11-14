@@ -1,6 +1,6 @@
 # H700 porting status
 
-**Latest complete H700 CI: PASS on code commit `d9c9840fc60cda9afcfe895b8360bc542ee25a61`, run [#289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948). All six jobs passed, including the full game/NativeEE AArch64 link and the full muOS `.muxapp`. The current branch HEAD is `25847674d3167c8c15cfda5af5b19e58bfdffec5`, which is a later documentation-only descendant; do not attribute the #289 run to that later SHA. Physical EGL/GLES/SDL preflight passed on 12 November 2026. Production NativeEE shaders on Mali, first NativeEE frame and gameplay remain NOT YET VALIDATED.**
+**Latest complete H700 CI: PASS on the exact `h700/porting` HEAD `bd57d0a9ac52f0959a561b8bea03452d015331c2`, run [43436273369](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369), 13 November 2026. All six jobs passed: host checks, AArch64 GLES renderer compile, Mesa production shader smoke, AArch64 package, full NativeEE application link and full muOS `.muxapp`. The runner is ELF64/AArch64 with maximum required `GLIBC_2.30`; the full package SHA-256 is `46a06be627dfa0578e8fd0869ddea0656f2cba01a67847c37d6f28c8653f315b`. Physical EGL/GLES/SDL preflight passed on 12 November 2026, but production NativeEE shaders on Mali, first NativeEE frame and gameplay remain NOT YET VALIDATED.**
 
 ## Current status
 
@@ -41,7 +41,41 @@
 - [Windows workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/windows.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-## Verified full H700 build · run #289
+## Latest full H700 build · run 43436273369
+
+Exact tested code SHA: `bd57d0a9ac52f0959a561b8bea03452d015331c2`  
+Run: [43436273369](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369) · 13 November 2026 · all six jobs passed:
+
+- `host-checks`
+- `gles-renderer-compile`
+- `gles-shader-mesa-smoke`
+- `aarch64-package`
+- `full-app-aarch64-link`
+- `full-app-muxapp`
+
+The full `twinsanityevolved` runner is an ELF64/AArch64 PIE and requires at most `GLIBC_2.30`, within the Debian Bullseye GLIBC 2.31 baseline. Its dynamic dependencies include SDL2 and GLESv2.
+
+The full inner `.muxapp` passed ZIP integrity, single-root layout, diagnostics and licence-payload checks. Its SHA-256 is:
+
+```text
+46a06be627dfa0578e8fd0869ddea0656f2cba01a67847c37d6f28c8653f315b
+```
+
+It contains exactly one application root, `TwinsanityRintromped/`, including the full runner, `mux_launch.sh`, `mux_lang.ini`, diagnostics and FFmpeg/TwinsanityEvolved licence files. It excludes `game.iso` and `disc-image.txt`.
+
+| Artifact | ID | Uploaded ZIP size | SHA-256 of uploaded ZIP |
+|---|---:|---:|---|
+| Full `.muxapp` + sidecar | `14043803800` | 5,560,771 B | `6180ba47faee294f65a9cf2077e5921094766bd103ef08ae471f361d73b72084` |
+| Full AArch64 runner | `14043129263` | 5,636,884 B | `cc0571c009aa7022bc78b1796b233d3399869465fcae2720cb3a031560517fbe` |
+| Diagnostic preflight | `14043388401` | 391,691 B | `b5d3e2cdd082771ba6eeb6d164ace543d1517c4cb711c9b12d55a58cd40b69dc` |
+
+These SHA-256 values for the uploaded Actions ZIPs are distinct from the inner `.muxapp` hash above. The package is a verified cross-build artifact, not proof of a physical boot: first NativeEE frame, Mali render-target/readback correctness, controller, audio/video, disc streaming and sustained performance remain pending.
+
+Full package: [artifact 14043803800](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369/artifacts/14043803800).  
+Full runner: [artifact 14043129263](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369/artifacts/14043129263).  
+Preflight: [artifact 14043388401](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43436273369/artifacts/14043388401).
+
+## Earlier verified full H700 build · run #289
 
 Exact tested code SHA: `d9c9840fc60cda9afcfe895b8360bc542ee25a61`  
 Run: [`43434846948`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948) · 13 November 2026 · all six jobs passed:
