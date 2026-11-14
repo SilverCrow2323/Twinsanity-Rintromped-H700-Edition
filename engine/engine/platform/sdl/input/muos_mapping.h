@@ -10,8 +10,8 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <initializer_list>
 #include <string>
-#include <vector>
 
 namespace ps2r::platform::sdl::muos_mapping {
 
@@ -40,14 +40,7 @@ inline std::string Lower(std::string value) {
 }
 
 inline std::string Version() {
-    std::string value = ReadLine("/opt/muos/config/system/version");
-    if (value.empty()) {
-        const std::string os = ReadLine("/etc/os-release");
-        const std::string key = "VERSION=";
-        const size_t at = os.find(key);
-        if (at != std::string::npos) value = os.substr(at + key.size());
-    }
-    return value;
+    return ReadLine("/opt/muos/config/system/version");
 }
 
 inline bool IsAndromeda() {
@@ -126,40 +119,41 @@ inline Result Apply(int device_index) {
     result.muos_keys = IsMuosKeysDevice(device_index, result.guid);
     if (result.guid.empty()) return result;
 
+    auto install = [&](const std::string& candidate, const std::string& source) {
+        if (candidate.empty() || SDL_GameControllerAddMapping(candidate.c_str()) < 0) return false;
+        result.source = source;
+        result.layout = candidate.find(",a:b3,b:b2,x:b5,y:b4,") != std::string::npos ? "modern" : "retro/system";
+        result.added = true;
+        return true;
+    };
+
     // Prefer the exact mapping injected by SETUP_APP. It carries the user's
-    // currently selected scheme and any controller remap configured in muOS.
-    std::string line;
+    // selected content/system scheme and any per-device remapping from muOS.
     const char* active = std::getenv("SDL_GAMECONTROLLERCONFIG");
-    if (active && LineMatchesGuid(active, result.guid)) {
-        line = active;
-        result.source = "SDL_GAMECONTROLLERCONFIG";
+    if (active && LineMatchesGuid(active, result.guid) && install(active, "SDL_GAMECONTROLLERCONFIG"))
+        return result;
+
+    // SETUP_SDL_ENVIRONMENT also exports the selected Retro/Modern database.
+    const char* selected_file = std::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
+    if (install(FindLineInFile(selected_file, result.guid),
+                selected_file ? selected_file : "SDL controller database"))
+        return result;
+
+    for (const char* db_path : {"/usr/lib/gamecontrollerdb.txt", "/usr/lib32/gamecontrollerdb.txt"}) {
+        if (install(FindLineInFile(db_path, result.guid), db_path)) return result;
     }
 
-    // SETUP_SDL_ENVIRONMENT also exports the selected Retro/Modern DB file.
-    if (line.empty()) {
-        const char* selected_file = std::getenv("SDL_GAMECONTROLLERCONFIG_FILE");
-        line = FindLineInFile(selected_file, result.guid);
-        if (!line.empty()) result.source = selected_file ? selected_file : "SDL map";
-    }
-    if (line.empty()) {
-        for (const char* path : {"/usr/lib/gamecontrollerdb.txt", "/usr/lib32/gamecontrollerdb.txt"}) {
-            line = FindLineInFile(path, result.guid);
-            if (!line.empty()) { result.source = path; break; }
-        }
-    }
-
-    if (line.empty() && result.andromeda && result.muos_keys) {
+    // Only the Andromeda H700 fallback is synthesized locally. Older firmware
+    // retains the pre-existing generic fallback and future muOS codenames must
+    // wait for their own verified mapping contract.
+    if (result.andromeda && result.muos_keys) {
         const std::string layout = SelectedLayout();
         const char* name = SDL_JoystickNameForIndex(device_index);
         const bool has_sticks = SDL_JoystickNumAxes(device_index) >= 6 ||
                                 SDL_JoystickNumButtons(device_index) >= 15;
-        line = BuildAndromedaH700Fallback(result.guid, name, has_sticks, layout);
-        result.source = "Andromeda H700 canonical fallback";
+        install(BuildAndromedaH700Fallback(result.guid, name, has_sticks, layout),
+                "Andromeda H700 canonical fallback");
     }
-
-    if (line.empty()) return result;
-    result.layout = line.find(",a:b3,b:b2,") != std::string::npos ? "modern" : "retro/system";
-    result.added = SDL_GameControllerAddMapping(line.c_str()) >= 0;
     return result;
 }
 
