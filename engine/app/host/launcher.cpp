@@ -16,6 +16,7 @@
 #include "engine/core/config/settings_file.h"
 #include "engine/platform/host/platform.h"
 #include "engine/platform/sdl/gl_context.h"
+#include "engine/platform/sdl/input/muos_mapping.h"
 #include "engine/title/title_profile.h"
 #include "imgui.h"
 #include PS2R_GL_HEADER
@@ -199,11 +200,30 @@ void Launcher::DetectControllers() {
     SDL_JoystickEventState(SDL_ENABLE);
     for (int i = 0; i < SDL_NumJoysticks(); i++) {
         const char* joystick_name = SDL_JoystickNameForIndex(i);
+        // SETUP_APP has already applied the user's muOS Retro/Modern choice.
+        // Add that exact GUID row before SDL classifies the device; this keeps
+        // the pre-launch Controls page identical to in-game controller input.
+        const auto muos_map = ps2r::platform::sdl::muos_mapping::Apply(i);
         bool generic_mapping = false;
+        if (muos_map.added) {
+            std::fprintf(stderr, "[muos.launcher.input] muOS %s map: %s from %s (GUID %s)\n",
+                         muos_map.andromeda ? "Andromeda" : "active",
+                         muos_map.layout.c_str(), muos_map.source.c_str(), muos_map.guid.c_str());
+        }
+        if (muos_map.andromeda && muos_map.muos_keys && !muos_map.added) {
+            std::fprintf(stderr, "[muos.launcher.input] Andromeda muOS-Keys map failed; refusing stale mapping (%s)\n",
+                         muos_map.guid.c_str());
+            continue;
+        }
         if (!SDL_IsGameController(i)) {
-            // Match GamepadBackend's muOS raw-joystick fallback. In particular,
-            // muOS-Keys must be opened as a GameController so GUIDE and START
-            // events reach the launcher's navigation and system exit chord.
+            // Never map Andromeda muOS-Keys as Xbox b0/b1: those are volume
+            // controls, while the official DB assigns face buttons to b2-b5
+            // and MENU/START/SELECT to b12/b11.
+            if (muos_map.andromeda && muos_map.muos_keys) {
+                std::fprintf(stderr, "[muos.launcher.input] refusing incorrect generic fallback for Andromeda muOS-Keys (%s)\n",
+                             muos_map.guid.c_str());
+                continue;
+            }
             char guid[64] = {};
             SDL_JoystickGetGUIDString(SDL_JoystickGetDeviceGUID(i), guid, sizeof(guid));
             const std::string mapping = std::string(guid) + "," +

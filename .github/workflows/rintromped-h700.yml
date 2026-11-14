@@ -12,6 +12,19 @@ on:
     paths:
       - 'porting/h700/**'
       - 'CMakeLists.txt'
+      - 'cmake/**'
+      - 'engine/**'
+      - 'game/**'
+      - 'games/**'
+      - 'platform/**'
+      - 'runner/**'
+      - 'launcher/discs/**'
+      - 'tools/**'
+      - '.github/workflows/rintromped-h700.yml'
+  pull_request:
+    branches: [h700/porting]
+    paths:
+      - 'porting/h700/**'
       - 'CMakeLists.txt'
       - 'cmake/**'
       - 'engine/**'
