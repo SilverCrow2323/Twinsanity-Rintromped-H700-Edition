@@ -96,6 +96,17 @@ inline std::string SelectedLayout() {
     return system_layout == "1" ? "modern" : "retro";
 }
 
+inline bool HasRightStick(int device_index) {
+    // SDL exposes physical capabilities on an opened joystick, not by device
+    // index. Open/close a temporary handle before the long-lived controller.
+    SDL_Joystick* joystick = SDL_JoystickOpen(device_index);
+    if (!joystick) return false;
+    const bool has_right_stick = SDL_JoystickNumAxes(joystick) >= 6 ||
+                                 SDL_JoystickNumButtons(joystick) >= 15;
+    SDL_JoystickClose(joystick);
+    return has_right_stick;
+}
+
 inline std::string BuildAndromedaH700Fallback(const std::string& guid, const char* name,
                                                bool has_sticks, const std::string& layout) {
     const bool modern = layout == "modern";
@@ -149,8 +160,7 @@ inline Result Apply(int device_index) {
     if (result.andromeda && result.muos_keys) {
         const std::string layout = SelectedLayout();
         const char* name = SDL_JoystickNameForIndex(device_index);
-        const bool has_sticks = SDL_JoystickNumAxes(device_index) >= 6 ||
-                                SDL_JoystickNumButtons(device_index) >= 15;
+        const bool has_sticks = HasRightStick(device_index);
         install(BuildAndromedaH700Fallback(result.guid, name, has_sticks, layout),
                 "Andromeda H700 canonical fallback");
     }
