@@ -101,7 +101,7 @@ inline bool HasRightStick(int device_index) {
     // index. Open/close a temporary handle before the long-lived controller.
     SDL_Joystick* joystick = SDL_JoystickOpen(device_index);
     if (!joystick) return false;
-    const bool has_right_stick = SDL_JoystickNumAxes(joystick) >= 6 ||
+    const bool has_right_stick = SDL_JoystickNumAxes(joystick) >= 4 ||
                                  SDL_JoystickNumButtons(joystick) >= 15;
     SDL_JoystickClose(joystick);
     return has_right_stick;
