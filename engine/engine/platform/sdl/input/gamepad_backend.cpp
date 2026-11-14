@@ -114,6 +114,11 @@ void GamepadBackend::TryOpenDeviceIndex(int device_index) {
                      muos_map.andromeda ? "Andromeda" : "active",
                      muos_map.layout.c_str(), muos_map.source.c_str(), muos_map.guid.c_str());
     }
+    if (muos_map.andromeda && muos_map.muos_keys && !muos_map.added) {
+        std::fprintf(stderr, "input: gamepad: Andromeda muOS-Keys map failed; refusing stale mapping (%s)\n",
+                     muos_map.guid.c_str());
+        return;
+    }
 
     bool generic = false;
     if (!SDL_IsGameController(device_index)) {
