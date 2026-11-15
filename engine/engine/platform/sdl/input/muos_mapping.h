@@ -39,8 +39,20 @@ inline std::string Lower(std::string value) {
     return value;
 }
 
+
+// Test builds can redirect the muOS metadata paths without changing production paths.
+inline const char* ConfigPath(const char* test_env, const char* fallback) {
+#ifdef PS2R_MUOS_MAPPING_TEST
+    const char* override_path = std::getenv(test_env);
+    if (override_path && *override_path) return override_path;
+#else
+    (void)test_env;
+#endif
+    return fallback;
+}
+
 inline std::string Version() {
-    return ReadLine("/opt/muos/config/system/version");
+    return ReadLine(ConfigPath("TW_MUOS_TEST_VERSION_FILE", "/opt/muos/config/system/version"));
 }
 
 inline bool IsAndromeda() {
@@ -48,7 +60,7 @@ inline bool IsAndromeda() {
     // release may change its input contract, and must not inherit this layout
     // merely because its version number is newer than 2606.0.
     if (Lower(Version()).find("andromeda") != std::string::npos) return true;
-    std::ifstream os_file("/etc/os-release");
+    std::ifstream os_file(ConfigPath("TW_MUOS_TEST_OS_RELEASE_FILE", "/etc/os-release"));
     std::string line;
     while (std::getline(os_file, line))
         if (Lower(line).find("andromeda") != std::string::npos) return true;
@@ -90,9 +102,9 @@ inline std::string FindLineInFile(const char* path, const std::string& guid) {
 }
 
 inline std::string SelectedLayout() {
-    const std::string run_selection = ReadLine("/run/muos/controller");
+    const std::string run_selection = ReadLine(ConfigPath("TW_MUOS_TEST_CONTROLLER_SELECTION_FILE", "/run/muos/controller"));
     if (run_selection == "retro" || run_selection == "modern") return run_selection;
-    const std::string system_layout = ReadLine("/opt/muos/config/settings/remap/layout");
+    const std::string system_layout = ReadLine(ConfigPath("TW_MUOS_TEST_LAYOUT_FILE", "/opt/muos/config/settings/remap/layout"));
     return system_layout == "1" ? "modern" : "retro";
 }
 
@@ -150,8 +162,16 @@ inline Result Apply(int device_index) {
                 selected_file ? selected_file : "SDL controller database"))
         return result;
 
-    for (const char* db_path : {"/usr/lib/gamecontrollerdb.txt", "/usr/lib32/gamecontrollerdb.txt"}) {
-        if (install(FindLineInFile(db_path, result.guid), db_path)) return result;
+#ifdef PS2R_MUOS_MAPPING_TEST
+    const char* test_db = std::getenv("TW_MUOS_TEST_CONTROLLER_DB");
+    if (test_db && *test_db) {
+        if (install(FindLineInFile(test_db, result.guid), test_db)) return result;
+    } else
+#endif
+    {
+        for (const char* db_path : {"/usr/lib/gamecontrollerdb.txt", "/usr/lib32/gamecontrollerdb.txt"}) {
+            if (install(FindLineInFile(db_path, result.guid), db_path)) return result;
+        }
     }
 
     // Only the Andromeda H700 fallback is synthesized locally. Older firmware

@@ -228,4 +228,14 @@ with zipfile.ZipFile(p) as archive:
 print("Full muxapp ZIP package test passed.")
 PY
 
+
+# Execute the Andromeda mapping contract against SDL stubs. These tests exercise
+# environment/database precedence and Retro/Modern fallback logic; they are not
+# a substitute for physical muOS controller validation.
+c++ -std=c++17 -Wall -Wextra -Werror \
+  -I"$ROOT/tests/fake-sdl" -I"$ROOT/../../engine" \
+  "$ROOT/tests/test-muos-mapping.cpp" -o "$TMP/test-muos-mapping"
+mkdir -p "$TMP/muos-mapping"
+TW_MUOS_TEST_DIR="$TMP/muos-mapping" "$TMP/test-muos-mapping"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'

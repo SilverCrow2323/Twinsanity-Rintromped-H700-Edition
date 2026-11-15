@@ -47,3 +47,7 @@ The engine's MENU + START exit chord is now bound through the official `guide:b1
 Each launch records the detected muOS version/build, board name, selected controller scheme, SDL database path and active SDL mapping in `logs/game-launch.log`. The device report also records the system version and active muOS-Keys rows. This makes it possible to distinguish a wrong profile from a controller that SDL failed to open.
 
 For a new report, recreate `logs/performance-diagnostics.once` only when profiling is required; ordinary launches do not run the performance sampler.
+
+## Host-side mapping contract test
+
+The H700 host test-kit compiles `tests/test-muos-mapping.cpp` against a small SDL stub. It executes the mapping helper and checks active-environment, selected-database and system-database precedence; Retro/Modern fallback selection; right-stick capability detection; future-release isolation; and fail-closed behavior when SDL rejects an Andromeda `muOS-Keys` mapping. Test-only path overrides are compiled behind `PS2R_MUOS_MAPPING_TEST`; production builds continue to use the fixed muOS paths above. This is deterministic host evidence, not a physical controller test.
