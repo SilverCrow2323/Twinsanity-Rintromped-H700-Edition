@@ -90,12 +90,12 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         fi
     } >> "$APP_DIR/logs/game-launch.log"
 
-    # muOS may invoke application scripts with framework-specific positional
-    # parameters. They are not game options: never forward them to NativeEE.
-    # --iso is a direct-run flag and suppresses the launcher unless --launcher is
-    # also present. Force the pre-launch UI while retaining the selected disc.
-    printf 'Launcher: forced single-screen UI before game start\n' >> "$APP_DIR/logs/game-launch.log"
-    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" --launcher >> "$APP_DIR/logs/game-launch.log" 2>&1
+    # Boot straight into the selected game image. The optional Qt pre-launch
+    # screen is deliberately skipped on the H700 path: muOS already owns
+    # application navigation, and this framebuffer-only target should not
+    # depend on the extra Qt launcher to reach gameplay.
+    printf 'Startup UI: skipped; launching the selected disc directly\n' >> "$APP_DIR/logs/game-launch.log"
+    exec "$APP_DIR/$GAME_BIN" --iso "$DISC_PATH" >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
 
 export APP_DIR

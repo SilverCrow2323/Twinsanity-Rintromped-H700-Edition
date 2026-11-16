@@ -32,8 +32,8 @@ enum class ThreadRole : uint8_t { Interactive = 0, Pacer, Game, Graphics, Worker
 struct Thread      { void* handle = nullptr; };
 struct Fiber       { void* handle = nullptr; };
 struct Timer       { void* handle = nullptr; };
-enum class MapFlags { None };
-enum class Prot { None, Read, ReadWrite, ReadExec };
+enum class MapFlags { NoFlags };
+enum class Prot { NoProtection, Read, ReadWrite, ReadExec };
 
 struct PlatformCaps {
     const char* name = "";

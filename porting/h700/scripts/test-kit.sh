@@ -21,6 +21,19 @@ bash -n "$ROOT/scripts/build-ffmpeg-static.sh"
 sh -n "$ROOT/scripts/package-full-muxapp.sh"
 python3 -c "from pathlib import Path; compile(Path('tools/gl_api_inventory.py').read_text(encoding='utf-8'), 'tools/gl_api_inventory.py', 'exec')"
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT HUP INT TERM
+# X11 defines the global macro None as 0. The platform API must not use that
+# token as an enum member because EGL includes Xlib before platform.h.
+cat > "$TMP/platform-header-x11.cpp" <<'EOF'
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#define None 0
+#include "engine/platform/platform.h"
+static_assert(static_cast<int>(ps2r::platform::MapFlags::NoFlags) == 0);
+static_assert(static_cast<int>(ps2r::platform::Prot::NoProtection) == 0);
+int main() { return 0; }
+EOF
+c++ -std=c++17 -Wall -Wextra -Werror -I"$ROOT/../../engine" "$TMP/platform-header-x11.cpp" -o "$TMP/platform-header-x11"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/egl_gles_probe.c -ldl -o "$TMP/probe-host"
 cc -std=c11 -O2 -Wall -Wextra -Werror device/sdl_gles_probe.c -ldl -o "$TMP/sdl-probe-host"
 set +e
@@ -38,9 +51,9 @@ grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
 if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_BIN="$TMP/probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
-# Exercise the actual full-game launcher without muOS. The runner's CLI
-# requires --iso <path>; the prelaunch screen is force-enabled with --launcher
-# because --iso otherwise marks this as a direct/harness-style invocation.
+# Exercise the actual full-game launcher without muOS. The H700 path
+# must boot directly into the selected disc and must not require the optional
+# Qt pre-launch UI.
 mkdir -p "$TMP/launcher-app/My Discs"
 printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 cat > "$TMP/muos-func.sh" <<'EOF'
@@ -63,8 +76,11 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--launcher" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
+if grep -Fxq -- "--launcher" "$TMP/launcher-args.txt"; then
+  echo "H700 must not open the optional pre-launch screen" >&2
+  exit 1
+fi
 [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
 
 # The one-shot performance marker enables bounded diagnostics, removes itself
@@ -94,7 +110,11 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
+if grep -Fxq -- "--launcher" "$TMP/launcher-args.txt"; then
+  echo "Fallback H700 boot must also skip the optional pre-launch screen" >&2
+  exit 1
+fi
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # No valid image must fail before invoking the game runner.
