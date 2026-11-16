@@ -44,7 +44,9 @@ A graphics capability failure is written to the reports. The launcher then retur
 
 ## User data stays separate
 
-The diagnostic application does not include, replace, open or validate game.iso. Keep the image as user data in the application folder and make a backup before reinstalling an archive. Do not assume Archive Manager preserves files that are not part of the new package.
+The full-game package never contains a disc image. Put your own `game.iso` directly in the installed `TwinsanityRintromped/` application folder; the launcher passes the selected image to NativeEE with `--iso`. A saved `disc-image.txt` selection may point to a file inside that application root, including a subfolder, but absolute paths outside the root, parent-directory escapes and symlink escapes are rejected. If the saved selection is missing or unsafe, the launcher falls back to the root-level `game.iso` and repairs the selection file. A symlinked `game.iso` is not accepted.
+
+The ISO remains user data: it is never copied into the .muxapp. Back it up before reinstalling an archive because Archive Manager is not guaranteed to preserve files that are not part of the package.
 
 ## References
 
