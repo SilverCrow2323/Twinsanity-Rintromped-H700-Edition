@@ -40,24 +40,58 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
     # beside the executable and passes its resolved path explicitly; merely
     # writing disc-image.txt is not enough for the runner's command-line parser.
     # If the saved path is missing, seed it from game.iso without touching it.
+    APP_ROOT="$(pwd -P)"
+    resolve_disc_image() {
+        candidate="$1"
+        case "$candidate" in
+            /*) ;;
+            *) candidate="$APP_ROOT/$candidate" ;;
+        esac
+
+        [ -f "$candidate" ] || return 1
+        [ ! -L "$candidate" ] || return 1
+        candidate_dir="$(dirname "$candidate")" || return 1
+        candidate_name="$(basename "$candidate")" || return 1
+        resolved_dir="$(CDPATH= cd -P "$candidate_dir" 2>/dev/null && pwd -P)" || return 1
+        case "$resolved_dir" in
+            "$APP_ROOT"|"$APP_ROOT"/*) ;;
+            *) return 1 ;;
+        esac
+
+        resolved_path="$resolved_dir/$candidate_name"
+        [ -f "$resolved_path" ] && [ ! -L "$resolved_path" ] || return 1
+        printf '%s\n' "$resolved_path"
+    }
+
     DISC_OK=0
     DISC_IMAGE=""
     DISC_PATH=""
     if [ -s "$APP_DIR/disc-image.txt" ]; then
         IFS= read -r DISC_IMAGE < "$APP_DIR/disc-image.txt" || true
-        case "$DISC_IMAGE" in
-            /*) DISC_PATH="$DISC_IMAGE" ;;
-            "") DISC_PATH="" ;;
-            *)  DISC_PATH="$APP_DIR/$DISC_IMAGE" ;;
-        esac
-        [ -f "$DISC_PATH" ] && DISC_OK=1
+        if [ -n "$DISC_IMAGE" ]; then
+            DISC_PATH="$(resolve_disc_image "$DISC_IMAGE" 2>/dev/null)" || DISC_PATH=""
+            if [ -n "$DISC_PATH" ]; then
+                DISC_OK=1
+            else
+                printf 'Rejected saved disc selection (missing, symlinked, or outside app root): %s\n' "$DISC_IMAGE" >> "$APP_DIR/logs/game-launch.log"
+            fi
+        fi
     fi
-    if [ "$DISC_OK" -ne 1 ] && [ -f "$APP_DIR/game.iso" ]; then
-        DISC_IMAGE="game.iso"
-        DISC_PATH="$APP_DIR/$DISC_IMAGE"
-        printf '%s\n' "$DISC_IMAGE" > "$APP_DIR/.disc-image.txt.tmp"
-        mv -f "$APP_DIR/.disc-image.txt.tmp" "$APP_DIR/disc-image.txt"
-        DISC_OK=1
+    if [ "$DISC_OK" -ne 1 ]; then
+        DISC_PATH="$(resolve_disc_image "game.iso" 2>/dev/null)" || DISC_PATH=""
+        if [ -n "$DISC_PATH" ]; then
+            DISC_IMAGE="game.iso"
+            DISC_TMP="$(mktemp "$APP_DIR/.disc-image.txt.tmp.XXXXXX")" || exit 1
+            if ! printf '%s\n' "$DISC_IMAGE" > "$DISC_TMP"; then
+                rm -f "$DISC_TMP"
+                exit 1
+            fi
+            if ! mv -f "$DISC_TMP" "$APP_DIR/disc-image.txt"; then
+                rm -f "$DISC_TMP"
+                exit 1
+            fi
+            DISC_OK=1
+        fi
     fi
     if [ "$DISC_OK" -ne 1 ]; then
         echo "No valid disc image. Put your own game.iso in $APP_DIR or restore disc-image.txt." >&2
