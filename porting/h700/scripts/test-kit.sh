@@ -119,13 +119,13 @@ fi
 
 # A saved relative path must not escape the application root. The safe
 # root-level game.iso is selected instead, and the saved selection is repaired.
-printf '%s\\n' 'outside disc bytes' > "$TMP/outside.iso"
-printf '%s\\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
-printf '%s\\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-TW_H700_APP_DIR="$TMP/launcher-app" \\
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+printf '%s\n' 'outside disc bytes' > "$TMP/outside.iso"
+printf '%s\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
@@ -134,10 +134,10 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
 rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-app/disc-image.txt" "$TMP/launcher-args.txt"
 ln -s "$TMP/outside.iso" "$TMP/launcher-app/game.iso"
 set +e
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-TW_H700_APP_DIR="$TMP/launcher-app" \\
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
 symlink_rc=$?
 set -e
