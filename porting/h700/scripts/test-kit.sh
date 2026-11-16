@@ -117,6 +117,34 @@ if grep -Fxq -- "--launcher" "$TMP/launcher-args.txt"; then
 fi
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
+# A saved relative path must not escape the application root. The safe
+# root-level game.iso is selected instead, and the saved selection is repaired.
+printf '%s\\n' 'outside disc bytes' > "$TMP/outside.iso"
+printf '%s\\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+TW_H700_APP_DIR="$TMP/launcher-app" \\
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+  sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+[ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
+
+# A symlinked game.iso must not make the launcher read a disc outside the app.
+rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-app/disc-image.txt" "$TMP/launcher-args.txt"
+ln -s "$TMP/outside.iso" "$TMP/launcher-app/game.iso"
+set +e
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+TW_H700_APP_DIR="$TMP/launcher-app" \\
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+  sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
+symlink_rc=$?
+set -e
+[ "$symlink_rc" -eq 2 ]
+[ ! -e "$TMP/launcher-args.txt" ]
+rm -f "$TMP/launcher-app/game.iso"
+
 # No valid image must fail before invoking the game runner.
 rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-args.txt"
 set +e
