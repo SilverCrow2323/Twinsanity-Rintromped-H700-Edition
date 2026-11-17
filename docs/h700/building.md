@@ -80,13 +80,15 @@ The diagnostic package validates the hardware and production shader entry points
 
 ## Verified full AArch64 runner and muxapp
 
-The current `h700/porting` HEAD `681f0b3249cbb4e3f900ff55db4db252c949e3e3` passed H700 workflow run [`43844953315`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315) on 16 November 2026. All six jobs passed: host checks, AArch64 renderer compile, blocking Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
+The current validated H700 code HEAD `95732802bd5c651e83a90dfdf85d95249b3654aa` passed workflow run [`44067269456`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44067269456) on 17 November 2026. All six jobs passed: host checks, AArch64 renderer compile, blocking Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
 
 - Full runner: `twinsanityevolved`, ELF64 little-endian AArch64 PIE; maximum required GLIBC symbol `GLIBC_2.30` (within the pinned Bullseye GLIBC 2.31 baseline).
-- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; inner SHA-256 `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`.
-- Full-muxapp Actions artifact: ID `14214608053`, outer ZIP size 5,561,027 bytes, digest `3a53eed01fd3e43583bb13b3758aafd48b5800ce1fecc61c32b01353d5b5d8e9`.
-- Full-runner Actions artifact: ID `14215381134`, outer ZIP size 5,636,884 bytes, digest `7232c57f5c89a663369009346481e6a8e8dcbeeada0531e9286d704e07aa5ac2`.
-- The package contains exactly one root, `TwinsanityRintromped/`, with `mux_launch.sh` and `mux_lang.ini`; it excludes the user's `game.iso` and `disc-image.txt`.
+- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; inner SHA-256 `a088feba52ec205c558bb1918f66de041510b23981f5865abdaeb89ae51c08a3`.
+- Full-muxapp Actions artifact: ID `14321467319`, outer ZIP size 5,565,674 bytes, digest `d59fe6940c0448086a945f665c7c7470d1ab5086cc955f2652205df7471d02f9`.
+- Full-runner Actions artifact: ID `14321691939`, outer ZIP size 5,644,398 bytes, digest `7d3a89630d053dc9030fa1253c13ba186ea6835927545d18ce1fc06a7cbdb29e`.
+- The package job verified ZIP integrity, the single root `TwinsanityRintromped/`, diagnostics and licence payload; the user's `game.iso` and `disc-image.txt` are excluded.
+
+The generic NativeEE runner was built without a title ELF or disc image. This is a full link/package milestone, not proof of a first game frame or playable runtime.
 
 **Build boundary:** this CI run had no title ELF or disc input. The title recompilation, game composition and title-dependent EE/CDVD tests were skipped. The generic runner link and full package are not proof of a first NativeEE frame or playable game.
 
