@@ -4,15 +4,17 @@ This procedure separates three different results: (1) EGL/GLES/SDL preflight, (2
 
 ## Tested package
 
-Latest complete H700 CI build: [run #289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948), code commit `d9c9840fc60cda9afcfe895b8360bc542ee25a61`.
+Latest complete H700 CI code build: [run #310](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315), code commit `681f0b3249cbb4e3f900ff55db4db252c949e3e3`. All six jobs passed: host checks, GLES renderer compile, blocking Mesa shader smoke, full AArch64 link, diagnostic package and full muxapp package.
 
-Full-game artifact: [twinsanity-rintromped-h700-full-muxapp](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948/artifacts/14043202595), artifact ID `14043202595`. Inner `.muxapp` SHA-256:
+NativeEE runner-candidate artifact: [full muxapp artifact](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315/artifacts/14214608053), artifact ID `14214608053`. Inner `.muxapp` SHA-256:
 
 ```text
-2fbabe69621b8d2a3cd75d2d04b995f1f84718ad5db2efd89a9b23aea4c87ea8
+f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53
 ```
 
-Keep the inner `.muxapp` extension and verify its adjacent `.sha256` sidecar. The archive has one `TwinsanityRintromped/` root, an ELF64/AArch64 `twinsanityevolved` runner, launcher, diagnostics and licences. It contains neither `game.iso` nor `disc-image.txt`.
+Outer Actions ZIP digest: `3a53eed01fd3e43583bb13b3758aafd48b5800ce1fecc61c32b01353d5b5d8e9`. The archive has one `TwinsanityRintromped/` root, an ELF64/AArch64 `twinsanityevolved` runner, launcher, diagnostics and licences. It contains neither `game.iso` nor `disc-image.txt`.
+
+**Build boundary:** CI had no title ELF or disc input; title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. This is a runner candidate, not a game-verified build.
 
 The separate [preflight artifact](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948/artifacts/14043651388) is diagnostic-only and does not contain the game runner. Its six-colour SDL display is not a NativeEE frame.
 
@@ -68,8 +70,10 @@ Provide the exact package SHA-256 and Actions run/artifact ID, device model and 
 
 ## Existing evidence and current boundary
 
-A physical H700 test supplied on 12 November 2026 passed EGL 1.4, GLES 3.2, SDL window creation and six visible buffer swaps on muOS 2606.0 Andromeda / Allwinner sun50iw9 / Mali-G31. This is historical preflight evidence only.
+A physical H700 test supplied on 12 November 2026 passed EGL 1.4, GLES 3.2, SDL window creation and six visible buffer swaps on muOS 2606.0 Andromeda / Allwinner sun50iw9 / Mali-G31. This is Stage A preflight evidence.
 
-CI run #289 passed AArch64 renderer compile, Mesa llvmpipe production-shader smoke, full game/NativeEE AArch64 link and full `.muxapp` packaging. Mesa is a software renderer, not Mali. No physical-device report for the full package above has been supplied; therefore Mali production shaders, the first NativeEE frame and gameplay remain pending.
+A separate physical bring-up report dated 13 November 2026 records an earlier runner launch with the user's PAL `SLES-52568` image: the launcher passed `--iso`, NativeEE loaded the retail ELF, initialised the muOS gamepad and SDL audio, and created an ES 3.2 context on Mali-G31. The first PS2 vertex shader then failed on a leading newline before `#version`. The shader normaliser was subsequently fixed and Mesa CI now passes, but no post-fix Mali retest is documented. That 13 November report does not include an exact firmware build, package SHA-256 or Actions artifact ID.
+
+CI run #310 passed AArch64 renderer compile, Mesa llvmpipe production-shader smoke, NativeEE runner link and full `.muxapp` packaging. Mesa is a software renderer, not Mali. The CI build had no title ELF/disc input, so title-specific recompilation and game composition were skipped. Mali production shaders, GS surfaces, the first NativeEE frame and gameplay remain pending.
 
 See the [installation guide](../../../docs/h700/install.md), [graphics port](../../../docs/h700/graphics-port.md) and [compatibility matrix](../../../docs/h700/compatibility-matrix.md).
