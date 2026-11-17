@@ -1,19 +1,19 @@
 # muOS installation — H700 Edition
 
 <blockquote>
-<strong>Current candidate:</strong> the full-game H700 `.muxapp` is built by CI for AArch64 and uses the device's SDL2, EGL and GLES runtime. FFmpeg's required MPEG-1/2 decode path is linked statically with the minimal LGPL recipe. The first launch on physical Mali-G31 is still a device-validation step, not a CI-proven gameplay result.
+<strong>Current candidate:</strong> the NativeEE runner H700 `.muxapp` is built by CI for AArch64 and uses the device's SDL2, EGL and GLES runtime. FFmpeg's required MPEG-1/2 decode path is linked statically with the minimal LGPL recipe. The current CI build had no title ELF/disc input, so title-specific recompilation and game-composition tests were skipped. This is a runner/bring-up candidate, not a game-verified installer. An earlier 13 November physical bring-up reached NativeEE startup and disc/ELF initialisation but failed at the first vertex shader; the normaliser fix has passed Mesa CI and still needs a physical Mali retest.
 </blockquote>
 
 ## Choose the package
 
 | Artifact | What it installs | When to use it |
 |---|---|---|
-| `twinsanity-rintromped-h700-full-muxapp` | Game runner, diagnostics, launcher, reports directory and licences | **Normal installation / game candidate** |
+| `twinsanity-rintromped-h700-full-muxapp` | NativeEE runner candidate, diagnostics, launcher, reports directory and licences | **Bring-up candidate; not game-verified** |
 | `twinsanity-rintromped-h700-preflight` | EGL/GLES, NativeEE shader and SDL diagnostics only | Hardware troubleshooting; it does not boot the game |
 
 Both inner `.muxapp` files are ordinary ZIP archives renamed to `.muxapp`.
 
-## Install the full-game candidate
+## Install the NativeEE runner candidate (not yet game-verified)
 
 1. Open the latest successful **Twinsanity Rintromped H700** workflow and download the artifact `twinsanity-rintromped-h700-full-muxapp`.
 2. Extract the outer GitHub Actions artifact ZIP once. Inside it you will find `Twinsanity-Rintromped-H700-Edition.muxapp` and its `.sha256` file.
@@ -106,4 +106,4 @@ Attach the preflight reports for graphics-driver failures and the full runner lo
 
 ## Validation boundary
 
-CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. It has **not** verified a full game boot, Mali-specific shader compatibility, gameplay, audio, controller behavior or sustained frame pacing on the physical H700. Those remain the release-candidate device tests.
+CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. The latest full-runner build had no title ELF/disc input, so title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. The 13 November physical bring-up of an earlier runner reached NativeEE startup and retail ELF initialisation but failed at the first vertex shader; the normaliser fix has not yet been retested on Mali. CI has **not** verified a first NativeEE frame, title screen, gameplay, audio, controller behavior or sustained frame pacing on the physical H700.
