@@ -80,14 +80,17 @@ The diagnostic package validates the hardware and production shader entry points
 
 ## Verified full AArch64 runner and muxapp
 
-The current `h700/porting` head `e58a5fba82bc4e1d4c382e11584f161894f9d5eb` passed H700 workflow run `43399059636` on 13 November 2026. All six jobs passed: host preflight, AArch64 NativeEE renderer compile, Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
+The current `h700/porting` HEAD `681f0b3249cbb4e3f900ff55db4db252c949e3e3` passed H700 workflow run [`43844953315`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315) on 16 November 2026. All six jobs passed: host checks, AArch64 renderer compile, blocking Mesa production shader smoke, full application link, diagnostic package and full muxapp package.
 
-- Runner: `twinsanityevolved`, ELF64/AArch64, maximum required GLIBC symbol `GLIBC_2.30` (within the Bullseye GLIBC 2.31 baseline).
-- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; size 5,643,365 bytes; SHA-256 `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d`.
-- GitHub full-muxapp artifact ZIP: 5,555,771 bytes; digest `a8a0acc3b107941787e359b384758e96a09233ac072ed47ba4754e502f53a8ca`.
-- The package has exactly one root, `TwinsanityRintromped/`, includes `mux_launch.sh` and `mux_lang.ini`, and excludes the user's `game.iso` and `disc-image.txt`.
+- Full runner: `twinsanityevolved`, ELF64 little-endian AArch64 PIE; maximum required GLIBC symbol `GLIBC_2.30` (within the pinned Bullseye GLIBC 2.31 baseline).
+- Full package: `Twinsanity-Rintromped-H700-Edition.muxapp`; inner SHA-256 `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`.
+- Full-muxapp Actions artifact: ID `14214608053`, outer ZIP size 5,561,027 bytes, digest `3a53eed01fd3e43583bb13b3758aafd48b5800ce1fecc61c32b01353d5b5d8e9`.
+- Full-runner Actions artifact: ID `14215381134`, outer ZIP size 5,636,884 bytes, digest `7232c57f5c89a663369009346481e6a8e8dcbeeada0531e9286d704e07aa5ac2`.
+- The package contains exactly one root, `TwinsanityRintromped/`, with `mux_launch.sh` and `mux_lang.ini`; it excludes the user's `game.iso` and `disc-image.txt`.
 
-This is a successful **cross-build and packaging milestone**, not a physical boot or a playable-game certification. The first NativeEE frame, Mali shader execution, controller, audio, video, disc streaming and sustained performance still require real H700 testing.
+**Build boundary:** this CI run had no title ELF or disc input. The title recompilation, game composition and title-dependent EE/CDVD tests were skipped. The generic runner link and full package are not proof of a first NativeEE frame or playable game.
+
+The Mesa smoke is a blocking software-renderer shader compile/link test only. Mali shader execution, render targets, depth/stencil, texture upload/readback, first NativeEE frame, game boot and sustained gameplay remain physical-device gates.
 
 ## Debugging a compile failure
 
