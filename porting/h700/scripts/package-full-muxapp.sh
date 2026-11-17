@@ -69,7 +69,10 @@ cp "$ROOT/RELEASE-NOTES.txt" "$APP/RELEASE-NOTES.txt"
 cat > "$APP/README.txt" <<'EOF'
 Twinsanity Rintromped - H700 Edition
 
-This archive contains the AArch64 game runner and hardware diagnostics.
+This archive contains the AArch64 NativeEE runner candidate and hardware diagnostics.
+The CI-built runner was linked without a title ELF/disc input; title-specific recompilation,
+game composition and title-dependent EE/CDVD tests were skipped.
+A successful link and package do not prove that the game boots or renders.
 It does NOT contain game data or a disc image.
 
 Put your own game.iso in this application folder:
