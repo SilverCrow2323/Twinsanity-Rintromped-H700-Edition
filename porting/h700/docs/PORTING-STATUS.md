@@ -1,6 +1,6 @@
 # H700 porting status
 
-**Latest complete H700 CI: PASS on exact branch HEAD `681f0b3249cbb4e3f900ff55db4db252c949e3e3`, run [#310](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315), with all six jobs green. The full runner is ELF64/AArch64 and requires at most `GLIBC_2.30`; the full muOS `.muxapp` passed ZIP/layout validation (inner SHA-256 `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`). The build had no title ELF/disc input: game-specific recompilation and composition tests were skipped. Windows run #221 and Wiki run #264 passed; launcher Linux and Windows passed but macOS ARM64 was cancelled. The only physical evidence remains the 12 November EGL/GLES/SDL colour-frame preflight. Mali production shader execution, first NativeEE frame, game boot and gameplay remain NOT YET VALIDATED.**
+**Latest complete H700 CI: PASS on exact code HEAD `95732802bd5c651e83a90dfdf85d95249b3654aa`, run [#44067269456](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44067269456), with all six jobs green. The full runner is ELF64/AArch64 and requires at most `GLIBC_2.30`; the full muOS `.muxapp` passed ZIP integrity, single-root layout, diagnostics and licence-payload validation (inner SHA-256 `a088feba52ec205c558bb1918f66de041510b23981f5865abdaeb89ae51c08a3`). Full-muxapp artifact ID `14321467319`, outer ZIP 5,565,674 bytes, digest `sha256:d59fe6940c0448086a945f665c7c7470d1ab5086cc955f2652205df7471d02f9`; full-runner artifact ID `14321691939`, digest `sha256:7d3a89630d053dc9030fa1253c13ba186ea6835927545d18ce1fc06a7cbdb29e`. The build had no title ELF/disc input: game-specific recompilation and composition tests were skipped. Windows run #44067269389 and Wiki run #44067269169 passed; launcher Linux and Windows passed while macOS ARM64 remained queued at the latest check. The only physical evidence remains the 12 November EGL/GLES/SDL colour-frame preflight. Mali production shader execution, first NativeEE frame, game boot and gameplay remain NOT YET VALIDATED.**
 
 ## Current status
 
@@ -98,3 +98,17 @@ The player-facing Wiki and the engineering handbook are maintained separately. T
 - [Build guide](../../../docs/h700/building.md)
 - [Installation guide and device sequence](../../../docs/h700/install.md)
 - [Porting roadmap](../../../docs/h700/roadmap.md)
+
+
+## Latest full H700 build · 17 November 2026
+
+Exact tested code HEAD: `95732802bd5c651e83a90dfdf85d95249b3654aa`  
+Run: [#44067269456](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44067269456) · all six jobs passed: host checks, GLES renderer compile, blocking Mesa shader smoke, full AArch64 link, diagnostic package and full muxapp.
+
+- Full runner: ELF64/AArch64 PIE; maximum required GLIBC symbol `GLIBC_2.30`.
+- Full muxapp inner SHA-256: `a088feba52ec205c558bb1918f66de041510b23981f5865abdaeb89ae51c08a3`.
+- Full muxapp artifact ID `14321467319`; outer Actions ZIP size 5,565,674 bytes; digest `sha256:d59fe6940c0448086a945f665c7c7470d1ab5086cc955f2652205df7471d02f9`.
+- Full runner artifact ID `14321691939`; outer Actions ZIP size 5,644,398 bytes; digest `sha256:7d3a89630d053dc9030fa1253c13ba186ea6835927545d18ce1fc06a7cbdb29e`.
+- The package job reported ZIP integrity, single-root layout, diagnostics and licence payload verified. The package builder excludes the user's `game.iso` and `disc-image.txt`.
+
+The runner was built without a title ELF or disc image. This remains a full NativeEE link/package milestone, not a first game frame or gameplay validation.
