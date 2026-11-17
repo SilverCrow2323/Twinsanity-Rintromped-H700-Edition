@@ -1,6 +1,6 @@
 # H700 porting status
 
-**Latest complete H700 CI: PASS on code commit `d9c9840fc60cda9afcfe895b8360bc542ee25a61`, run [#289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948). All six jobs passed, including the full game/NativeEE AArch64 link and the full muOS `.muxapp`. The current branch HEAD is `25847674d3167c8c15cfda5af5b19e58bfdffec5`, which is a later documentation-only descendant; do not attribute the #289 run to that later SHA. Physical EGL/GLES/SDL preflight passed on 12 November 2026. Production NativeEE shaders on Mali, first NativeEE frame and gameplay remain NOT YET VALIDATED.**
+**Latest complete H700 CI: PASS on exact branch HEAD `681f0b3249cbb4e3f900ff55db4db252c949e3e3`, run [#310](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315), with all six jobs green. The full runner is ELF64/AArch64 and requires at most `GLIBC_2.30`; the full muOS `.muxapp` passed ZIP/layout validation (inner SHA-256 `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`). The build had no title ELF/disc input: game-specific recompilation and composition tests were skipped. Windows run #221 and Wiki run #264 passed; launcher Linux and Windows passed but macOS ARM64 was cancelled. The only physical evidence remains the 12 November EGL/GLES/SDL colour-frame preflight. Mali production shader execution, first NativeEE frame, game boot and gameplay remain NOT YET VALIDATED.**
 
 ## Current status
 
@@ -41,57 +41,41 @@
 - [Windows workflow](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/windows.yml)
 - [Wiki and documentation validation](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/wiki-docs.yml)
 
-## Verified full H700 build · run #289
+## Verified full H700 build · run #310
 
-Exact tested code SHA: `d9c9840fc60cda9afcfe895b8360bc542ee25a61`  
-Run: [`43434846948`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948) · 13 November 2026 · all six jobs passed:
+Exact tested branch HEAD: `681f0b3249cbb4e3f900ff55db4db252c949e3e3`  
+Run: [`43844953315`](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315) · 16 November 2026 · all six jobs passed:
 
 - `host-checks`
 - `gles-renderer-compile`
 - `gles-shader-mesa-smoke`
-- `aarch64-package`
 - `full-app-aarch64-link`
+- `aarch64-package`
 - `full-app-muxapp`
 
-The full runner `twinsanityevolved` is an ELF64 little-endian AArch64 PIE executable, 15,416,144 bytes, and requires at most `GLIBC_2.30`, within the Debian Bullseye GLIBC 2.31 baseline. The full link log contains the build of `runner/te_autopilot.cpp` and no longer reports the previous `-Wmisleading-indentation` warning for that file.
+The full runner `twinsanityevolved` was linked as an ELF64 little-endian AArch64 PIE executable. The link log reports a maximum required GLIBC symbol of `GLIBC_2.30`, within the pinned Debian Bullseye GLIBC 2.31 baseline.
 
-The full inner `.muxapp` is 5,645,597 bytes. Its SHA-256 is:
+The full muOS package is `Twinsanity-Rintromped-H700-Edition.muxapp`. Its inner package SHA-256 is:
 
 ```text
-2fbabe69621b8d2a3cd75d2d04b995f1f84718ad5db2efd89a9b23aea4c87ea8
+f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53
 ```
 
-The sidecar `Twinsanity-Rintromped-H700-Edition.muxapp.sha256` matches the actual inner package bytes. The downloaded outer GitHub Actions ZIP was also checked against the Actions artifact digest. The inner file has a valid ZIP `PK` signature, passes CRC/integrity testing, contains 14 file entries under exactly one root `TwinsanityRintromped/`, and includes the AArch64 runner, `mux_launch.sh`, `mux_lang.ini`, three diagnostics, device collector, README/release notes, performance marker and FFmpeg/TwinsanityEvolved licence payload. It contains neither `game.iso` nor `disc-image.txt`.
+The uploaded full-muxapp Actions artifact is ID `14214608053`, outer ZIP size 5,561,027 bytes, Actions digest `sha256:3a53eed01fd3e43583bb13b3758aafd48b5800ce1fecc61c32b01353d5b5d8e9`. The full-runner artifact is ID `14215381134`, outer ZIP size 5,636,884 bytes, digest `sha256:7232c57f5c89a663369009346481e6a8e8dcbeeada0531e9286d704e07aa5ac2`. The diagnostic preflight artifact is ID `14214697793`, outer ZIP size 391,952 bytes, digest `sha256:b7c5a33de0cf45861658e86387b790b15e41e0e653dee4e9dbe213bad7b0f07b`.
 
-### Artifacts and retention
+The full package job verified ZIP integrity, the single root `TwinsanityRintromped/`, launcher/language files, runtime and licence payload. It does not contain `game.iso` or `disc-image.txt`; the launcher still expects the user's own ISO at `MUOS/application/TwinsanityRintromped/game.iso`.
 
-| Artifact | ID | Outer ZIP size | Expires (UTC) |
-|---|---:|---:|---|
-| Full `.muxapp` | `14043202595` | 5,560,772 B | 27 Nov 2026 13:42:05 |
-| Full AArch64 runner | `14043722079` | 5,636,884 B | 27 Nov 2026 13:41:33 |
-| Diagnostic preflight | `14043651388` | 391,690 B | 27 Nov 2026 13:37:16 |
+**Important build boundary:** the CI runner had no title ELF or disc image. The log explicitly skipped `ps2r_title_recomp`, the game composition, title-dependent EE/CDVD tests and generated-body self-oracles. A successful generic NativeEE runner link and full package are not a first game frame and do not prove that Twinsanity boots.
 
-Full package: [download from run #289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948/artifacts/14043202595).  
-Full runner: [download from run #289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948/artifacts/14043722079).  
-Preflight: [download from run #289](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434846948/artifacts/14043651388).
-
-The Mesa shader smoke used Mesa GLES 3.2 with software renderer llvmpipe. It proves production shader compile/link on that software implementation only, not the Mali driver or final image correctness.
-
-### Remaining compiler warnings
-
-The previous `te_autopilot.cpp` misleading-indentation warning is absent from the full AArch64 build log. Other non-blocking warnings remain: wasm-ld function-signature mismatch warnings; enum/non-enum conditional-expression warnings in NativeEE graphics sources; an unused `world` parameter and unused CPU-profiler variables. These did not block the AArch64 link or package.
+The Mesa shader smoke compiled and linked the production shader library under Mesa llvmpipe. It is a blocking CI gate, but it is not a Mali result and does not prove correct render-target/readback output.
 
 ## Launcher and Windows matrix
 
-On launcher workflow run [#205](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434944588), exact workflow commit `ce5dc4c6acb1f3b3992faf75f3d525c30fa48afc`:
+On the exact H700 branch head `681f0b3249cbb4e3f900ff55db4db252c949e3e3`:
 
-- Linux x86_64 AppImage: **PASS**; artifact `14042881686` downloaded and ZIP/AppImage/sidecar SHA-256 verified.
-- Windows x64 launcher: **PASS**.
-- macOS ARM64: queued on `macos-15`; not yet validated.
-
-The prior `macos-14` job was cancelled before its first step because GitHub retired that Actions image. The workflow was moved to `macos-15` in commit `ce5dc4c6acb1f3b3992faf75f3d525c30fa48afc`. Do not mark macOS as passed until the new job completes.
-
-The separate Windows application workflow [#205](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43434944650) passed on the same workflow SHA.
+- Windows game build run [#221](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953505): **PASS**.
+- Wiki validation run [#264](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953306): **PASS**.
+- Launcher run [#221](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953522): Linux x86_64 AppImage **PASS**, Windows x64 **PASS**, macOS ARM64 **CANCELLED**. The overall launcher workflow therefore reports failure/cancellation; do not describe the three-platform matrix as green.
 
 ## Next device acceptance gates
 
