@@ -2,7 +2,7 @@
 
 This directory contains the H700-specific development tools, hardware probes, packaging scripts and renderer validation harness.
 
-> **CI release-candidate milestone reached:** the full AArch64 game runner now links with static LGPL FFmpeg and is packaged as a ZIP-based muOS `.muxapp`. A physical muOS Andromeda H700 has passed EGL 1.4, GLES 3.2 and SDL window presentation on Mali-G31; full-game boot and gameplay on that device are still unverified.
+> **CI NativeEE runner/package milestone:** the AArch64 runner links with static LGPL FFmpeg and is packaged as a ZIP-based muOS `.muxapp`. H700 run #310 is green, but CI had no title ELF/disc input: title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. A 13 November physical H700/Mali-G31 bring-up of an earlier runner reached NativeEE startup, loaded the user's PAL `SLES-52568` retail ELF and initialised gamepad/audio plus GLES; it then failed on the first vertex shader. The shader normaliser fix now passes Mesa CI, but no post-fix Mali retest, first NativeEE frame or gameplay is documented. This is not a playable-game claim.
 
 ## Start here
 
@@ -12,7 +12,7 @@ This directory contains the H700-specific development tools, hardware probes, pa
 |---|---|
 | device/ | EGL/GLES and SDL/GLES hardware probes, plus system inventory |
 | renderer/ | Compile-only CMake gate for the real engine GL backend and SDL platform sources |
-| scripts/ | Build, package and host-side checks for diagnostics and the full-game candidate |
+| scripts/ | Build, package and host-side checks for diagnostics and the NativeEE runner candidate |
 | muos/ | muOS Application Runner entry point and language metadata |
 | docs/ | API compatibility audit, test protocol and development notes |
 | tools/ | Source-level GL API inventory tools |
@@ -20,7 +20,7 @@ This directory contains the H700-specific development tools, hardware probes, pa
 
 ## Important distinction
 
-The H700 artifacts now include both a diagnostic-only preflight `.muxapp` and a full-game candidate `.muxapp`. Both are ZIP archives renamed to `.muxapp`; neither includes the user's ISO. The full runner is CI-built, but its first boot and gameplay still need physical Mali-G31 validation. See the [installation guide](../../docs/h700/install.md) before installing either artifact.
+The H700 artifacts include a diagnostic-only preflight `.muxapp` and a NativeEE runner-candidate `.muxapp`. Both are ZIP archives renamed to `.muxapp`; neither includes the user's ISO. The current CI runner was linked without a title ELF/disc input, so the game-specific recompile and composition gates were skipped. Its first frame and gameplay remain unverified; the earlier 13 November physical bring-up failed at the first vertex shader before the normaliser fix was added. See the [installation guide](../../docs/h700/install.md) before installing either artifact.
 
 ## Core commands
 
