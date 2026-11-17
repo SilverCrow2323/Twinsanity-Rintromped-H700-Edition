@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.4-dev
+
+- Built and linked the full H700 AArch64 NativeEE runner on branch head `681f0b3249cbb4e3f900ff55db4db252c949e3e3`; ELF64/AArch64, maximum required GLIBC `2.30`.
+- Produced and verified the full muOS `.muxapp` with a single `TwinsanityRintromped/` root; inner SHA-256 `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`.
+- Kept the user's ISO external to the package. CI had no title ELF/disc input, so title recompilation and game composition remain unvalidated; this is not a playable-game claim.
+
+
 ## 0.2.3-dev
 
 - Corrected the installable `.muxapp` layout: `TwinsanityRintromped/` is now the top-level archive directory, without an extra `application/` wrapper.
