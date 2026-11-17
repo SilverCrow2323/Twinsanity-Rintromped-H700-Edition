@@ -10,6 +10,7 @@
 | H700 branch | Active | `h700/porting`; work isolated from upstream baseline |
 | EGL / GLES / SDL preflight | **Historical device PASS** | muOS 2606.0 Andromeda, Mali-G31; EGL 1.4, GLES 3.2, SDL `mali` driver and six visible colour frames on 12 November 2026 |
 | Device inventory | Collected | Allwinner `sun50iw9`, kernel 4.9.170, muOS 2606.0 |
+| Andromeda controller mapping | Host regression tests added | Active muOS mapping, selected database, system database and Retro/Modern fallback; physical controls still pending |
 | Root CMake H700 profile | Added | `PS2R_GLES`; application and NativeEE both select GLES headers |
 | GLES dependency path | Added | `GLES3/gl32.h`, `libGLESv2`, imported `OpenGL::GL` interface |
 | SDL context selection | Added | Requests ES 3.2 and rejects lower returned versions |

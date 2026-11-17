@@ -21,6 +21,17 @@ fi
 SETUP_APP "$APP_BIN" ""
 cd "$APP_DIR" || exit 1
 mkdir -p logs
+# Preserve the selected muOS input contract for support reports. The mapping
+# contains button indices only; no credentials or user content are recorded.
+{
+    printf 'muOS version: %s\n' "$(cat /opt/muos/config/system/version 2>/dev/null || echo unknown)"
+    printf 'muOS build: %s\n' "$(cat /opt/muos/config/system/build 2>/dev/null || echo unknown)"
+    printf 'muOS board: %s\n' "$(cat /opt/muos/device/config/board/name 2>/dev/null || echo unknown)"
+    printf 'muOS controller selection: %s\n' "$(cat /run/muos/controller 2>/dev/null || echo system)"
+    printf 'SDL controller DB: %s\n' "${SDL_GAMECONTROLLERCONFIG_FILE:-<unset>}"
+    printf 'SDL active mapping: %s\n' "${SDL_GAMECONTROLLERCONFIG:-<unset>}"
+} >> "$APP_DIR/logs/game-launch.log"
+
 
 # A one-shot opt-in: create logs/performance-diagnostics.once to collect low-overhead
 # CPU samples plus the renderer/build timing census for the next game launch only.
