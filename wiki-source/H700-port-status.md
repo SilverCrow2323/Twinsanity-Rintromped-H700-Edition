@@ -27,9 +27,11 @@ On 12 November 2026, the diagnostic package was run on a physical muOS Andromeda
 
 ## 🔍 What this result means
 
-The physical test confirms SDL → EGL → GLES 3.2 on the documented muOS/Mali-G31 device. Separately, CI on head `e58a5fba` passed the real NativeEE GLES renderer/SDL AArch64 compile and the production shader library smoke under Mesa. The complete `twinsanityevolved` runner linked as ELF64/AArch64 with a maximum required `GLIBC_2.30`, and the full muOS package was built and inspected.
+The 12 November physical test confirms SDL → EGL → GLES 3.2 on muOS 2606.0 Andromeda / sun50iw9 / Mali-G31. A separate 13 November bring-up report records an earlier runner launch with the user's PAL `SLES-52568` image: NativeEE loaded the retail ELF, initialised gamepad/audio and created an ES 3.2 context, then failed at the first vertex shader because of a leading newline before `#version`. The shader normaliser was fixed afterwards, but no post-fix Mali retest is documented; the 13 November report lacks an exact firmware build and package hash.
 
-This validates the cross-compilation, shader-smoke, ELF/GLIBC and packaging gates. It does **not** prove that the production shaders behave correctly on Mali or that the game has rendered its first NativeEE frame on the handheld.
+CI run [#310](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315) on code head `681f0b3249cbb4e3f900ff55db4db252c949e3e3` passed all six jobs. The runner is ELF64/AArch64 with maximum required `GLIBC_2.30`; the full runner-candidate package SHA-256 is `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`.
+
+**Build boundary:** CI had no title ELF/disc input. Title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. The Mesa shader smoke is not a Mali result and does not prove a NativeEE frame.
 
 The original desktop renderer targets **OpenGL 4.1**. The H700 GLES 3.2 path is a dedicated port and adapter layer; the successful cross-compile and Mesa smoke do not establish full OpenGL 4.1 feature equivalence or validate the production renderer on Mali. That compatibility boundary remains open until the first NativeEE frame and the device render-target/shader matrix pass.
 
@@ -71,6 +73,6 @@ flowchart TD
 
 ## What to use today
 
-A full H700 candidate `.muxapp` is available from [H700 workflow run 43399059636](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43399059636). The package SHA-256 is `d6143bc85895e398b78185f83cfd149c4b7295aea278d24725e986e37ebe755d` (5,643,365 bytes). It has the exact `TwinsanityRintromped/` root and contains `mux_launch.sh` and `mux_lang.ini`; it excludes `game.iso` and `disc-image.txt`.
+The latest runner-candidate `.muxapp` is available from [H700 workflow run #310](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/43844953315), artifact ID `14214608053`. Inner package SHA-256: `f243a70cd66cdcab65f2cbc1dd8f1750536bbb21dfb31a4c388ef35369b54e53`. It has the exact `TwinsanityRintromped/` root and contains `mux_launch.sh` and `mux_lang.ini`; it excludes `game.iso` and `disc-image.txt`.
 
-This is a CI build candidate, not a published release and not proof of a playable game. For physical testing, install the candidate and place your own ISO at `MUOS/application/TwinsanityRintromped/game.iso`. Collect `logs/gles-shader-report.txt` and `logs/game-launch.log`; the first NativeEE frame, boot, controls, audio/video and performance remain pending.
+This is a CI runner candidate, not a published release and not proof of a playable game. CI had no title ELF/disc input, so title-specific recompilation and game composition were skipped. For physical testing, install the candidate and place your own ISO at `MUOS/application/TwinsanityRintromped/game.iso`. Collect `logs/gles-shader-report.txt` and `logs/game-launch.log`; the post-fix Mali shader run, first NativeEE frame, game boot, controls, audio/video and performance remain pending.
