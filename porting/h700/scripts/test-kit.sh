@@ -51,9 +51,8 @@ grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
 if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_BIN="$TMP/probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
-# Exercise the actual full-game launcher without muOS. The H700 path
-# must boot directly into the selected disc and must not require the optional
-# Qt pre-launch UI.
+# Exercise the actual full-game launcher without muOS. The NativeEE
+# SDL/ImGui menu is the default; its Data-page toggle can disable it.
 mkdir -p "$TMP/launcher-app/My Discs"
 printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 cat > "$TMP/muos-func.sh" <<'EOF'
@@ -129,10 +128,10 @@ TW_H700_APP_DIR="$TMP/launcher-app" \
 TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
 TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
-[ ! -e "$TMP/launcher-app/userdata/ps2r.ini" ] || grep -q 'launcher.show = off' "$TMP/launcher-app/userdata/ps2r.ini"
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A saved relative path must not escape the application root. The safe
