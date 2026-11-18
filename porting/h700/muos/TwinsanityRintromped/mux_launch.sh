@@ -147,7 +147,21 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         for arg in "$@"; do printf ' <%s>' "$arg"; done
         printf '\n'
     } >> "$APP_DIR/logs/game-launch.log"
-    exec "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    # Keep the wrapper alive while the runner executes so its termination is observable.
+    # A shell return code >=128 commonly represents termination by signal (128 + signal).
+    "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    GAME_RC=$?
+    {
+        printf '\n===== Twinsanity runner terminated =====\n'
+        printf 'Runner exit status: %s\n' "$GAME_RC"
+        if [ "$GAME_RC" -ge 128 ]; then
+            printf 'Possible terminating signal: %s (exit status minus 128)\n' "$((GAME_RC - 128))"
+        fi
+        printf 'Kernel log tail after runner exit:\n'
+        dmesg 2>&1 | tail -n 100
+        printf '===== End runner termination report =====\n'
+    } >> "$APP_DIR/logs/game-launch.log"
+    exit "$GAME_RC"
 fi
 
 export APP_DIR
