@@ -7,7 +7,7 @@ Twinsanity Evolved is being brought to the **Allwinner H700 handheld environment
 
 ## Start here
 
-- [MuOS Field Guide](https://SilverCrow2323.github.io/Twinsanity-Rintromped-H700-Edition/) — player-facing scope, package status, installation workflow, data safety and troubleshooting.
+- [MuOS Field Guide](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/blob/main/site/index.html) — player-facing scope, package status, installation workflow, data safety and troubleshooting.
 - [H700 / MuOS port status](H700-port-status) — current engineering gates and device validation.
 - [Discs and game data](Discs-and-game-data) — user-owned media and data handling, once paths are confirmed for the MuOS package.
 - [Troubleshooting](Troubleshooting) — collecting useful device reports.
