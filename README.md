@@ -7,6 +7,8 @@ decompilation's own `include/platform/*.h` is the only seam. On the PS Vita the 
 console's ARM processor instead, with the same seam and the 32 MB as a block of the program. No game data of any kind is in
 this repository — you need your own disc image, which is read at run time.
 
+**Player field guide:** [Open the visual installation and usage manual](site/index.html), with real launcher screenshots, setup steps, configuration notes, mod workflows and troubleshooting. The GitHub Pages workflow publishes the `site/` directory when Pages is configured for Actions.
+
 ## What's new
 
 Since v0.1.8 (the full list for players is in [RELEASE-NOTES.txt](RELEASE-NOTES.txt)):
