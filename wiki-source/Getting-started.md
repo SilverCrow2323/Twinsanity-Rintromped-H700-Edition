@@ -20,7 +20,7 @@ This guide covers Twinsanity Evolved on an Allwinner H700 handheld running MuOS.
 4. Follow the release's documented game-data path and first-launch steps exactly.
 5. Keep a backup of personal data before updating or removing an experimental build.
 
-Do not rename another archive to `.muxapp`, copy desktop runtime files onto the handheld or guess paths that are not documented by the release.
+Do not rename another archive to `.muxapp`, copy runtime files from another target onto the handheld or guess paths that are not documented by the release.
 
 ## Data and saves
 
