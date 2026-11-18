@@ -4,6 +4,12 @@ on:
     branches: [main]
     paths:
       - "site/**"
+      - "docs/launcher/screenshots/**"
+      - ".github/workflows/site-pages.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "docs/launcher/screenshots/**"
       - ".github/workflows/site-pages.yml"
   workflow_dispatch:
 permissions:
@@ -32,6 +38,7 @@ jobs:
         with:
           path: site-dist
   deploy:
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
