@@ -142,10 +142,10 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
     # Keep the hand-off to the known-supported CLI until the menu is integrated properly.
     set -- --iso "$DISC_PATH"
     {
-        printf 'Startup UI: not bundled in this runner; launching the selected disc directly\\n'
+        printf 'Startup UI: not bundled in this runner; launching the selected disc directly\n'
         printf 'Runner arguments:'
         for arg in "$@"; do printf ' <%s>' "$arg"; done
-        printf '\\n'
+        printf '\n'
     } >> "$APP_DIR/logs/game-launch.log"
     exec "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
