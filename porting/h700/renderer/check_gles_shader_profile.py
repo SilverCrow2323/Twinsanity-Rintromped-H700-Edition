@@ -93,7 +93,10 @@ def main() -> int:
         "disc-image.txt",
         "game.iso",
         'SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-mali}"',
-        'exec "$APP_DIR/$GAME_BIN"',
+        '"$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1',
+        "GAME_RC=$?",
+        "Runner exit status: %s",
+        "dmesg 2>&1 | tail -n 100",
     ), "device game/preflight launcher and ISO-preserving hand-off")
     require_tokens(WORKFLOW, (
         "dpkg --add-architecture arm64",
