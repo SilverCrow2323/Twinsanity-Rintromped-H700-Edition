@@ -135,45 +135,17 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         fi
     } >> "$APP_DIR/logs/game-launch.log"
 
-    # NativeEE's SDL/ImGui launcher is GLES 3.2 compatible on the H700.
-    # Show it by default, but honour the saved Data-page toggle (flat or sectioned INI).
-    SETTINGS_FILE="$APP_DIR/userdata/ps2r.ini"
-    SAVED_LAUNCHER_SHOW=""
-    if [ -f "$SETTINGS_FILE" ]; then
-        SAVED_LAUNCHER_SHOW="$(awk '
-            function trim(s) { gsub(/^[ \t\r]+|[ \t\r]+$/, "", s); return s }
-            {
-                line = $0
-                sub(/[;#].*$/, "", line)
-                line = trim(line)
-                if (line ~ /^\[[^]]+\]$/) {
-                    section = substr(line, 2, length(line) - 2)
-                    section = trim(section)
-                    next
-                }
-                eq = index(line, "=")
-                if (!eq) next
-                key = trim(substr(line, 1, eq - 1))
-                value = trim(substr(line, eq + 1))
-                if (key == "launcher.show" || (section == "launcher" && key == "show")) saved = value
-            }
-            END { if (saved != "") print saved }
-        ' "$SETTINGS_FILE")"
-    fi
-    SHOW_LAUNCHER=1
-    case "$SAVED_LAUNCHER_SHOW" in
-        off|false|0) SHOW_LAUNCHER=0 ;;
-    esac
-
+    # This package ships the standalone game runner built from runner/main.cpp.
+    # That CLI does not accept --launcher. The ImGui launcher under engine/app/host
+    # belongs to a separate NativeEE host target and is not linked into this runner.
+    # Passing --launcher here makes the real runner print Usage() and exit with status 2.
+    # Keep the hand-off to the known-supported CLI until the menu is integrated properly.
     set -- --iso "$DISC_PATH"
-    if [ "$SHOW_LAUNCHER" -eq 1 ]; then
-        set -- --launcher "$@"
-    fi
     {
-        printf 'Startup menu: %s (saved launcher.show=%s)\n' "$([ "$SHOW_LAUNCHER" -eq 1 ] && echo on || echo off)" "${SAVED_LAUNCHER_SHOW:-default-on}"
+        printf 'Startup UI: not bundled in this runner; launching the selected disc directly\\n'
         printf 'Runner arguments:'
         for arg in "$@"; do printf ' <%s>' "$arg"; done
-        printf '\n'
+        printf '\\n'
     } >> "$APP_DIR/logs/game-launch.log"
     exec "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
 fi
