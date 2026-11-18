@@ -74,14 +74,35 @@ TW_H700_APP_DIR="$TMP/launcher-app" \
 TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
 TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
+[ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+
+# The menu is the default; the Data-page toggle may persist either flat or
+# sectioned launcher.show=off and must then restore the direct-to-game path.
+mkdir -p "$TMP/launcher-app/userdata"
+printf '%s\n' '[launcher]' 'show = off' > "$TMP/launcher-app/userdata/ps2r.ini"
+rm -f "$TMP/launcher-args.txt"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
 [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
-if grep -Fxq -- "--launcher" "$TMP/launcher-args.txt"; then
-  echo "H700 must not open the optional pre-launch screen" >&2
-  exit 1
-fi
-[ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+printf '%s\n' 'launcher.show = on' > "$TMP/launcher-app/userdata/ps2r.ini"
+rm -f "$TMP/launcher-args.txt"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
+TW_H700_APP_DIR="$TMP/launcher-app" \
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
 
 # The one-shot performance marker enables bounded diagnostics, removes itself
 # before the runner starts, and is inert on ordinary launches.
@@ -111,10 +132,7 @@ TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
 [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
 [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
 [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
-if grep -Fxq -- "--launcher" "$TMP/launcher-args.txt"; then
-  echo "Fallback H700 boot must also skip the optional pre-launch screen" >&2
-  exit 1
-fi
+[ ! -e "$TMP/launcher-app/userdata/ps2r.ini" ] || grep -q 'launcher.show = off' "$TMP/launcher-app/userdata/ps2r.ini"
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A saved relative path must not escape the application root. The safe
@@ -127,7 +145,9 @@ TW_H700_APP_DIR="$TMP/launcher-app" \
 TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
 TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
+[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
+[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A symlinked game.iso must not make the launcher read a disc outside the app.
@@ -237,6 +257,10 @@ require_fixed 'bool already_bound = false' "$UNIFORM_HEADER"
 require_fixed 'u.Sync(fast ? 1 : 0)' "$GL_DRAW_SOURCE"
 require_fixed 'u.Sync(0)' "$GL_DRAW_SOURCE"
 echo 'H700 deferred GLES uniform source contract passed.'
+require_fixed 'video.frame_rate' "$ROOT/../../engine/app/host/launcher_settings.cpp"
+require_fixed 'APPLY RECOMMENDED TEST PROFILE' "$ROOT/../../engine/app/host/launcher_settings.cpp"
+require_fixed 'H700 TEST PROFILE' "$ROOT/../../engine/app/host/launcher.cpp"
+require_fixed 'r.launcher) cfg.launcher.show = true' "$ROOT/../../engine/games/slus_20909_crash_twinsanity/composition/title_main.cpp"
 
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
 # GitHub Actions artifact downloads may restore files as 0644; the packager must

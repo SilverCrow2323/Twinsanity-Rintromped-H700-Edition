@@ -569,11 +569,15 @@ void Launcher::DrawReady() {
 
     if (!last_extract_summary_.empty()) ImGui::TextDisabled("%s", last_extract_summary_.c_str());
     if (page_ == 0) {
-        ImGui::BeginChild("twinsanity-home-hero", ImVec2(0, 102), true);
-        ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 1.0f), "RINTROMPED");
+        const float anim_time = static_cast<float>(SDL_GetTicks64()) * 0.001f;
+        const float pulse = 0.5f + 0.5f * std::sin(anim_time * 1.7f);
+        ImGui::BeginChild("twinsanity-home-hero", ImVec2(0, 112), true);
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + std::sin(anim_time * 0.9f) * 1.5f);
+        ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 0.84f + 0.16f * pulse), "RINTROMPED");
         ImGui::SameLine();
         ImGui::TextDisabled("H700 EDITION");
         ImGui::TextWrapped("The twins are ready. Configure your controls, adjust the graphics and jump straight into the adventure.");
+        ImGui::TextDisabled("H700 TEST PROFILE: 1x / HALF-RATE / TITLE FILTER  //  DISPLAY TO CONFIGURE");
         ImGui::EndChild();
 
         if (!warning.empty()) {
@@ -615,7 +619,7 @@ void Launcher::DrawReady() {
             for (const std::string& controller : controllers_) ImGui::SameLine(), ImGui::Text("%s", controller.c_str());
         }
         ImGui::Separator();
-        ImGui::TextDisabled("SYSTEM EXIT: MENU + START");
+        ImGui::TextDisabled("A / CROSS: SELECT     B: BACK     MENU + START: EXIT");
         if (!verify_message_.empty() && !verify_ok_)
             ImGui::TextColored(ImVec4(1.0f, 0.55f, 0.45f, 1.0f), "%s", verify_message_.c_str());
         return;

@@ -135,6 +135,12 @@ The device advertises `GL_EXT_disjoint_timer_query`. The desktop query implement
 
 [Back to the H700 hub](README.md) · [Compatibility matrix](compatibility-matrix.md) · [Roadmap](roadmap.md)
 
+## H700 startup menu and performance profile
+
+The muOS package opens NativeEE's own SDL/ImGui settings launcher before the game by default. It reuses the GLES 3.2 path and controller navigation; the animated spiral backdrop is already driven by the launcher render loop. The Data page's `launcher.show` switch controls whether the wrapper opens this screen on later starts. The menu includes Display, Controls, Save states, Fixes and Data, and all changes persist to `userdata/ps2r.ini`.
+
+Display exposes the real `video.frame_rate` presentation cadence. The H700 test preset uses 1x internal scale, 30-rate presentation and the game's own texture filter. At a 60 Hz game rate, 30 presents every other picture; at 50 Hz it presents at 25. This does **not** underclock the EE/game simulation or the physical Cortex-A53. CPU frequency remains under muOS control. The preset is a measurement starting point, not a verified performance guarantee: the device's first profile showed a renderer vertex-submission bottleneck, so compare a fresh profiler run before choosing a permanent setting.
+
 ## H700 runtime batching and performance diagnostics
 
 The GLES uniform uploader is deferred by default on H700. For a controlled A/B run, set `TE_GFX_UNIFORM_SYNC=0` in the launch environment before starting the app; do not compare runs with different scene/load conditions.

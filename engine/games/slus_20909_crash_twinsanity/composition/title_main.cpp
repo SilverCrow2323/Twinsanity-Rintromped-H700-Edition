@@ -230,6 +230,9 @@ int TitleMain(int argc, char** argv) {
     // verify, extract; afterwards the settings screen) runs BEFORE the game on a
     // plain start. Any harness flag bypasses it; --launcher forces it.
     if (app::Launcher::Wanted(cfg, ActiveTitleProfile(), r.harness_cli, r.launcher)) {
+        // A forced launcher (including muOS's saved startup-menu choice) is the
+        // visible "show on every start" state presented on the Data page.
+        if (r.launcher) cfg.launcher.show = true;
         app::Launcher launcher(cfg, ActiveTitleProfile(), g_build_id);
         if (!r.launcher_screenshot.empty()) launcher.SetScreenshot(r.launcher_screenshot, r.launcher_then_play);
         else if (r.launcher_then_play) launcher.SetAutoPlay();
