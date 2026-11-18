@@ -1,12 +1,15 @@
-# Project documentation
+# Engineering documentation
 
-This directory contains contributor and porting documentation. The [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki) contains player-facing manuals, installation steps, FAQs and troubleshooting.
+Player-facing instructions are maintained in the **MuOS-only H700 Field Guide**: [open the guide](../site/index.html).
+
+This directory contains implementation and validation notes for contributors working on the Allwinner H700 / MuOS target.
 
 ## Guides
 
-- [Wiki Home source](../wiki-source/Home.md) — tracked source for the practical GitHub Wiki.
-- [Wiki publishing rules](../wiki-source/README.md) — page structure and publishing workflow.
-- [H700 porting plan](H700_PORTING_PLAN.md) — staged development and hardware acceptance gates.
-- [H700 renderer audit](H700_RENDERER_AUDIT.md) — current OpenGL/GLSL compatibility findings.
+- [H700 / MuOS porting plan](H700_PORTING_PLAN.md) — engineering stages and physical-device acceptance gates.
+- [H700 renderer audit](H700_RENDERER_AUDIT.md) — source-level graphics compatibility findings.
+- [Launcher screenshots](launcher/screenshots/) — existing launcher captures retained as repository history; they are not presented as MuOS device screenshots.
 
-The H700 target remains experimental until a physical device report is reviewed. The diagnostic preflight package is not a playable game build.
+## Validation rule
+
+The H700 target remains experimental until a physical device report is reviewed. The diagnostic preflight package is not a playable game build. A successful host or CI build is not hardware acceptance.
