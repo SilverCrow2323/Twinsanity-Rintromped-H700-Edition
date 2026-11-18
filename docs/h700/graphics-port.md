@@ -58,7 +58,7 @@ The same log exposed a separate first-run storage issue: `userdata/` was selecte
 | OpenGL 4.1 core | SDL requests ES 3.2 and verifies the returned version | Physical SDL path passes |
 | GLSL 4.10 core | Runtime conversion to GLSL ES 3.20 with highp defaults | Source guard added; device shader test pending |
 | `noperspective` varying | Removed only for the audited `v_texcoord` path | Mathematical rationale; image comparison pending |
-| `glProgramUniform*` | Bind target program, update with `glUniform*`, restore previous program | Compile/runtime test pending |
+| `glProgramUniform*` | Queue changed values, bind the selected PS2 program once, flush dirty values with `glUniform*` | AArch64 compile gate; Mali frame timing pending |
 | `glClearDepth` | `glClearDepthf` | Compile gate |
 | `glGetTexLevelParameteriv` | Derive mip dimensions from surface dimensions and level | Compile gate; mip capture pending |
 | `glDrawBuffer(GL_NONE)` | `glDrawBuffers(1, { GL_NONE })` | Compile gate; FBO test pending |
@@ -92,9 +92,11 @@ The PS2 vertex path sets `gl_Position.w = 1.0`, so smooth interpolation is scree
 ## 🔬 Known engineering risks
 
 <details>
-<summary>Uniform update cost</summary>
+<summary>Uniform update cost · batched on H700</summary>
 
-GLES 3.2 has no core `glProgramUniform*` family. The initial adapter temporarily binds the destination program and uses `glUniform*`. This favors correctness over throughput. Once shader and draw correctness are proven, updates should be batched while the intended program is already bound, with state-cache tests.
+The H700 path queues scalar and small vec4-array changes in the uniform shadow. After the draw variant is selected, it binds that PS2 program once and flushes only that program's dirty values through `glUniform*`. This avoids the per-uniform `glGetIntegerv(GL_CURRENT_PROGRAM)` plus bind/restore sequence in the normal GLES draw path. Oversized/untracked arrays and the opt-out path retain the conservative immediate uploader.
+
+Set `TE_GFX_UNIFORM_SYNC=0` before launching the runner to restore immediate uploads for an A/B comparison. This is a CPU/driver-call reduction hypothesis, not a measured frame-rate improvement: compare profiler output on the physical Mali-G31 before making further claims.
 
 </details>
 
@@ -134,6 +136,8 @@ The device advertises `GL_EXT_disjoint_timer_query`. The desktop query implement
 [Back to the H700 hub](README.md) · [Compatibility matrix](compatibility-matrix.md) · [Roadmap](roadmap.md)
 
 ## H700 runtime batching and performance diagnostics
+
+The GLES uniform uploader is deferred by default on H700. For a controlled A/B run, set `TE_GFX_UNIFORM_SYNC=0` in the launch environment before starting the app; do not compare runs with different scene/load conditions.
 
 The H700 GLES profile enables two conservative batching paths by default: adjacent blended draws with identical fixed-function state are joined in order, and consecutive shadow-volume count draws are grouped by stencil state. The environment overrides `TE_GFX_JOIN_BLENDED=0` and `TE_GFX_GROUP_VOLUMES=0` remain available for A/B comparison. These changes do not alter the title simulation rate or the internal render scale.
 

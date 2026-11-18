@@ -214,6 +214,30 @@ grep -q 'SDL_WINDOWEVENT_FOCUS_LOST' "$DRAW_SOURCE"
 grep -q 'SDL_GameControllerAddMapping(mapping.c_str())' "$LAUNCHER_SOURCE"
 grep -q 'settings_.reset()' "$LAUNCHER_SOURCE"
 
+
+# The H700 GLES path queues uniform changes and flushes only the selected,
+# already-bound draw program. Keep the conservative immediate A/B switch.
+require_fixed() {
+  expected=$1
+  source=$2
+  if ! grep -Fq -- "$expected" "$source"; then
+    echo "Missing H700 source contract: '$expected' in $source" >&2
+    return 1
+  fi
+}
+UNIFORM_SOURCE="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.cpp"
+UNIFORM_HEADER="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.h"
+GL_DRAW_SOURCE="$ROOT/../../engine/engine/render/backends/gl/gl_draw_executor.cpp"
+require_fixed 'PS2R_HOST_VITA || PS2R_HOST_GLES' "$UNIFORM_SOURCE"
+require_fixed 'TE_GFX_UNIFORM_SYNC' "$UNIFORM_SOURCE"
+require_fixed 'if (already_bound)' "$UNIFORM_SOURCE"
+require_fixed 'Send(e.shadow, program == 0 ? e.loc : MirrorOf(e.loc), program, true)' "$UNIFORM_SOURCE"
+require_fixed 'SendArray(to, a.count, a.v, program, true)' "$UNIFORM_SOURCE"
+require_fixed 'bool already_bound = false' "$UNIFORM_HEADER"
+require_fixed 'u.Sync(fast ? 1 : 0)' "$GL_DRAW_SOURCE"
+require_fixed 'u.Sync(0)' "$GL_DRAW_SOURCE"
+echo 'H700 deferred GLES uniform source contract passed.'
+
 # Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
 # GitHub Actions artifact downloads may restore files as 0644; the packager must
 # accept regular ELF files and set executable mode on the staged application copy.
