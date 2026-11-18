@@ -3,8 +3,7 @@
 Native port of Crash Twinsanity: the [twinsanity-reversed](https://github.com/Smartkin/twinsanity-reversed)
 decompilation (`game/`) running on the NativeEE engine (`engine/`).
 The game is compiled to wasm32 and lowered to C with wasm2c; its linear memory is the engine's 32 MB main memory; the
-decompilation's own `include/platform/*.h` is the only seam. On the PS Vita the game's code is compiled natively for the
-console's ARM processor instead, with the same seam and the 32 MB as a block of the program. No game data of any kind is in
+decompilation's own `include/platform/*.h` is the only seam. The H700 / MuOS target is developed as a dedicated ARM64 handheld lane with its own graphics, runtime and package acceptance gates. No game data of any kind is in
 this repository — you need your own disc image, which is read at run time.
 
 **Player field guide:** [Open the visual installation and usage manual](site/index.html), with real launcher screenshots, setup steps, configuration notes, mod workflows and troubleshooting. The GitHub Pages workflow publishes the `site/` directory when Pages is configured for Actions.
