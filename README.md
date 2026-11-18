@@ -1,6 +1,6 @@
-# TwinsanityEvolved
+# Twinsanity Evolved / H700 MuOS port
 
-Native PC port of Crash Twinsanity: the [twinsanity-reversed](https://github.com/Smartkin/twinsanity-reversed)
+Native port of Crash Twinsanity: the [twinsanity-reversed](https://github.com/Smartkin/twinsanity-reversed)
 decompilation (`game/`) running on the NativeEE engine (`engine/`).
 The game is compiled to wasm32 and lowered to C with wasm2c; its linear memory is the engine's 32 MB main memory; the
 decompilation's own `include/platform/*.h` is the only seam. On the PS Vita the game's code is compiled natively for the
