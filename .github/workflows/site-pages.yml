@@ -18,14 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate site entry point
+      - name: Assemble and validate the site
         run: |
           test -s site/index.html
           grep -q 'id="install"' site/index.html
-          grep -q 'launcher-setup-where.png' site/index.html
+          mkdir -p site-dist/assets/screenshots
+          cp site/index.html site-dist/index.html
+          cp docs/launcher/screenshots/*.png site-dist/assets/screenshots/
+          sed -i 's#../docs/launcher/screenshots/#assets/screenshots/#g' site-dist/index.html
+          test -s site-dist/assets/screenshots/launcher-setup-where.png
+          grep -q 'assets/screenshots/launcher-setup-where.png' site-dist/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site-dist
   deploy:
     environment:
       name: github-pages
