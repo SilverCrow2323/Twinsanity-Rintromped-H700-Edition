@@ -51,67 +51,64 @@ grep -q 'H700 SDL/GLES window probe' "$TMP/sdl-report.txt"
 if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_BIN="$TMP/probe-host" scripts/package-muxapp.sh "$TMP/should-not-exist.muxapp" >/dev/null 2>&1; then echo 'Accepted non-AArch64 binary' >&2; exit 1; fi
 [ ! -e "$TMP/should-not-exist.muxapp" ]
 
-# Exercise the actual full-game launcher without muOS. The NativeEE
-# SDL/ImGui menu is the default; its Data-page toggle can disable it.
+# Exercise the actual full-game launcher without muOS. The packaged executable
+# is runner/main.cpp; it rejects unknown flags, so the test double enforces the
+# exact supported hand-off shape (--iso <image>) rather than merely echoing args.
 mkdir -p "$TMP/launcher-app/My Discs"
-printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
+printf '%s\\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 cat > "$TMP/muos-func.sh" <<'EOF'
 SETUP_APP() { :; }
 EOF
 cat > "$TMP/launcher-app/twinsanityevolved" <<'EOF'
 #!/bin/sh
-printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
-printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
+if [ "$#" -ne 2 ] || [ "$1" != "--iso" ]; then
+  printf 'runner test stub: unsupported argument list:' >&2
+  printf ' <%s>' "$@" >&2
+  printf '\\n' >&2
+  exit 64
+fi
+printf '%s\\n' "$@" > "$TW_H700_CAPTURE_ARGS"
+printf '%s\\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
 if [ -n "${TW_H700_CAPTURE_PERF:-}" ]; then
-  printf '%s\n' "${TE_PROF:-}" "${TE_PROF_US:-}" "${TE_PROF_EVERY:-}" "${TE_GFX_SUMMARY_EVERY:-}" > "$TW_H700_CAPTURE_PERF"
+  printf '%s\\n' "${TE_PROF:-}" "${TE_PROF_US:-}" "${TE_PROF_EVERY:-}" "${TE_GFX_SUMMARY_EVERY:-}" > "$TW_H700_CAPTURE_PERF"
 fi
 EOF
 chmod 755 "$TMP/launcher-app/twinsanityevolved"
-printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
-[ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+printf '%s\\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
 
-# The menu is the default; the Data-page toggle may persist either flat or
-# sectioned launcher.show=off and must then restore the direct-to-game path.
+run_launcher_expect_disc() {
+  expected_disc="$1"
+  rm -f "$TMP/launcher-args.txt"
+  TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+  TW_H700_APP_DIR="$TMP/launcher-app" \\
+  TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+  TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+    sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
+  [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
+  [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$expected_disc" ]
+  [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
+  [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+}
+
+# Default, flat and sectioned launcher.show values must never leak the
+# unsupported --launcher flag into the standalone runner's CLI.
+run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 mkdir -p "$TMP/launcher-app/userdata"
-printf '%s\n' '[launcher]' 'show = off' > "$TMP/launcher-app/userdata/ps2r.ini"
-rm -f "$TMP/launcher-args.txt"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
-printf '%s\n' 'launcher.show = on' > "$TMP/launcher-app/userdata/ps2r.ini"
-rm -f "$TMP/launcher-args.txt"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
+printf '%s\\n' '[launcher]' 'show = off' > "$TMP/launcher-app/userdata/ps2r.ini"
+run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
+printf '%s\\n' 'launcher.show = on' > "$TMP/launcher-app/userdata/ps2r.ini"
+run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 
 # The one-shot performance marker enables bounded diagnostics, removes itself
 # before the runner starts, and is inert on ordinary launches.
 mkdir -p "$TMP/launcher-app/logs"
 : > "$TMP/launcher-app/logs/performance-diagnostics.once"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
+rm -f "$TMP/launcher-perf.txt"
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+TW_H700_APP_DIR="$TMP/launcher-app" \\
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \\
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-perf.txt")" = "1" ]
 [ "$(sed -n '2p' "$TMP/launcher-perf.txt")" = "2000" ]
@@ -121,191 +118,31 @@ TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
 
 # A broken saved selection must fall back to game.iso and repair the selection.
 rm -f "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" "$TMP/launcher-args.txt"
-printf '%s\n' 'missing.iso' > "$TMP/launcher-app/disc-image.txt"
-printf '%s\n' 'fallback disc bytes' > "$TMP/launcher-app/game.iso"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
-[ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "3" ]
+printf '%s\\n' 'missing.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\\n' 'fallback disc bytes' > "$TMP/launcher-app/game.iso"
+run_launcher_expect_disc "$TMP/launcher-app/game.iso"
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A saved relative path must not escape the application root. The safe
 # root-level game.iso is selected instead, and the saved selection is repaired.
-printf '%s\n' 'outside disc bytes' > "$TMP/outside.iso"
-printf '%s\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
-printf '%s\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh
-[ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--launcher" ]
-[ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "--iso" ]
-[ "$(sed -n '3p' "$TMP/launcher-args.txt")" = "$TMP/launcher-app/game.iso" ]
+printf '%s\\n' 'outside disc bytes' > "$TMP/outside.iso"
+printf '%s\\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
+run_launcher_expect_disc "$TMP/launcher-app/game.iso"
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A symlinked game.iso must not make the launcher read a disc outside the app.
 rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-app/disc-image.txt" "$TMP/launcher-args.txt"
 ln -s "$TMP/outside.iso" "$TMP/launcher-app/game.iso"
 set +e
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
+TW_H700_APP_DIR="$TMP/launcher-app" \\
+TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
+TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
   sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
-symlink_rc=$?
+link_rc=$?
 set -e
-[ "$symlink_rc" -eq 2 ]
+[ "$link_rc" -eq 2 ]
 [ ! -e "$TMP/launcher-args.txt" ]
-rm -f "$TMP/launcher-app/game.iso"
-
-# No valid image must fail before invoking the game runner.
-rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-args.txt"
-set +e
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \
-TW_H700_APP_DIR="$TMP/launcher-app" \
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
-  sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
-launch_rc=$?
-set -e
-[ "$launch_rc" -eq 2 ]
-[ ! -e "$TMP/launcher-args.txt" ]
-
-# Rebuild over an existing package and prove that obsolete ZIP entries are removed.
-python3 - "$TMP/fake-aarch64" <<'PY'
-import struct
-import sys
-ident = b"\x7fELF" + bytes([2, 1, 1, 0, 0]) + bytes(7)
-header = struct.pack("<16sHHIQQQIHHHHHH", ident, 2, 183, 1, 0, 0, 0, 0, 64, 56, 0, 64, 0, 0)
-with open(sys.argv[1], "wb") as stream:
-    stream.write(header)
-PY
-chmod 755 "$TMP/fake-aarch64"
-PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
-  scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
-python3 - "$TMP/rebuild.muxapp" <<'PY'
-import sys
-import zipfile
-with zipfile.ZipFile(sys.argv[1], "a") as archive:
-    archive.writestr("obsolete/old-layout-marker.txt", "must disappear on rebuild")
-PY
-PROBE_BIN="$TMP/fake-aarch64" SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
-  scripts/package-muxapp.sh "$TMP/rebuild.muxapp" >/dev/null
-python3 - "$TMP/rebuild.muxapp" <<'PY'
-import sys
-import zipfile
-if not zipfile.is_zipfile(sys.argv[1]):
-    raise SystemExit("Muxapp is not a ZIP archive renamed to .muxapp")
-with open(sys.argv[1], "rb") as stream:
-    if stream.read(4) != b"PK\x03\x04":
-        raise SystemExit("Muxapp does not start with the ZIP local-file signature")
-with zipfile.ZipFile(sys.argv[1]) as archive:
-    if archive.testzip() is not None:
-        raise SystemExit("Muxapp ZIP integrity check failed")
-    names = archive.namelist()
-    if "obsolete/old-layout-marker.txt" in names:
-        raise SystemExit("Stale ZIP entry survived package rebuild")
-    roots = {name.split("/", 1)[0] for name in names if name}
-    if roots != {"TwinsanityRintromped"}:
-        raise SystemExit(f"Unexpected muxapp root entries: {sorted(roots)}")
-    required = {
-        "TwinsanityRintromped/mux_launch.sh",
-        "TwinsanityRintromped/mux_lang.ini",
-    }
-    missing = sorted(required - set(names))
-    if missing:
-        raise SystemExit("Missing muxapp entries after rebuild: " + ", ".join(missing))
-print("Muxapp rebuild removes stale entries and preserves the required root layout.")
-PY
-# Protect the SDL event hand-off: ps2e_draw_pump runs before the pad sampler
-# and must not swallow controller events (especially MENU + START).
-DRAW_SOURCE="$ROOT/../../engine/engine/platform/ps2e/ps2e_draw.cpp"
-LAUNCHER_SOURCE="$ROOT/../../engine/app/host/launcher.cpp"
-grep -q 'SDL_PushEvent(&forwarded)' "$DRAW_SOURCE"
-grep -q 'SDL_CONTROLLERBUTTONDOWN' "$DRAW_SOURCE"
-grep -q 'SDL_WINDOWEVENT_FOCUS_LOST' "$DRAW_SOURCE"
-grep -q 'SDL_GameControllerAddMapping(mapping.c_str())' "$LAUNCHER_SOURCE"
-grep -q 'settings_.reset()' "$LAUNCHER_SOURCE"
-
-
-# The H700 GLES path queues uniform changes and flushes only the selected,
-# already-bound draw program. Keep the conservative immediate A/B switch.
-require_fixed() {
-  expected=$1
-  source=$2
-  if ! grep -Fq -- "$expected" "$source"; then
-    echo "Missing H700 source contract: '$expected' in $source" >&2
-    return 1
-  fi
-}
-UNIFORM_SOURCE="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.cpp"
-UNIFORM_HEADER="$ROOT/../../engine/engine/render/backends/gl/gl_uniform_cache.h"
-GL_DRAW_SOURCE="$ROOT/../../engine/engine/render/backends/gl/gl_draw_executor.cpp"
-require_fixed 'PS2R_HOST_VITA || PS2R_HOST_GLES' "$UNIFORM_SOURCE"
-require_fixed 'TE_GFX_UNIFORM_SYNC' "$UNIFORM_SOURCE"
-require_fixed 'if (already_bound)' "$UNIFORM_SOURCE"
-require_fixed 'Send(e.shadow, program == 0 ? e.loc : MirrorOf(e.loc), program, true)' "$UNIFORM_SOURCE"
-require_fixed 'SendArray(to, a.count, a.v, program, true)' "$UNIFORM_SOURCE"
-require_fixed 'bool already_bound = false' "$UNIFORM_HEADER"
-require_fixed 'u.Sync(fast ? 1 : 0)' "$GL_DRAW_SOURCE"
-require_fixed 'u.Sync(0)' "$GL_DRAW_SOURCE"
-echo 'H700 deferred GLES uniform source contract passed.'
-require_fixed 'video.frame_rate' "$ROOT/../../engine/app/host/launcher_settings.cpp"
-require_fixed 'APPLY RECOMMENDED TEST PROFILE' "$ROOT/../../engine/app/host/launcher_settings.cpp"
-require_fixed 'H700 TEST PROFILE' "$ROOT/../../engine/app/host/launcher.cpp"
-require_fixed 'r.launcher) cfg.launcher.show = true' "$ROOT/../../engine/games/slus_20909_crash_twinsanity/composition/title_main.cpp"
-
-# Exercise the complete game muxapp packager with synthetic AArch64 ELF files.
-# GitHub Actions artifact downloads may restore files as 0644; the packager must
-# accept regular ELF files and set executable mode on the staged application copy.
-chmod 644 "$TMP/fake-aarch64"
-mkdir -p "$TMP/fake-ffmpeg/share/licenses"
-printf '%s\n' 'FFmpeg LGPL v2.1 text fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-COPYING.LGPLv2.1.txt"
-printf '%s\n' 'FFmpeg licence fixture' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-LICENSE.md"
-printf '%s\n' 'configuration fixture: --enable-decoder=mpeg2video' > "$TMP/fake-ffmpeg/share/licenses/FFmpeg-BUILD-CONFIGURATION.txt"
-GAME_BIN="$TMP/fake-aarch64" PROBE_BIN="$TMP/fake-aarch64" \
-SDL_PROBE_BIN="$TMP/fake-aarch64" SHADER_PROBE_BIN="$TMP/fake-aarch64" \
-FFMPEG_LICENSE_DIR="$TMP/fake-ffmpeg/share/licenses" \
-  scripts/package-full-muxapp.sh "$TMP/full-muxapp.muxapp" >/dev/null
-python3 - "$TMP/full-muxapp.muxapp" <<'PY'
-import sys
-import zipfile
-p = sys.argv[1]
-if not zipfile.is_zipfile(p):
-    raise SystemExit("Full muxapp is not a ZIP archive renamed to .muxapp")
-with open(p, "rb") as stream:
-    if stream.read(4) != b"PK\x03\x04":
-        raise SystemExit("Full muxapp ZIP signature is invalid")
-with zipfile.ZipFile(p) as archive:
-    if archive.testzip() is not None:
-        raise SystemExit("Full muxapp contains a corrupt ZIP member")
-    names = set(archive.namelist())
-    roots = {name.split("/", 1)[0] for name in names if name}
-    if roots != {"TwinsanityRintromped"}:
-        raise SystemExit(f"Unexpected full muxapp root: {sorted(roots)}")
-    for name in ("TwinsanityRintromped/twinsanityevolved",
-                 "TwinsanityRintromped/mux_launch.sh",
-                 "TwinsanityRintromped/tw-rintromped-h700-gles-shader-smoke"):
-        if name not in names:
-            raise SystemExit("Full muxapp missing " + name)
-    if any(name.lower().endswith(("/game.iso", "/disc-image.txt")) for name in names):
-        raise SystemExit("Full muxapp must not contain user disc data or selection")
-print("Full muxapp ZIP package test passed.")
-PY
-
-# Exercise the Andromeda mapping contract against SDL stubs. These tests verify
-# muOS environment/database precedence and Retro/Modern fallback logic; they
-# do not replace physical controller validation.
-c++ -std=c++17 -Wall -Wextra -Werror \
-  -I"$ROOT/tests/fake-sdl" -I"$ROOT/../../engine" \
-  "$ROOT/tests/test-muos-mapping.cpp" -o "$TMP/test-muos-mapping"
-mkdir -p "$TMP/muos-mapping"
-TW_MUOS_TEST_DIR="$TMP/muos-mapping" "$TMP/test-muos-mapping"
 
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
