@@ -12,7 +12,9 @@ namespace ps2r {
 namespace render {
 
 GlUniformCache::GlUniformCache() {
-#if PS2R_HOST_VITA
+#if PS2R_HOST_VITA || PS2R_HOST_GLES
+    // H700 GLES batches dirty uniform writes until the selected PS2 program is bound.
+    // Set TE_GFX_UNIFORM_SYNC=0 at launch to compare the original immediate path.
     const char* e = std::getenv("TE_GFX_UNIFORM_SYNC");
     deferred_ = !(e && e[0] == '0');
 #endif
@@ -160,12 +162,30 @@ void GlUniformCache::SetPrograms(uint32_t first, uint32_t second) {
 #endif
 }
 
-void GlUniformCache::Send(const Shadow& s, int loc, int program) {
+void GlUniformCache::Send(const Shadow& s, int loc, int program, bool already_bound) {
     if (loc < 0) return;
     ++sent_;
+#if PS2R_HOST_GLES
+    if (already_bound) {
+        // Sync() is called immediately after GlDrawExecutor binds the selected PS2 program.
+        // Do not query/bind/restore GL_CURRENT_PROGRAM for each dirty uniform.
+        switch (s.kind) {
+            case 1: glUniform1i(loc, s.i[0]); break;
+            case 2: glUniform1f(loc, s.f[0]); break;
+            case 3: glUniform2f(loc, s.f[0], s.f[1]); break;
+            case 4: glUniform3f(loc, s.f[0], s.f[1], s.f[2]); break;
+            case 5: glUniform2i(loc, s.i[0], s.i[1]); break;
+            case 6: glUniform4f(loc, s.f[0], s.f[1], s.f[2], s.f[3]); break;
+            default: --sent_; break;
+        }
+        return;
+    }
+#else
+    (void)already_bound;
+#endif
 #if !PS2R_HOST_VITA
-    // Desktop GL can write a named program without binding it. GLES 3.2 has
-    // no core glProgramUniform entry points, so bind temporarily and restore.
+    // Desktop GL can write a named program without binding it. GLES immediate mode
+    // (TE_GFX_UNIFORM_SYNC=0) binds temporarily and restores as the conservative fallback.
     if (const uint32_t p = programs_[program & 1]) {
 #if PS2R_HOST_GLES
         GLint previous = 0;
@@ -209,9 +229,17 @@ void GlUniformCache::Send(const Shadow& s, int loc, int program) {
     }
 }
 
-void GlUniformCache::SendArray(int loc, int count, const float* v, int program) {
+void GlUniformCache::SendArray(int loc, int count, const float* v, int program, bool already_bound) {
     if (loc < 0) return;
     ++sent_;
+#if PS2R_HOST_GLES
+    if (already_bound) {
+        glUniform4fv(loc, count, v);
+        return;
+    }
+#else
+    (void)already_bound;
+#endif
 #if !PS2R_HOST_VITA
     if (const uint32_t p = programs_[program & 1]) {
 #if PS2R_HOST_GLES
@@ -265,7 +293,7 @@ void GlUniformCache::Sync(int program) {
         Entry& e = table_[idx];
         if (!(e.dirty & bit)) continue;
         e.dirty &= uint8_t(~bit);
-        Send(e.shadow, program == 0 ? e.loc : MirrorOf(e.loc), program);
+        Send(e.shadow, program == 0 ? e.loc : MirrorOf(e.loc), program, true);
         NoteSent(int(idx), program);
     }
     pending_[program].clear();
@@ -275,7 +303,7 @@ void GlUniformCache::Sync(int program) {
         a.dirty &= uint8_t(~bit);
         const int to = program == 0 ? a.loc : MirrorOf(a.loc);
         if (to < 0) continue;
-        SendArray(to, a.count, a.v, program);
+        SendArray(to, a.count, a.v, program, true);
         NoteArraySent(k, program);
     }
     Check(program);
