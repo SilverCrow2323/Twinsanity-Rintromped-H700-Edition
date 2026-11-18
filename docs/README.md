@@ -2,7 +2,7 @@
 
 Player-facing instructions are maintained in the **MuOS-only H700 Field Guide**: [open the guide](../site/index.html).
 
-This directory contains implementation and validation notes for contributors working on the Allwinner H700 / MuOS target.
+This directory contains implementation and validation notes for contributors working on the Allwinner H700 / MuOS target. The player Wiki source is tracked in [wiki-source/](../wiki-source/), and the reading surface is the [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki).
 
 ## Guides
 
