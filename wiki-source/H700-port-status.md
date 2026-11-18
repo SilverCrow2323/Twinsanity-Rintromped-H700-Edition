@@ -6,7 +6,7 @@ This page records the work required to run Twinsanity Evolved on an Allwinner H7
 
 - The Allwinner H700 brief identifies a quad-core Cortex-A53 CPU and a G31 GPU ([Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)).
 - Arm documents Mali-G31 support for OpenGL ES 1.1 / 2.0 / 3.2 and Vulkan 1.2 ([Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)).
-- The H700 port requires a dedicated EGL/GLES display and renderer path; a generic AArch64 build does not prove compatibility with MuOS.
+- The engine's existing renderer baseline targets desktop OpenGL 4.1; H700/MuOS requires a separate EGL/OpenGL ES adaptation. This compatibility boundary remains **unvalidated on hardware**; an AArch64 build does not establish it.
 - The [GLSL ES 3.20 specification](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html) and the renderer's shader requirements must be reconciled and tested on the target GPU.
 
 ## Diagnostic milestone
