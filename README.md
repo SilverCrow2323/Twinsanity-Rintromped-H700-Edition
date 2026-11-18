@@ -6,7 +6,7 @@ The game is compiled to wasm32 and lowered to C with wasm2c; its linear memory i
 decompilation's own `include/platform/*.h` is the only seam. The H700 / MuOS target is developed as a dedicated ARM64 handheld lane with its own graphics, runtime and package acceptance gates. No game data of any kind is in
 this repository — you need your own disc image, which is read at run time.
 
-**Player field guide:** [Open the visual installation and usage manual](site/index.html), with real launcher screenshots, setup steps, configuration notes, mod workflows and troubleshooting. The GitHub Pages workflow publishes the `site/` directory when Pages is configured for Actions.
+**Player field guide:** [Open the visual installation and usage manual](site/index.html), with MuOS/H700 package status, installation guidance, data safety and troubleshooting. The GitHub Pages workflow publishes the `site/` directory when Pages is configured for Actions.
 
 ## Player documentation — MuOS only
 
