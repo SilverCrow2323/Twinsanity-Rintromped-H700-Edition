@@ -135,11 +135,13 @@ The device advertises `GL_EXT_disjoint_timer_query`. The desktop query implement
 
 [Back to the H700 hub](README.md) · [Compatibility matrix](compatibility-matrix.md) · [Roadmap](roadmap.md)
 
-## H700 startup menu and performance profile
+## H700 startup UI status and performance profile
 
-The muOS package opens NativeEE's own SDL/ImGui settings launcher before the game by default. It reuses the GLES 3.2 path and controller navigation; the animated spiral backdrop is already driven by the launcher render loop. The Data page's `launcher.show` switch controls whether the wrapper opens this screen on later starts. The menu includes Display, Controls, Save states, Fixes and Data, and all changes persist to `userdata/ps2r.ini`.
+The SDL/ImGui settings screen in `engine/app/host/launcher.cpp` exists in the NativeEE host library, but it is **not part of the executable currently shipped in the full H700 .muxapp**. The package's `twinsanityevolved` binary is built from `runner/main.cpp`; that runner has its own command-line parser and does not accept `--launcher`. The earlier muOS wrapper revision passed that unsupported flag and caused the runner to print Usage() and exit before starting the game.
 
-Display exposes the real `video.frame_rate` presentation cadence. The H700 test preset uses 1x internal scale, 30-rate presentation and the game's own texture filter. At a 60 Hz game rate, 30 presents every other picture; at 50 Hz it presents at 25. This does **not** underclock the EE/game simulation or the physical Cortex-A53. CPU frequency remains under muOS control. The preset is a measurement starting point, not a verified performance guarantee: the device's first profile showed a renderer vertex-submission bottleneck, so compare a fresh profiler run before choosing a permanent setting.
+The muOS hand-off is now deliberately limited to the runner's supported `--iso <image>` form. The `launcher.show` value in `userdata/ps2r.ini` is currently ignored by this standalone runner. The startup menu, animated menu background, and its settings controls are **not yet shipped in the H700 package**; they must be integrated into the actual runner target before being advertised as available on-device.
+
+The display profile code in the NativeEE host settings screen is likewise not evidence that the separate runner is applying those settings. The runner's live log reports the effective values (for example, `frame rate 60`); use those runtime lines rather than the unlinked settings screen when checking the device configuration. A 30-rate presentation target, where supported by the runner, changes display cadence rather than underclocking the EE/game simulation or the physical Cortex-A53.
 
 ## H700 runtime batching and performance diagnostics
 
