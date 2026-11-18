@@ -7,6 +7,14 @@ decompilation's own `include/platform/*.h` is the only seam. On the PS Vita the 
 console's ARM processor instead, with the same seam and the 32 MB as a block of the program. No game data of any kind is in
 this repository — you need your own disc image, which is read at run time.
 
+## Project hub and player documentation
+
+There is currently **no separate project website** published for this repository. The public documentation hub is the [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki), backed by the tracked [Wiki source](wiki-source/). Use [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) for downloadable builds and [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues) for support.
+
+- [Open the project Wiki ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki)
+- [Latest releases ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases)
+- [H700 port notes](wiki-source/H700-port-status.md)
+
 ## What's new
 
 Since v0.1.8 (the full list for players is in [RELEASE-NOTES.txt](RELEASE-NOTES.txt)):
