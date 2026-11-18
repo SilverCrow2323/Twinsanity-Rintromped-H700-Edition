@@ -1,6 +1,6 @@
 # Wiki source and publishing
 
-The tracked pages in `wiki-source/` are the canonical source for the GitHub Wiki. The live Wiki is the reading surface for practical player guides, FAQs and troubleshooting.
+The tracked pages in `wiki-source/` are the canonical source for the [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki). The live Wiki is the reading surface for practical player guides, FAQs and troubleshooting. There is no separate project website published yet; use the [Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki), [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) and [repository](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition) as the official public entry points.
 
 ## Page rules
 
