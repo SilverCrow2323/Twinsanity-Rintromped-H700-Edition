@@ -1,44 +1,34 @@
-# Getting started
+# Getting started on MuOS
 
-Install the latest published build for a platform listed in [Supported platforms](Supported-platforms), then select your own Crash Twinsanity disc image on first launch.
+This guide covers Twinsanity Evolved on an Allwinner H700 handheld running MuOS. Install only a release explicitly marked as a playable MuOS / H700 package.
+
+> [!IMPORTANT]
+> The current H700 preflight package is diagnostic, not a playable game build. If the Releases page does not contain a playable MuOS package with device validation notes, stop here and do not install the preflight expecting gameplay.
 
 ## Before you start
 
-- Have your own Crash Twinsanity `.iso` disc image ready.
-- Leave enough free storage for the extracted program and your personal game folder.
-- Use a release archive that matches your operating system and CPU architecture.
-- Do not use a Linux AArch64 archive as proof that an H700 handheld is supported; see [H700 port status](H700-port-status).
+- Confirm the exact H700 handheld model and installed MuOS version.
+- Back up your SD card, saves and personal configuration.
+- Have your own legally obtained Crash Twinsanity disc image ready.
+- Read the package-specific prerequisites and checksum on the release page.
 
-> [!IMPORTANT]
-> **MUST KNOW!!** The release contains the program, libraries, licences, tools and supported mods/language files — not the original game data.
+## Install a MuOS package
 
-## Desktop install
+1. Open the project's [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases).
+2. Select an artifact explicitly labelled for MuOS / H700 and read its release notes.
+3. If the release supplies a `.muxapp`, follow its exact instructions for placing it in the MuOS `ARCHIVE` folder and installing it through Applications → Archive Manager.
+4. Follow the release's documented game-data path and first-launch steps exactly.
+5. Keep a backup of personal data before updating or removing an experimental build.
 
-1. Open the project's Releases page and download the launcher for your desktop, or the standalone game archive for your system.
-2. Extract the standalone archive to a folder you control.
-3. Start `twinsanityevolved` (`twinsanityevolved.exe` on Windows).
-4. On first launch, choose your own disc image when asked.
-5. Keep the game folder together: it holds settings, memory cards and mods.
+Do not rename another archive to `.muxapp`, copy runtime files from another target onto the handheld or guess paths that are not documented by the release.
 
-The launcher can find discs in common folders and removable drives. You can also drop a disc image on its window or choose it manually.
+## Data and saves
 
-## Where data is stored
-
-- `disc-image.txt` remembers the selected disc.
-- `userdata/` stores settings and personal data beside the program folder.
-- `memcards/` contains memory-card saves.
-- `mods/` contains imported and enabled mods.
-
-An earlier `~/.twinsanityevolved` data folder continues to be used when present.
-
-## Save compatibility
-
-- Memory-card saves are separate from save states.
-- Save states belong to the build that created them; a new game build may not load an older state.
-- Keep a backup of the whole game folder before testing an experimental build.
+The final MuOS package documentation must state the exact location of the user-owned disc image, settings, memory cards and logs. Until those paths are confirmed on hardware, do not assume a path from another target.
 
 ## Related pages
 
-- [Supported platforms](Supported-platforms)
+- [Supported target](Supported-platforms)
 - [Discs and game data](Discs-and-game-data)
 - [H700 port status](H700-port-status)
+- [Troubleshooting](Troubleshooting)

@@ -1,34 +1,24 @@
-# Supported platforms
+# Supported target: MuOS on H700
 
-Use a release that explicitly matches your system. The existence of a CPU-compatible archive is not enough to prove that a device's graphics driver, display stack or input path is supported.
+The only player target documented by this project is an **Allwinner H700 handheld running MuOS**.
 
-## Current release targets
+A CPU-compatible executable or a successful cross-build is not enough to establish support. The graphics driver, display stack, input, audio, runtime libraries and package lifecycle must all work on the actual device.
 
-The repository README lists builds for:
+## Current status
 
-- Windows x64.
-- macOS on Apple silicon (arm64).
-- macOS x86_64.
-- Linux x86_64.
-- Linux AArch64.
-- PS Vita, with its own native console build and VPK package.
-
-The launcher is published for Windows, macOS and Linux desktop systems.
-
-## H700 handhelds
-
-> [!IMPORTANT]
-> **MUST KNOW!!** H700 / muOS support is not established by the Linux AArch64 desktop archive. The H700 port has its own graphics, display, input, audio, runtime and packaging requirements. See [H700 port status](H700-port-status).
-
-## Graphics requirements
-
-The current player-facing release notes specify a graphics driver with OpenGL 4.1 for the desktop build. The H700's Mali-G31 class GPU exposes a different embedded graphics API path; the renderer must be audited and ported deliberately rather than assuming desktop OpenGL compatibility.
+- H700 / MuOS is an active engineering target.
+- The diagnostic preflight `.muxapp` checks parts of the graphics and display path.
+- The diagnostic package is **not a playable game build**.
+- No hardware compatibility claim is made until a named device and MuOS version pass the acceptance matrix.
 
 ## How to check a release
 
-1. Read the release's asset name and notes.
-2. Match the operating system and CPU architecture.
-3. Check the documented graphics requirements.
-4. For handheld targets, look for a device-specific validation note — not just a successful cross-compile.
+1. Open the project's Releases page.
+2. Select an artifact explicitly labelled for MuOS / H700.
+3. Read its prerequisites, exact package instructions, checksum and known limitations.
+4. Confirm that the release notes name the tested handheld model and MuOS version.
+5. If there is no playable MuOS artifact, do not install a diagnostic package expecting the game.
 
----
+## Graphics and runtime
+
+The H700's Mali-G31 graphics path must be validated through the target MuOS firmware. EGL/OpenGL ES context creation, shaders, frame presentation, input, audio and storage behaviour are all separate acceptance gates. See [H700 port status](H700-port-status).

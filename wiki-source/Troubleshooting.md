@@ -1,41 +1,37 @@
-# Troubleshooting
+# Troubleshooting on MuOS / H700
 
-Start with the exact message shown by the launcher or game. Keep the original error text in your notes before changing settings.
+Start with the exact package, handheld model and firmware version. Avoid changing multiple settings at once.
 
-## The game does not recognise my disc
+## The package does not appear in Archive Manager
 
-- Confirm that the selected file is your own Crash Twinsanity disc image in ISO format.
-- Check whether it is the documented PAL or North American disc.
-- If the image is modified, the launcher may label it as a modified disc.
-- Avoid renaming or patching the image just to make its filename look like a known disc.
+- Confirm that the release explicitly provides a MuOS `.muxapp`.
+- Follow the release's documented `ARCHIVE` destination and installation steps.
+- Do not rename a different archive to `.muxapp`.
 
-## The game starts but a mod is missing
+## The application does not start
 
-- Check that the mod is switched on in the launcher's **Mods** page.
-- Check the disc-region badge and any warning that says the mod was left out.
-- Remember that a mod change takes effect after restarting the game.
-- Verify the mod with `twinsanityevolved-modtool verify` and your own disc image.
+- Confirm the exact H700 model and MuOS version.
+- Check the package checksum against the release notes.
+- Capture the error and the log path documented by that package.
 
-## A save state will not load
+## Black screen or renderer failure
 
-- Save states belong to the exact build that created them.
-- Try a memory-card save instead; memory-card saves are separate from save states.
-- Back up the game folder before testing another build.
+- Record whether the handheld returns to MuOS, freezes or reboots.
+- Include the EGL/GLES diagnostic output if the release provides it.
+- Do not infer GPU support from a successful cross-build.
 
-## Desktop graphics are unavailable
+## Missing disc image or game data
 
-- Check that the graphics driver meets the desktop OpenGL 4.1 requirement documented by the release notes.
-- Update the vendor driver where appropriate.
-- On an H700 handheld, do not assume that a desktop Linux AArch64 binary will work; check [H700 port status](H700-port-status).
+- Check the exact filename and path stated by the MuOS release.
+- Confirm that the image is a supported revision.
+- Never post the image itself or copyrighted game files.
 
-## What to include in a report
+## Controls or audio do not work
 
-- Release version and asset name.
-- Operating system, firmware and device model.
-- Whether the disc is PAL, North American or modified.
-- The exact steps before the issue and the full relevant log excerpt.
-- A note about whether the issue also happens with mods disabled.
+- Record the physical button pressed and the expected action.
+- For audio, note the output route and whether the failure is continuous or intermittent.
+- Include logs and the exact build identifier.
 
-> **MUST KNOW!!** Never attach a disc image, copyrighted game files, account tokens or private device data to a public report.
+## Still stuck?
 
----
+Open an issue with the device model, MuOS version, package checksum, reproduction steps, logs and a photo of the handheld screen where useful.
