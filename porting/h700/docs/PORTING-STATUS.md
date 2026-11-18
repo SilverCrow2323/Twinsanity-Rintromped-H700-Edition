@@ -112,3 +112,17 @@ Run: [#44067269456](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700
 - The package job reported ZIP integrity, single-root layout, diagnostics and licence payload verified. The package builder excludes the user's `game.iso` and `disc-image.txt`.
 
 The runner was built without a title ELF or disc image. This remains a full NativeEE link/package milestone, not a first game frame or gameplay validation.
+
+
+## Exact-head CI refresh · 18 November 2026
+
+Current H700 PR head: `4b99499d6374b5b68c00948724d230b8aa39066e`.
+
+The latest validation runs now complete on this documentation head:
+
+- H700 run [#44123849723](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44123849723): **6/6 jobs passed** — host checks, GLES renderer compile, blocking Mesa shader smoke, AArch64 package, full AArch64 application link and full muxapp package.
+- Windows run [#44123851074](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44123851074): **PASS**.
+- Wiki validation [#44123850914](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44123850914): **PASS**.
+- Launcher matrix [#44123850075](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44123850075): Linux x86_64 AppImage **PASS**, Windows x64 **PASS**, macOS ARM64 **CANCELLED**. The matrix is not fully green; the cancelled macOS lane remains a separate CI follow-up.
+
+This confirms the current CI compile/link/package gates, not a playable-game result. The CI runner still does not contain the user's game ISO or a title ELF, and no new physical Mali report is attached to this run. Production shader execution on Mali, render-target/readback validation, first NativeEE game frame, game boot, input/audio/video gameplay and sustained performance remain unverified. Keep PR #2 in Draft and do not publish a release.
