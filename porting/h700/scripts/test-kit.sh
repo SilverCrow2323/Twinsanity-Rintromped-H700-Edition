@@ -55,7 +55,7 @@ if PROBE_BIN="$TMP/probe-host" SDL_PROBE_BIN="$TMP/sdl-probe-host" SHADER_PROBE_
 # is runner/main.cpp; it rejects unknown flags, so the test double enforces the
 # exact supported hand-off shape (--iso <image>) rather than merely echoing args.
 mkdir -p "$TMP/launcher-app/My Discs"
-printf '%s\\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
+printf '%s\n' 'test disc bytes' > "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 cat > "$TMP/muos-func.sh" <<'EOF'
 SETUP_APP() { :; }
 EOF
@@ -64,25 +64,22 @@ cat > "$TMP/launcher-app/twinsanityevolved" <<'EOF'
 if [ "$#" -ne 2 ] || [ "$1" != "--iso" ]; then
   printf 'runner test stub: unsupported argument list:' >&2
   printf ' <%s>' "$@" >&2
-  printf '\\n' >&2
+  printf '\n' >&2
   exit 64
 fi
-printf '%s\\n' "$@" > "$TW_H700_CAPTURE_ARGS"
-printf '%s\\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
-if [ -n "${TW_H700_CAPTURE_PERF:-}" ]; then
-  printf '%s\\n' "${TE_PROF:-}" "${TE_PROF_US:-}" "${TE_PROF_EVERY:-}" "${TE_GFX_SUMMARY_EVERY:-}" > "$TW_H700_CAPTURE_PERF"
+printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
+printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
+if [ -n "$TW_H700_CAPTURE_PERF" ]; then
+  printf '%s\n' "$TE_PROF" "$TE_PROF_US" "$TE_PROF_EVERY" "$TE_GFX_SUMMARY_EVERY" > "$TW_H700_CAPTURE_PERF"
 fi
 EOF
 chmod 755 "$TMP/launcher-app/twinsanityevolved"
-printf '%s\\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
 
 run_launcher_expect_disc() {
   expected_disc="$1"
   rm -f "$TMP/launcher-args.txt"
-  TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-  TW_H700_APP_DIR="$TMP/launcher-app" \\
-  TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-  TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+  TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
     sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
   [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
   [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$expected_disc" ]
@@ -94,9 +91,9 @@ run_launcher_expect_disc() {
 # unsupported --launcher flag into the standalone runner's CLI.
 run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 mkdir -p "$TMP/launcher-app/userdata"
-printf '%s\\n' '[launcher]' 'show = off' > "$TMP/launcher-app/userdata/ps2r.ini"
+printf '%s\n' '[launcher]' 'show = off' > "$TMP/launcher-app/userdata/ps2r.ini"
 run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
-printf '%s\\n' 'launcher.show = on' > "$TMP/launcher-app/userdata/ps2r.ini"
+printf '%s\n' 'launcher.show = on' > "$TMP/launcher-app/userdata/ps2r.ini"
 run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 
 # The one-shot performance marker enables bounded diagnostics, removes itself
@@ -104,11 +101,7 @@ run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 mkdir -p "$TMP/launcher-app/logs"
 : > "$TMP/launcher-app/logs/performance-diagnostics.once"
 rm -f "$TMP/launcher-perf.txt"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-TW_H700_APP_DIR="$TMP/launcher-app" \\
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
-TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \\
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
 [ "$(sed -n '1p' "$TMP/launcher-perf.txt")" = "1" ]
 [ "$(sed -n '2p' "$TMP/launcher-perf.txt")" = "2000" ]
@@ -118,16 +111,16 @@ TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \\
 
 # A broken saved selection must fall back to game.iso and repair the selection.
 rm -f "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" "$TMP/launcher-args.txt"
-printf '%s\\n' 'missing.iso' > "$TMP/launcher-app/disc-image.txt"
-printf '%s\\n' 'fallback disc bytes' > "$TMP/launcher-app/game.iso"
+printf '%s\n' 'missing.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\n' 'fallback disc bytes' > "$TMP/launcher-app/game.iso"
 run_launcher_expect_disc "$TMP/launcher-app/game.iso"
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
 # A saved relative path must not escape the application root. The safe
 # root-level game.iso is selected instead, and the saved selection is repaired.
-printf '%s\\n' 'outside disc bytes' > "$TMP/outside.iso"
-printf '%s\\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
-printf '%s\\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
+printf '%s\n' 'outside disc bytes' > "$TMP/outside.iso"
+printf '%s\n' '../outside.iso' > "$TMP/launcher-app/disc-image.txt"
+printf '%s\n' 'safe in-app disc bytes' > "$TMP/launcher-app/game.iso"
 run_launcher_expect_disc "$TMP/launcher-app/game.iso"
 [ "$(cat "$TMP/launcher-app/disc-image.txt")" = "game.iso" ]
 
@@ -135,10 +128,7 @@ run_launcher_expect_disc "$TMP/launcher-app/game.iso"
 rm -f "$TMP/launcher-app/game.iso" "$TMP/launcher-app/disc-image.txt" "$TMP/launcher-args.txt"
 ln -s "$TMP/outside.iso" "$TMP/launcher-app/game.iso"
 set +e
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" \\
-TW_H700_APP_DIR="$TMP/launcher-app" \\
-TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" \\
-TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \\
+TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh >/dev/null 2>&1
 link_rc=$?
 set -e
