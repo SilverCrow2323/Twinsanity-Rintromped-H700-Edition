@@ -169,7 +169,7 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         last_map_bucket=0
         sleep_pid=""
         trap 'if [ -n "$sleep_pid" ]; then kill "$sleep_pid" 2>/dev/null || true; fi; exit 0' TERM INT
-        printf '[memory] sampler start: pid=%s interval=%ss (procfs, low overhead)\n' "$sample_pid" "$sample_seconds"
+        printf '[memory] runner pid=%s sampler interval=%ss (procfs, low overhead)\n' "$sample_pid" "$sample_seconds"
         while kill -0 "$sample_pid" 2>/dev/null; do
             status_file="/proc/$sample_pid/status"
             [ -r "$status_file" ] || break
@@ -193,7 +193,9 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
                 printf '[memory] host '
                 awk '
                     $1 == "MemAvailable:" || $1 == "SwapFree:" || $1 == "SwapTotal:" {
-                        printf "%s=%s%s ", $1, $2, $3
+                        key = $1
+                        sub(/:$/, "", key)
+                        printf "%s=%s%s ", key, $2, $3
                     }
                     END { print "" }
                 ' /proc/meminfo 2>/dev/null
