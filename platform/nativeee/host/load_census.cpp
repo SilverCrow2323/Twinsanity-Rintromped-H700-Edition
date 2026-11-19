@@ -1,6 +1,8 @@
 // load_census.cpp -- see te_load_census.h.
 #include "te_load_census.h"
 
+#include "engine/platform/host/platform.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -59,6 +61,47 @@ void AtomicMax(std::atomic<uint64_t>& a, uint64_t v) {
     while (v > cur && !a.compare_exchange_weak(cur, v, std::memory_order_relaxed)) {}
 }
 uint64_t Take(std::atomic<uint64_t>& a) { return a.exchange(0, std::memory_order_relaxed); }
+
+#if PS2R_HOST_GLES
+struct ProcessMemorySnapshot {
+    uint64_t rss_kb = 0, anon_kb = 0, file_kb = 0, shmem_kb = 0, available_kb = 0;
+    bool valid = false;
+};
+
+uint64_t ProcKbField(const char* line, const char* key) {
+    const size_t n = std::strlen(key);
+    if (std::strncmp(line, key, n) != 0) return 0;
+    const char* value = line + n;
+    while (*value == ' ' || *value == '\\t') ++value;
+    return std::strtoull(value, nullptr, 10);
+}
+
+ProcessMemorySnapshot ReadProcessMemorySnapshot() {
+    ProcessMemorySnapshot out;
+    if (FILE* f = std::fopen("/proc/self/status", "r")) {
+        char line[256];
+        while (std::fgets(line, sizeof(line), f)) {
+            if (std::strncmp(line, "VmRSS:", 6) == 0) out.rss_kb = ProcKbField(line, "VmRSS:");
+            else if (std::strncmp(line, "RssAnon:", 8) == 0) out.anon_kb = ProcKbField(line, "RssAnon:");
+            else if (std::strncmp(line, "RssFile:", 8) == 0) out.file_kb = ProcKbField(line, "RssFile:");
+            else if (std::strncmp(line, "RssShmem:", 9) == 0) out.shmem_kb = ProcKbField(line, "RssShmem:");
+        }
+        std::fclose(f);
+        out.valid = out.rss_kb != 0;
+    }
+    if (FILE* f = std::fopen("/proc/meminfo", "r")) {
+        char line[256];
+        while (std::fgets(line, sizeof(line), f)) {
+            if (std::strncmp(line, "MemAvailable:", 13) == 0) {
+                out.available_kb = ProcKbField(line, "MemAvailable:");
+                break;
+            }
+        }
+        std::fclose(f);
+    }
+    return out;
+}
+#endif
 
 // The tick's work as text (the slow-tick line's suffix and the window's longest tick)
 std::string Describe(const TickNotes& t, const GpuAllocs* allocs) {
@@ -214,7 +257,7 @@ std::string WindowLine(uint64_t from, uint64_t to) {
     g_longest_lock.clear(std::memory_order_release);
     if (!ticks) return std::string();
     auto ms = [](uint64_t u) { return double(u) / 1000.0; };
-    char b[2400];
+    char b[3000];
     int at = std::snprintf(b, sizeof b, "[te.load] presents %llu-%llu: %llu ticks (%.1f ms of work); over %.0f ms %llu (%.0f ms)",
                            (unsigned long long)from, (unsigned long long)to, (unsigned long long)ticks, ms(tick_us), LongMs(),
                            (unsigned long long)long_ticks, ms(long_us));
@@ -246,6 +289,15 @@ std::string WindowLine(uint64_t from, uint64_t to) {
                             "batches (%llu meshes) in %.1f ms, its longest job %.1f ms\n",
                             (unsigned long long)a, double(ab) / 1024.0, (unsigned long long)f, (unsigned long long)rtn, ms(rtus),
                             (unsigned long long)rtb, (unsigned long long)rtm, ms(rtmus), ms(rtmax));
+#if PS2R_HOST_GLES
+    const ProcessMemorySnapshot memory = ReadProcessMemorySnapshot();
+    if (memory.valid && at > 0 && at < int(sizeof b))
+        at += std::snprintf(b + at, sizeof b - size_t(at),
+                            "; H700 memory: process RSS %.1f MiB (anon %.1f, file %.1f, shmem %.1f), system MemAvailable %.1f MiB",
+                            double(memory.rss_kb) / 1024.0, double(memory.anon_kb) / 1024.0,
+                            double(memory.file_kb) / 1024.0, double(memory.shmem_kb) / 1024.0,
+                            double(memory.available_kb) / 1024.0);
+#endif
     if (at >= int(sizeof b)) b[sizeof b - 2] = '\n', b[sizeof b - 1] = 0;
     return b;
 }
