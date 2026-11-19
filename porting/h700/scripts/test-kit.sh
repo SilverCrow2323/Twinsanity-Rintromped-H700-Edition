@@ -80,12 +80,18 @@ fi
 EOF
 chmod 755 "$TMP/launcher-app/twinsanityevolved"
 printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.txt"
+# Fake the documented read-only Mali debugfs layout: per-context profile and
+# device memory counters. The launcher must capture both without writing to them.
+mkdir -p "$TMP/mali-debugfs/ctx/123" "$TMP/mali-debugfs/mem"
+printf '%s\n' 'ctx memory profile fixture' > "$TMP/mali-debugfs/ctx/123/mem_profile"
+printf '%s\n' 'device memory fixture' > "$TMP/mali-debugfs/mem/memory"
 
 run_launcher_expect_disc() {
   expected_disc="$1"
   rm -f "$TMP/launcher-args.txt"
   env -u TE_GFX_EAGER_TEXTURES \
     TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" \
+    TW_H700_MALI_DEBUGFS_ROOTS="$TMP/mali-debugfs" \
     TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
     TW_H700_CAPTURE_EAGER="$TMP/launcher-eager.txt" \
     sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
@@ -96,6 +102,9 @@ run_launcher_expect_disc() {
   [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
   grep -q '^\[memory\] runner pid=' "$TMP/launcher-app/logs/game-launch.log"
   grep -q '^\[memory\] host MemAvailable=' "$TMP/launcher-app/logs/game-launch.log"
+  grep -q '^\[mali\] debugfs snapshot=startup ' "$TMP/launcher-app/logs/game-launch.log"
+  grep -q 'ctx memory profile fixture' "$TMP/launcher-app/logs/game-launch.log"
+  grep -q 'device memory fixture' "$TMP/launcher-app/logs/game-launch.log"
 }
 
 # Default, flat and sectioned launcher.show values must never leak the
