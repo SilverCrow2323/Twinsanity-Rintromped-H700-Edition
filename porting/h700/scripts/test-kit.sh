@@ -72,6 +72,8 @@ fi
 printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
 printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
 printf '%s\n' "${TE_GFX_EAGER_TEXTURES-<unset>}" > "$TW_H700_CAPTURE_EAGER"
+# Keep the stub alive long enough for the launcher memory sampler's first sample.
+sleep 1
 if [ -n "$TW_H700_CAPTURE_PERF" ]; then
   printf '%s\n' "$TE_PROF" "$TE_PROF_US" "$TE_PROF_EVERY" "$TE_GFX_SUMMARY_EVERY" > "$TW_H700_CAPTURE_PERF"
 fi
@@ -92,6 +94,8 @@ run_launcher_expect_disc() {
   [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$expected_disc" ]
   [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
   [ "$(cat "$TMP/launcher-driver.txt")" = "mali" ]
+  grep -q '^\[memory\] runner pid=' "$TMP/launcher-app/logs/game-launch.log"
+  grep -q '^\[memory\] host MemAvailable=' "$TMP/launcher-app/logs/game-launch.log"
 }
 
 # Default, flat and sectioned launcher.show values must never leak the
