@@ -1,7 +1,7 @@
 # muOS installation — H700 Edition
 
 <blockquote>
-<strong>Current candidate:</strong> the NativeEE runner H700 `.muxapp` is built by CI for AArch64 and uses the device's SDL2, EGL and GLES runtime. FFmpeg's required MPEG-1/2 decode path is linked statically with the minimal LGPL recipe. The current CI build had no title ELF/disc input, so title-specific recompilation and game-composition tests were skipped. This is a runner/bring-up candidate, not a game-verified installer. An earlier 13 November physical bring-up reached NativeEE startup and disc/ELF initialisation but failed at the first vertex shader; the normaliser fix has passed Mesa CI and still needs a physical Mali retest.
+<strong>Current status:</strong> the physical H700 run has reached the PAL game world and loaded the beach hub. A subsequent run was terminated by the Linux OOM killer: this is a confirmed memory-pressure failure, not a confirmed GLES shader crash. The H700 profile is being changed to decode textures on first draw, cap retained texture pools, and report anonymous/file-backed RSS. These changes still require a fresh on-device run before they can be called validated. This is a development build, not a release-ready installer.
 </blockquote>
 
 ## Choose the package
@@ -29,6 +29,12 @@ MUOS/application/TwinsanityRintromped/game.iso
 ```
 
 The launcher selects `game.iso` only when there is no valid existing `disc-image.txt` selection. It does not rewrite, patch, or bundle the ISO. Keep a separate backup of your disc image and saves before installing or updating the application.
+
+## Recommended test image
+
+For repeatable H700 testing, use the **PAL edition** of Crash Twinsanity as the reference disc image. PAL uses a 50 Hz video timing standard, which is the baseline used by the current device run. That does **not** mean the H700 port is already rendering at 50 FPS: actual frame rate and frame pacing depend on the unfinished renderer and its current performance limits.
+
+The project distributes neither the disc image nor copyrighted game data. Supply your own legally obtained image; the PAL recommendation is about a consistent test baseline, not a bundled or modified ROM.
 
 ## Archive layout
 
@@ -72,7 +78,7 @@ The shader report exercises the selected NativeEE production shader programs on 
 
 1. Install the `twinsanity-rintromped-h700-full-muxapp` artifact. Extract only the outer GitHub Actions artifact ZIP; keep the inner `.muxapp` intact and verify its adjacent `.sha256` sidecar.
 2. Put your own disc image at `MUOS/application/TwinsanityRintromped/game.iso`. The image is not part of either artifact.
-3. Launch the installed application. The full package selects `twinsanityevolved`, defaults SDL to the muOS `mali` video driver unless overridden, and invokes NativeEE with the resolved `--iso` path and `--launcher`.
+3. Launch the installed application. The full package selects `twinsanityevolved`, defaults SDL to the muOS `mali` video driver unless overridden, and invokes the standalone runner with the resolved `--iso <path>` argument. The current runner does not include the separate ImGui launcher UI, so no `--launcher` flag is passed.
 4. Observe and report separately: runner starts, first NativeEE-rendered frame appears, game reaches gameplay, controller/audio/video work, and sustained play is stable.
 5. Copy `logs/game-launch.log`. The first installed launch also consumes the one-shot performance diagnostics marker and writes the profiler output into the game launch log. For another capture, create an empty `logs/performance-diagnostics.once` before launching again.
 6. Record the full artifact workflow run, exact source commit SHA, inner `.muxapp` SHA-256, muOS version and device model.
@@ -106,4 +112,4 @@ Attach the preflight reports for graphics-driver failures and the full runner lo
 
 ## Validation boundary
 
-CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. The latest full-runner build had no title ELF/disc input, so title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. The 13 November physical bring-up of an earlier runner reached NativeEE startup and retail ELF initialisation but failed at the first vertex shader; the normaliser fix has not yet been retested on Mali. CI has **not** verified a first NativeEE frame, title screen, gameplay, audio, controller behavior or sustained frame pacing on the physical H700.
+CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. The physical report supplied for the current PAL run confirms that the game entered `levels\\earth\\hub\\beach`; the kernel later killed `te-game` for out-of-memory pressure (approximately 706 MiB file-backed RSS plus 127 MiB anonymous RSS at termination). The cause within those resident mappings is still under investigation. Sustained play, stable memory usage and useful frame pacing are not yet verified on the physical H700.
