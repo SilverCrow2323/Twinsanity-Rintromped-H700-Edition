@@ -156,10 +156,97 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         for arg in "$@"; do printf ' <%s>' "$arg"; done
         printf '\n'
     } >> "$APP_DIR/logs/game-launch.log"
+    # Sample the game's live memory from procfs while it runs. H700's OOM report
+    # showed a large file-backed RSS; status + smaps_rollup + threshold-triggered
+    # mapping snapshots let us identify which mappings grow without a heavy profiler.
+    sample_runner_memory() {
+        sample_pid="$1"
+        sample_seconds="$TW_H700_MEM_SAMPLE_SECONDS"
+        [ -n "$sample_seconds" ] || sample_seconds=5
+        case "$sample_seconds" in *[!0-9]*) sample_seconds=5 ;; esac
+        [ "$sample_seconds" -ge 1 ] 2>/dev/null || sample_seconds=5
+        sample_count=0
+        last_map_bucket=0
+        sleep_pid=""
+        trap 'if [ -n "$sleep_pid" ]; then kill "$sleep_pid" 2>/dev/null || true; fi; exit 0' TERM INT
+        printf '[memory] sampler start: pid=%s interval=%ss (procfs, low overhead)\n' "$sample_pid" "$sample_seconds"
+        while kill -0 "$sample_pid" 2>/dev/null; do
+            status_file="/proc/$sample_pid/status"
+            [ -r "$status_file" ] || break
+            fields="$(awk '
+                $1 == "VmRSS:" { rss = $2 }
+                $1 == "RssAnon:" { anon = $2 }
+                $1 == "RssFile:" { file = $2 }
+                $1 == "RssShmem:" { shmem = $2 }
+                $1 == "VmSwap:" { swap = $2 }
+                END { printf "%d %d %d %d %d\n", rss, anon, file, shmem, swap }
+            ' "$status_file" 2>/dev/null)"
+            set -- $fields
+            rss="${1:-0}"
+            rss_anon="${2:-0}"
+            rss_file="${3:-0}"
+            rss_shmem="${4:-0}"
+            vm_swap="${5:-0}"
+            {
+                printf '[memory] epoch=%s pid=%s VmRSS=%skB RssAnon=%skB RssFile=%skB RssShmem=%skB VmSwap=%skB\n' \
+                    "$(date +%s 2>/dev/null || echo 0)" "$sample_pid" "$rss" "$rss_anon" "$rss_file" "$rss_shmem" "$vm_swap"
+                printf '[memory] host '
+                awk '
+                    $1 == "MemAvailable:" || $1 == "SwapFree:" || $1 == "SwapTotal:" {
+                        printf "%s=%s%s ", $1, $2, $3
+                    }
+                    END { print "" }
+                ' /proc/meminfo 2>/dev/null
+                if [ -r "/proc/$sample_pid/smaps_rollup" ]; then
+                    printf '[memory] smaps_rollup '
+                    awk '
+                        $1 == "Rss:" || $1 == "Pss:" || $1 == "Pss_Anon:" || $1 == "Pss_File:" ||
+                        $1 == "Shared_Clean:" || $1 == "Shared_Dirty:" || $1 == "Private_Clean:" ||
+                        $1 == "Private_Dirty:" || $1 == "Anonymous:" || $1 == "Swap:" {
+                            printf "%s=%s%s ", $1, $2, $3
+                        }
+                        END { print "" }
+                    ' "/proc/$sample_pid/smaps_rollup" 2>/dev/null
+                fi
+            }
+            sample_count=$((sample_count + 1))
+            # At every additional 128 MiB of file-backed RSS, capture the ten
+            # largest mappings once. This is event-triggered, not every sample.
+            if [ "$rss_file" -ge 131072 ] 2>/dev/null; then
+                map_bucket=$((rss_file / 131072))
+                if [ "$map_bucket" -gt "$last_map_bucket" ]; then
+                    printf '[memory] largest mappings at RssFile=%skB (bucket=%s):\n' "$rss_file" "$map_bucket"
+                    if [ -r "/proc/$sample_pid/smaps" ]; then
+                        awk '
+                            function emit() { if (map != "") printf "%10d\t%s\n", rss, map }
+                            /^[[:xdigit:]]+-[[:xdigit:]]+ / { emit(); map = $0; rss = 0; next }
+                            $1 == "Rss:" { rss = $2 }
+                            END { emit() }
+                        ' "/proc/$sample_pid/smaps" 2>/dev/null | sort -nr | head -n 10 | sed 's/^/[memory-map] /' || true
+                    else
+                        printf '[memory] smaps unavailable for pid=%s\n' "$sample_pid"
+                    fi
+                    last_map_bucket="$map_bucket"
+                fi
+            fi
+            sleep "$sample_seconds" &
+            sleep_pid=$!
+            wait "$sleep_pid" 2>/dev/null || true
+            sleep_pid=""
+        done
+        printf '[memory] sampler end: pid=%s samples=%s\n' "$sample_pid" "$sample_count"
+    }
+
     # Keep the wrapper alive while the runner executes so its termination is observable.
     # A shell return code >=128 commonly represents termination by signal (128 + signal).
-    "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1
+    "$APP_DIR/$GAME_BIN" "$@" >> "$APP_DIR/logs/game-launch.log" 2>&1 &
+    GAME_PID=$!
+    ( sample_runner_memory "$GAME_PID" ) >> "$APP_DIR/logs/game-launch.log" 2>&1 &
+    MEMORY_PID=$!
+    wait "$GAME_PID"
     GAME_RC=$?
+    kill "$MEMORY_PID" 2>/dev/null || true
+    wait "$MEMORY_PID" 2>/dev/null || true
     {
         printf '\n===== Twinsanity runner terminated =====\n'
         printf 'Runner exit status: %s\n' "$GAME_RC"
