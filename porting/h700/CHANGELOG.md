@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.5-dev
+
+- Added an H700-only low-memory texture path: texture records keep reserved IDs but decode and create at first draw by default (`TE_GFX_EAGER_TEXTURES=2`); explicit environment overrides remain available.
+- Reduced H700 GLES retained texture-cache budgets: decoded L2 64 MiB (8 MiB probation), owned unbound surfaces 32 MiB, and recycled GL texture storage 16 MiB. These are cache budgets, not a total process/GPU memory cap.
+- Added H700 `/proc` telemetry for process RSS split into anonymous, file-backed and shared memory, plus system `MemAvailable`.
+- Confirmed from the physical kernel report that the prior runner was killed by the OOM killer. The root source of the large file-backed RSS remains under investigation; this patch is a mitigation candidate, not a validated fix.
+- Documented the PAL edition as the repeatable test baseline (50 Hz video standard; not a promise of 50 rendered FPS on H700).
+
 ## 0.2.4-dev
 
 - Built and linked the full H700 AArch64 NativeEE runner on branch head `681f0b3249cbb4e3f900ff55db4db252c949e3e3`; ELF64/AArch64, maximum required GLIBC `2.30`.
