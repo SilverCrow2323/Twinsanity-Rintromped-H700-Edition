@@ -22,6 +22,8 @@
 #include <list>
 #include <unordered_map>
 
+#include "engine/platform/host/platform.h"
+
 #include "engine/render/backend.h"
 
 namespace ps2r {
@@ -29,10 +31,20 @@ namespace gs {
 
 class DecodeCache {
 public:
+#if PS2R_HOST_GLES
+    // H700 shares system RAM with the Mali driver and the game. Keep decoded
+    // surfaces bounded well below desktop defaults; this is a cache cap, not
+    // a total process/GPU memory limit.
+    static constexpr size_t kL2MaxEntries = 4096;
+    static constexpr uint64_t kL2MaxBytes = 64ull * 1024u * 1024u;
+    static constexpr size_t kL2SuMaxEntries = 512;
+    static constexpr uint64_t kL2SuMaxBytes = 8ull * 1024u * 1024u;
+#else
     static constexpr size_t kL2MaxEntries = 16384;
     static constexpr uint64_t kL2MaxBytes = 320ull * 1024u * 1024u;
     static constexpr size_t kL2SuMaxEntries = 2048;
     static constexpr uint64_t kL2SuMaxBytes = 32ull * 1024u * 1024u;
+#endif
 
     struct L1Entry {
         render::SurfaceId tex;
