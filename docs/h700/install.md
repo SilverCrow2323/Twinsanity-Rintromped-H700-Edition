@@ -1,7 +1,7 @@
 # muOS installation — H700 Edition
 
 <blockquote>
-<strong>Current status:</strong> the physical H700 run has reached the PAL game world and loaded the beach hub. A subsequent run was terminated by the Linux OOM killer: this is a confirmed memory-pressure failure, not a confirmed GLES shader crash. The H700 profile is being changed to decode textures on first draw, cap retained texture pools, and report anonymous/file-backed RSS. These changes still require a fresh on-device run before they can be called validated. This is a development build, not a release-ready installer.
+<strong>Current status:</strong> the physical H700 run has reached the PAL game world and loaded the beach hub. A subsequent run was terminated by the Linux OOM killer: this is a confirmed memory-pressure failure, not a confirmed GLES shader crash. The 0.2.5-dev H700 candidate now decodes textures on first draw by default, lowers retained texture-pool budgets, and reports anonymous/file-backed RSS. These changes still require a fresh on-device run before they can be called validated. This is a development build, not a release-ready installer.
 </blockquote>
 
 ## Choose the package
@@ -112,4 +112,4 @@ Attach the preflight reports for graphics-driver failures and the full runner lo
 
 ## Validation boundary
 
-CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. The physical report supplied for the current PAL run confirms that the game entered `levels\\earth\\hub\\beach`; the kernel later killed `te-game` for out-of-memory pressure (approximately 706 MiB file-backed RSS plus 127 MiB anonymous RSS at termination). The cause within those resident mappings is still under investigation. Sustained play, stable memory usage and useful frame pacing are not yet verified on the physical H700.
+CI has verified cross-compilation, production shader compilation/link on Mesa, AArch64 architecture, GLIBC baseline, the static LGPL FFmpeg configuration and the ZIP package layout. The physical report supplied for the current PAL run confirms that the game entered the beach hub (`levels/earth/hub/beach`); the kernel later killed `te-game` for out-of-memory pressure (approximately 706 MiB file-backed RSS plus 127 MiB anonymous RSS at termination). The cause within those resident mappings is still under investigation. Sustained play, stable memory usage and useful frame pacing are not yet verified on the physical H700.
