@@ -162,7 +162,8 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
     capture_mali_debugfs() {
         debug_reason="$1"
         debug_found=0
-        for debug_root in /sys/kernel/debug/mali0 /sys/kernel/debug/mali /sys/kernel/debug/mali_kbase /sys/kernel/debug/mali0/mem /sys/kernel/debug/mali/mem; do
+        debug_roots="${TW_H700_MALI_DEBUGFS_ROOTS:-/sys/kernel/debug/mali0 /sys/kernel/debug/mali /sys/kernel/debug/mali_kbase /sys/kernel/debug/mali0/mem /sys/kernel/debug/mali/mem}"
+        for debug_root in $debug_roots; do
             [ -d "$debug_root" ] || continue
             debug_found=1
             printf '[mali] debugfs snapshot=%s root=%s pid=%s\n' "$debug_reason" "$debug_root" "$sample_pid"
