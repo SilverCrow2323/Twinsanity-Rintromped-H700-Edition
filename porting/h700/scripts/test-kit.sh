@@ -69,6 +69,7 @@ if [ "$#" -ne 2 ] || [ "$1" != "--iso" ]; then
 fi
 printf '%s\n' "$@" > "$TW_H700_CAPTURE_ARGS"
 printf '%s\n' "$SDL_VIDEODRIVER" > "$TW_H700_CAPTURE_DRIVER"
+printf '%s\n' "${TE_GFX_EAGER_TEXTURES-<unset>}" > "$TW_H700_CAPTURE_EAGER"
 if [ -n "$TW_H700_CAPTURE_PERF" ]; then
   printf '%s\n' "$TE_PROF" "$TE_PROF_US" "$TE_PROF_EVERY" "$TE_GFX_SUMMARY_EVERY" > "$TW_H700_CAPTURE_PERF"
 fi
@@ -79,8 +80,12 @@ printf '%s\n' 'My Discs/Crash Twinsanity.iso' > "$TMP/launcher-app/disc-image.tx
 run_launcher_expect_disc() {
   expected_disc="$1"
   rm -f "$TMP/launcher-args.txt"
-  TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  env -u TE_GFX_EAGER_TEXTURES \
+    TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" \
+    TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+    TW_H700_CAPTURE_EAGER="$TMP/launcher-eager.txt" \
     sh muos/TwinsanityRintromped/mux_launch.sh --muos-framework-argument
+  [ "$(cat "$TMP/launcher-eager.txt")" = "2" ]
   [ "$(sed -n '1p' "$TMP/launcher-args.txt")" = "--iso" ]
   [ "$(sed -n '2p' "$TMP/launcher-args.txt")" = "$expected_disc" ]
   [ "$(wc -l < "$TMP/launcher-args.txt" | tr -d ' ')" = "2" ]
@@ -101,13 +106,24 @@ run_launcher_expect_disc "$TMP/launcher-app/My Discs/Crash Twinsanity.iso"
 mkdir -p "$TMP/launcher-app/logs"
 : > "$TMP/launcher-app/logs/performance-diagnostics.once"
 rm -f "$TMP/launcher-perf.txt"
-TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
+env -u TE_GFX_EAGER_TEXTURES \
+  TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" \
+  TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  TW_H700_CAPTURE_EAGER="$TMP/launcher-eager.txt" TW_H700_CAPTURE_PERF="$TMP/launcher-perf.txt" \
   sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(cat "$TMP/launcher-eager.txt")" = "2" ]
 [ "$(sed -n '1p' "$TMP/launcher-perf.txt")" = "1" ]
 [ "$(sed -n '2p' "$TMP/launcher-perf.txt")" = "2000" ]
 [ "$(sed -n '3p' "$TMP/launcher-perf.txt")" = "120" ]
 [ "$(sed -n '4p' "$TMP/launcher-perf.txt")" = "120" ]
 [ ! -e "$TMP/launcher-app/logs/performance-diagnostics.once" ]
+
+# An explicit override remains available for A/B diagnostics.
+TE_GFX_EAGER_TEXTURES=0 TW_H700_MUOS_FUNC_SH="$TMP/muos-func.sh" TW_H700_APP_DIR="$TMP/launcher-app" \
+  TW_H700_CAPTURE_ARGS="$TMP/launcher-args.txt" TW_H700_CAPTURE_DRIVER="$TMP/launcher-driver.txt" \
+  TW_H700_CAPTURE_EAGER="$TMP/launcher-eager.txt" \
+  sh muos/TwinsanityRintromped/mux_launch.sh
+[ "$(cat "$TMP/launcher-eager.txt")" = "0" ]
 
 # A broken saved selection must fall back to game.iso and repair the selection.
 rm -f "$TMP/launcher-app/My Discs/Crash Twinsanity.iso" "$TMP/launcher-args.txt"
