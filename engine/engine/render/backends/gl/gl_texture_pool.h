@@ -27,6 +27,10 @@ public:
     // kept small: 32 entries, 8 MB
     static constexpr size_t kMaxEntries = 32;
     static constexpr uint64_t kMaxBytes = 8ull * 1024 * 1024;
+#elif PS2R_HOST_GLES
+    // H700's Mali allocations share the handheld's 1 GB system RAM.
+    static constexpr size_t kMaxEntries = 64;
+    static constexpr uint64_t kMaxBytes = 16ull * 1024 * 1024;
 #else
     static constexpr size_t kMaxEntries = 128;
     static constexpr uint64_t kMaxBytes = 96ull * 1024 * 1024;
