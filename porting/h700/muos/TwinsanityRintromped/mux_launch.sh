@@ -162,18 +162,18 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
     capture_mali_debugfs() {
         debug_reason="$1"
         debug_found=0
-        for debug_root in /sys/kernel/debug/mali0 /sys/kernel/debug/mali /sys/kernel/debug/mali_kbase; do
+        for debug_root in /sys/kernel/debug/mali0 /sys/kernel/debug/mali /sys/kernel/debug/mali_kbase /sys/kernel/debug/mali0/mem /sys/kernel/debug/mali/mem; do
             [ -d "$debug_root" ] || continue
             debug_found=1
             printf '[mali] debugfs snapshot=%s root=%s pid=%s\n' "$debug_reason" "$debug_root" "$sample_pid"
             find "$debug_root" -maxdepth 4 -type f \( \
                 -name mem_pool_size -o -name mem_pool_max_size -o \
                 -name lp_mem_pool_size -o -name lp_mem_pool_max_size -o \
-                -name mem_profile -o -name gpu_memory -o -name memory_usage -o \
+                -name mem_profile -o -name memory -o -name gpu_memory -o -name memory_usage -o \
                 -name ctx_num \
             \) -print 2>/dev/null | while IFS= read -r debug_file; do
                 case "$debug_file" in
-                    */"$sample_pid"/*|*/mem_pool_size|*/mem_pool_max_size|*/lp_mem_pool_size|*/lp_mem_pool_max_size|*/gpu_memory|*/memory_usage|*/ctx_num) ;;
+                    */ctx/*/mem_profile|*/mem/*|*/"$sample_pid"/*|*/mem_pool_size|*/mem_pool_max_size|*/lp_mem_pool_size|*/lp_mem_pool_max_size|*/gpu_memory|*/memory|*/memory_usage|*/ctx_num) ;;
                     *) continue ;;
                 esac
                 printf '[mali-debugfs] %s\n' "$debug_file"
