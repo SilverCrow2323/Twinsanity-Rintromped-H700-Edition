@@ -69,17 +69,27 @@ cp "$ROOT/RELEASE-NOTES.txt" "$APP/RELEASE-NOTES.txt"
 cat > "$APP/README.txt" <<'EOF'
 Twinsanity Rintromped - H700 Edition
 
-This archive contains the AArch64 NativeEE runner candidate and hardware diagnostics.
-The CI-built runner was linked without a title ELF/disc input; title-specific recompilation,
-game composition and title-dependent EE/CDVD tests were skipped.
-A successful link and package do not prove that the game boots or renders.
-It does NOT contain game data or a disc image.
+This is a development candidate containing the AArch64 NativeEE runner and
+hardware diagnostics. The package does NOT contain game data or a disc image.
 
-Put your own game.iso in this application folder:
+TEST DISC RECOMMENDATION
+Use the PAL edition of Crash Twinsanity as the repeatable H700 test baseline.
+PAL uses 50 Hz video timing. This is NOT a promise that the H700 renderer
+currently reaches 50 FPS: actual frame rate and pacing are still being tuned.
+
+Put your own legally obtained game.iso in this application folder:
   MUOS/application/TwinsanityRintromped/game.iso
 
 On launch, the muOS launcher selects game.iso only when no valid
 disc-image.txt selection exists. The ISO is never modified.
+
+CURRENT H700 STATUS
+A physical run with the PAL image reached the beach hub. The Linux kernel
+then terminated the runner through the OOM killer. This is a confirmed
+memory-pressure issue; sustained gameplay is not yet validated.
+The 0.2.5-dev candidate decodes textures at first draw by default, reduces
+retained H700 texture-cache budgets and reports process/system memory.
+These mitigations still need a new physical-device run.
 
 Diagnostic reports are written to:
   MUOS/application/TwinsanityRintromped/logs/
@@ -89,13 +99,23 @@ The installed runner uses the device's SDL2, EGL and GLES runtime.
 H700 performance notes:
 - GLES enables adjacent blended-draw joining and shadow-volume draw grouping by default.
 - The batches preserve draw/state order and reduce repeated submissions to the Mali driver.
+- Texture decoding defaults to first draw (TE_GFX_EAGER_TEXTURES=2); an explicit environment override remains available.
 - The first launch after installing this package automatically collects one low-overhead report. The marker is consumed automatically.
 - To collect another report later, create an empty file at:
     logs/performance-diagnostics.once
-  Then launch the game. The resulting logs/game-launch.log includes CPU samples and frame/build/render timings.
+  Then launch the game. The resulting logs/game-launch.log includes CPU samples, frame/build/render timings and H700 RSS data.
 
 FFmpeg's MPEG-1/2 decoder, MPEG video parser and swscale are linked
 statically; see licenses/ for the LGPL v2.1+ texts and build proof.
+EOF
+# Add an H700-specific addendum to the cross-platform release notes inside this package.
+cat >> "$APP/RELEASE-NOTES.txt" <<'EOF'
+
+## H700 Edition — development notes
+
+- Recommended test image: the PAL edition of Crash Twinsanity (50 Hz video timing). This does not guarantee 50 rendered FPS on H700.
+- The current physical PAL run reached the beach hub but was later terminated by the Linux OOM killer. Stable memory use and sustained gameplay remain under test.
+- The 0.2.5-dev H700 candidate adds first-draw texture decoding, smaller GLES cache budgets and RSS/memory-availability telemetry. These changes are not yet hardware-validated.
 EOF
 chmod 755 "$APP/mux_launch.sh" "$APP/device/collect-system-info.sh" \
   "$APP/twinsanityevolved" "$APP/tw-rintromped-h700-probe" \
