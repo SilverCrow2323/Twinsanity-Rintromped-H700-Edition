@@ -2,7 +2,7 @@
 
 This directory contains the H700-specific development tools, hardware probes, packaging scripts and renderer validation harness.
 
-> **CI NativeEE runner/package milestone:** the AArch64 runner links with static LGPL FFmpeg and is packaged as a ZIP-based muOS `.muxapp`. H700 run #310 is green, but CI had no title ELF/disc input: title-specific recompilation, game composition and title-dependent EE/CDVD tests were skipped. A 13 November physical H700/Mali-G31 bring-up of an earlier runner reached NativeEE startup, loaded the user's PAL `SLES-52568` retail ELF and initialised gamepad/audio plus GLES; it then failed on the first vertex shader. The shader normaliser fix now passes Mesa CI, but no post-fix Mali retest, first NativeEE frame or gameplay is documented. This is not a playable-game claim.
+> **0.2.5-dev physical checkpoint:** the PAL image reaches the beach hub on the H700/Mali-G31, but the kernel later terminates `te-game` through the OOM killer. The cause is now confirmed as memory pressure; the exact source of the large file-backed RSS is still being isolated. This branch adds first-draw texture decoding, H700-specific cache budgets and process RSS telemetry. CI and a fresh device run must pass before this mitigation can be called validated.
 
 ## Start here
 
@@ -20,7 +20,7 @@ This directory contains the H700-specific development tools, hardware probes, pa
 
 ## Important distinction
 
-The H700 artifacts include a diagnostic-only preflight `.muxapp` and a NativeEE runner-candidate `.muxapp`. Both are ZIP archives renamed to `.muxapp`; neither includes the user's ISO. The current CI runner was linked without a title ELF/disc input, so the game-specific recompile and composition gates were skipped. Its first frame and gameplay remain unverified; the earlier 13 November physical bring-up failed at the first vertex shader before the normaliser fix was added. See the [installation guide](../../docs/h700/install.md) before installing either artifact.
+The H700 artifacts include a diagnostic-only preflight `.muxapp` and a NativeEE runner-candidate `.muxapp`. Both are ZIP archives renamed to `.muxapp`; neither includes the user's ISO. The physical PAL boot reached the beach hub, but sustained gameplay is blocked by the confirmed OOM condition. The memory-limited candidate is not yet a validated fix. See the [installation guide](../../docs/h700/install.md) before installing an artifact.
 
 ## Core commands
 
