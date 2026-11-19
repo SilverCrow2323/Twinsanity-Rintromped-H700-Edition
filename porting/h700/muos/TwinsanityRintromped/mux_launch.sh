@@ -156,9 +156,43 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         for arg in "$@"; do printf ' <%s>' "$arg"; done
         printf '\n'
     } >> "$APP_DIR/logs/game-launch.log"
+    # Mali kbase can account GPU-backed pages to the client process without those
+    # pages appearing in ordinary smaps VMAs. Read-only debugfs snapshots, when the
+    # firmware exposes them, complement procfs and may identify the context pools.
+    capture_mali_debugfs() {
+        debug_reason="$1"
+        debug_found=0
+        for debug_root in /sys/kernel/debug/mali0 /sys/kernel/debug/mali /sys/kernel/debug/mali_kbase; do
+            [ -d "$debug_root" ] || continue
+            debug_found=1
+            printf '[mali] debugfs snapshot=%s root=%s pid=%s\n' "$debug_reason" "$debug_root" "$sample_pid"
+            find "$debug_root" -maxdepth 4 -type f \( \
+                -name mem_pool_size -o -name mem_pool_max_size -o \
+                -name lp_mem_pool_size -o -name lp_mem_pool_max_size -o \
+                -name mem_profile -o -name gpu_memory -o -name memory_usage -o \
+                -name ctx_num \
+            \) -print 2>/dev/null | while IFS= read -r debug_file; do
+                case "$debug_file" in
+                    */"$sample_pid"/*|*/mem_pool_size|*/mem_pool_max_size|*/lp_mem_pool_size|*/lp_mem_pool_max_size|*/gpu_memory|*/memory_usage|*/ctx_num) ;;
+                    *) continue ;;
+                esac
+                printf '[mali-debugfs] %s\n' "$debug_file"
+                if [ -r "$debug_file" ]; then
+                    head -c 4096 "$debug_file" 2>/dev/null || true
+                    printf '\n'
+                else
+                    printf '[unreadable]\n'
+                fi
+            done
+        done
+        if [ "$debug_found" -eq 0 ]; then
+            printf '[mali] debugfs unavailable (not mounted or no known kbase root)\n'
+        fi
+    }
+
     # Sample the game's live memory from procfs while it runs. H700's OOM report
-    # showed a large file-backed RSS; status + smaps_rollup + threshold-triggered
-    # mapping snapshots let us identify which mappings grow without a heavy profiler.
+    # shows kbase GPU pages in RSS that are absent from smaps; pair procfs with
+    # read-only Mali debugfs snapshots at startup and each 128 MiB RSS growth step.
     sample_runner_memory() {
         sample_pid="$1"
         sample_seconds="$TW_H700_MEM_SAMPLE_SECONDS"
@@ -169,7 +203,8 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
         last_map_bucket=0
         sleep_pid=""
         trap 'if [ -n "$sleep_pid" ]; then kill "$sleep_pid" 2>/dev/null || true; fi; exit 0' TERM INT
-        printf '[memory] runner pid=%s sampler interval=%ss (procfs, low overhead)\n' "$sample_pid" "$sample_seconds"
+        printf '[memory] runner pid=%s sampler interval=%ss (procfs + optional Mali debugfs)\n' "$sample_pid" "$sample_seconds"
+        capture_mali_debugfs startup
         while kill -0 "$sample_pid" 2>/dev/null; do
             status_file="/proc/$sample_pid/status"
             [ -r "$status_file" ] || break
@@ -228,6 +263,7 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
                     else
                         printf '[memory] smaps unavailable for pid=%s\n' "$sample_pid"
                     fi
+                    capture_mali_debugfs "rssfile-bucket-$map_bucket"
                     last_map_bucket="$map_bucket"
                 fi
             fi
