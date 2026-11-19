@@ -293,7 +293,7 @@ std::string WindowLine(uint64_t from, uint64_t to) {
     const ProcessMemorySnapshot memory = ReadProcessMemorySnapshot();
     if (memory.valid && at > 0 && at < int(sizeof b))
         at += std::snprintf(b + at, sizeof b - size_t(at),
-                            "\\n[te.memory] H700 process RSS %.1f MiB (anon %.1f, file %.1f, shmem %.1f); system MemAvailable %.1f MiB\\n",
+                            "\n[te.memory] H700 process RSS %.1f MiB (anon %.1f, file %.1f, shmem %.1f); system MemAvailable %.1f MiB\n",
                             double(memory.rss_kb) / 1024.0, double(memory.anon_kb) / 1024.0,
                             double(memory.file_kb) / 1024.0, double(memory.shmem_kb) / 1024.0,
                             double(memory.available_kb) / 1024.0);
