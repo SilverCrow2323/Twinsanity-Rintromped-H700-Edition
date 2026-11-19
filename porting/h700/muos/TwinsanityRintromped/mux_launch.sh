@@ -111,6 +111,15 @@ if [ "$APP_BIN" = "$GAME_BIN" ]; then
 
     # The physical preflight selected SDL's Mali backend on this muOS build.
     export SDL_VIDEODRIVER="${SDL_VIDEODRIVER:-mali}"
+    # Keep decoded RGBA textures from piling up behind the GLES render thread on the 1 GB H700.
+    # Mode 2 keeps eager IDs but decodes/makes each texture only when its first draw needs it.
+    # Respect an explicit user override for diagnostics.
+    if [ -z "${TE_GFX_EAGER_TEXTURES+x}" ]; then
+        export TE_GFX_EAGER_TEXTURES=2
+        printf 'Texture scheduling: decode on first draw (H700 default, TE_GFX_EAGER_TEXTURES=2)\n' >> "$APP_DIR/logs/game-launch.log"
+    else
+        printf 'Texture scheduling override: TE_GFX_EAGER_TEXTURES=%s\n' "$TE_GFX_EAGER_TEXTURES" >> "$APP_DIR/logs/game-launch.log"
+    fi
     {
         printf 'Launching %s\n' "$GAME_BIN"
         printf 'Disc image: %s\n' "$DISC_PATH"
