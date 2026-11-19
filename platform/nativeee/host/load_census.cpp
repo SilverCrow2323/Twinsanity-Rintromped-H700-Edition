@@ -72,7 +72,7 @@ uint64_t ProcKbField(const char* line, const char* key) {
     const size_t n = std::strlen(key);
     if (std::strncmp(line, key, n) != 0) return 0;
     const char* value = line + n;
-    while (*value == ' ' || *value == '\\t') ++value;
+    while (*value == ' ' || *value == '\t') ++value;
     return std::strtoull(value, nullptr, 10);
 }
 
@@ -293,7 +293,7 @@ std::string WindowLine(uint64_t from, uint64_t to) {
     const ProcessMemorySnapshot memory = ReadProcessMemorySnapshot();
     if (memory.valid && at > 0 && at < int(sizeof b))
         at += std::snprintf(b + at, sizeof b - size_t(at),
-                            "; H700 memory: process RSS %.1f MiB (anon %.1f, file %.1f, shmem %.1f), system MemAvailable %.1f MiB",
+                            "\\n[te.memory] H700 process RSS %.1f MiB (anon %.1f, file %.1f, shmem %.1f); system MemAvailable %.1f MiB\\n",
                             double(memory.rss_kb) / 1024.0, double(memory.anon_kb) / 1024.0,
                             double(memory.file_kb) / 1024.0, double(memory.shmem_kb) / 1024.0,
                             double(memory.available_kb) / 1024.0);
