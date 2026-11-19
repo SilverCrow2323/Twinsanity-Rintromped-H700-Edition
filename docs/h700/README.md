@@ -5,8 +5,8 @@
 **The technical home for bringing Twinsanity Rintromped to Allwinner H700 handhelds running muOS Andromeda.**
 
 <blockquote>
-<strong>Current checkpoint · Hardware graphics preflight passed.</strong>
-The device creates an EGL 1.4 display, a GLES 3.2 context and a visible SDL window using the Mali video driver. The game renderer itself is still under adaptation.
+<strong>Current checkpoint · Physical PAL boot reaches the beach hub; OOM is confirmed.</strong>
+The device creates an EGL 1.4 display, a GLES 3.2 context and a visible SDL window using the Mali video driver. The physical game run reaches the beach hub, but the kernel later kills the runner under memory pressure. The 0.2.5-dev candidate adds first-draw texture decoding, smaller H700 cache budgets and RSS telemetry; sustained play is not validated yet.
 </blockquote>
 
 [![Build](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml/badge.svg?branch=h700%2Fporting)](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/workflows/rintromped-h700.yml)
@@ -17,6 +17,7 @@ The device creates an EGL 1.4 display, a GLES 3.2 context and a visible SDL wind
 |---|---|
 | Firmware | muOS 2606.0 Andromeda |
 | SoC | Allwinner H700 · sun50iw9 |
+| Test disc baseline | Crash Twinsanity PAL · 50 Hz video timing (not a 50 FPS H700 guarantee) |
 | CPU | AArch64 · 4× Cortex-A53 class cores |
 | GPU | ARM Mali-G31 · Bifrost r20p0 |
 | Graphics | EGL 1.4 · OpenGL ES 3.2 · GLSL ES 3.20 |
@@ -60,8 +61,8 @@ flowchart LR
 | GLSL ES conversion | Added | Runtime adapter and source-level regression guard; Mali shader test pending |
 | GLES API compatibility | Initial adapters added | Compile gate and device workload tests pending |
 | Full renderer compile | CI validation | AArch64 compile-only target added |
-| First engine-rendered frame | Pending | Requires successful compile and device run |
-| Gameplay | Pending | Not yet available |
+| First game-world load | <strong>PASS · partial</strong> | Physical PAL run entered the beach hub |
+| Sustained gameplay | <strong>BLOCKED · OOM</strong> | Linux OOM killer terminated `te-game`; memory stability and useful frame pacing remain open |
 
 ## Project rules
 
