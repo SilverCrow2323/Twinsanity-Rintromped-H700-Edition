@@ -32,6 +32,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include "engine/platform/host/platform.h"
+
 #include "engine/gs/hle/ir/tex_read_view.h"
 #include "engine/gs/hle/texsrc/texture_source.h"
 #include "engine/render/backend.h"
@@ -42,7 +44,11 @@ namespace gs {
 class OwnedTextureSlots {
 public:
     static constexpr uint32_t kMaxLevels = 7;
-    static constexpr uint64_t kMaxSurfaceBytes = 256ull * 1024u * 1024u;   // of w*h*4, unbound images
+#if PS2R_HOST_GLES
+    static constexpr uint64_t kMaxSurfaceBytes = 32ull * 1024u * 1024u;   // H700: unbound images only
+#else
+    static constexpr uint64_t kMaxSurfaceBytes = 256ull * 1024u * 1024u;  // of w*h*4, unbound images
+#endif
 
     struct Level {
         uint32_t w = 0, h = 0;           // the authored (declared) extent the title's tuple names

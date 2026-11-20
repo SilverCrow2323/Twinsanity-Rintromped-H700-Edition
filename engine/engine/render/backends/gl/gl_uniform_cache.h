@@ -113,8 +113,8 @@ private:
     // a changed value of entry `idx`: sent at once, or marked for every program (deferred)
     void Changed(int idx, int loc);
     // `s` to location `loc` of program `program` (0 the first, 1 the mirrored one)
-    void Send(const Shadow& s, int loc, int program);
-    void SendArray(int loc, int count, const float* v, int program);
+    void Send(const Shadow& s, int loc, int program, bool already_bound = false);
+    void SendArray(int loc, int count, const float* v, int program, bool already_bound = false);
     uint32_t programs_[2] = {0, 0};   // SetPrograms (0: the bound program)
     Entry table_[kSize];
     SentRecord* sent_shadow_ = nullptr;   // [kSize] when checking

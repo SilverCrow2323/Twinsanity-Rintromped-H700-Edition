@@ -21,18 +21,20 @@ namespace platform {
 GlContext::~GlContext() { Destroy(); }
 
 void GlContext::RequestAttributes() {
+#if PS2R_HOST_GLES
+    // Verified on muOS Andromeda: SDL's "mali" driver creates an ES 3.2 context.
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+#else
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 1);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG);
-#ifdef _WIN32
-    // 24, not 32, on Windows. The accelerated ICDs (nvoglv64 / igxelpicd64)
-    // advertise 24-bit depth with 8 stencil and no 32-bit depth format at all,
-    // while the Microsoft GDI Generic software renderer DOES offer 32 -- so
-    // asking for 32 does not fail, it silently selects the software format and
-    // the context comes back as "GDI Generic" OpenGL 1.1, where none of the 4.1
-    // core entry points exist. (The 24-bit retry in platform/sdl/window.cpp only
-    // fires when SDL_CreateWindow fails outright, which this does not.)
+#endif
+#if defined(_WIN32) || PS2R_HOST_GLES
+    // 24-bit depth is the portable request for the H700 ES window configuration.
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 #else
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 32);
@@ -117,6 +119,25 @@ bool GlContext::Create(Window& window) {
         return false;
     }
     if (!MakeCurrent(window)) return false;
+#if PS2R_HOST_GLES
+    // SDL may create a context with a lower version than requested. Refuse it
+    // before NativeEE issues GLES 3.x entry points or compiles GLSL ES 3.20.
+    GLint major = 0, minor = 0;
+    glGetIntegerv(GL_MAJOR_VERSION, &major);
+    glGetIntegerv(GL_MINOR_VERSION, &minor);
+    if (major < 3 || (major == 3 && minor < 2)) {
+        const GLubyte* returned_version = glGetString(GL_VERSION);
+        std::fprintf(stderr, "[gl] H700 needs OpenGL ES 3.2; SDL returned %d.%d (%s)\n",
+                     major, minor, returned_version ? reinterpret_cast<const char*>(returned_version) : "unknown");
+        Destroy();
+        return false;
+    }
+    const GLubyte* es_version = glGetString(GL_VERSION);
+    const GLubyte* es_renderer = glGetString(GL_RENDERER);
+    std::fprintf(stderr, "[gl] H700 context: %s / %s\n",
+                 es_renderer ? reinterpret_cast<const char*>(es_renderer) : "?",
+                 es_version ? reinterpret_cast<const char*>(es_version) : "?");
+#endif
 #if defined(_WIN32)
     // The GL entry points are function pointers on Windows (engine/platform/windows/gl_loader.h): fill them from this
     // context's driver before the first GL call below. A driver without one of the 4.1-core names the engine uses

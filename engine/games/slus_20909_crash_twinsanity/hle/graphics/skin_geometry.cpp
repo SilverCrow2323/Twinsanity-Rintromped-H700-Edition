@@ -255,7 +255,7 @@ bool RunDisplace(QwPtr m, uint32_t top, const SkinGeometry::Shape& shape, const 
     const float r8[4] = {vu1lib::CF(factors[0]), vu1lib::CF(factors[1]), vu1lib::CF(factors[2]), vu1lib::CF(shape.weight)};
     for (uint32_t j = 0; j < vertices; ++j) {
         const uint32_t v = top + 3 + 4 * j;
-        float f5[4], f6[4], f9[4];
+        float f5[4] = {}, f6[4] = {}, f9[4];
         for (int k = 0; k < 4; ++k) {
             const int8_t d = int8_t(shape.rows[size_t(j) * 4 + size_t(k)]);   // the V4-8 unpack sign-extends
             f9[k] = float(int32_t(d));                                        // ITOF0

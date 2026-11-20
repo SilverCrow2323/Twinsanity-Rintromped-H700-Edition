@@ -1,4 +1,4 @@
-# engine/platform/sdl -- SDL2 window + OpenGL 4.1 context. The audio sink
+# engine/platform/sdl -- SDL2 window + desktop GL 4.1 / H700 GLES 3.2 context. The audio sink
 # and input backends of the same directory are Phase 7's and get their own target.
 include(${CMAKE_SOURCE_DIR}/cmake/Sdl2Dependency.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/OpenGlDependency.cmake)

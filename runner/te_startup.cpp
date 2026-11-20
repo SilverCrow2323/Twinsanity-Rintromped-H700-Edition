@@ -77,18 +77,6 @@ fs::path HomeDataDir() {
     return home && *home ? fs::path(home) / ".twinsanityevolved" : fs::path();
 }
 
-// A folder the game may write to: a probe file created and removed.
-bool Writable(const fs::path& dir) {
-    std::error_code ec;
-    const fs::path probe = dir / ".twinsanityevolved-write-test";
-    {
-        std::ofstream f(probe, std::ios::binary);
-        if (!f) return false;
-    }
-    fs::remove(probe, ec);
-    return true;
-}
-
 }  // namespace
 
 std::string GameFolderPath() {
@@ -158,15 +146,30 @@ bool RememberDiscImage(const std::string& path) {
 }
 
 std::string DataDirectory() {
-    std::error_code ec;
     const std::string game_folder = GameFolderPath();
     const fs::path exe = game_folder.empty() ? fs::path() : fs::path(game_folder);
     const fs::path portable = exe.empty() ? fs::path() : exe / "userdata";
     const fs::path home = HomeDataDir();
-    if (!portable.empty() && fs::is_directory(portable, ec)) return portable.generic_string();
-    if (!home.empty() && fs::is_directory(home, ec)) return home.generic_string();   // an earlier install's saves stay where they are
-    if (!portable.empty() && Writable(exe)) return portable.generic_string();
-    return home.generic_string();
+    std::error_code ec;
+    // Preserve data from an earlier install: an existing portable userdata/
+    // directory wins, then an existing HOME data directory. Both are probed
+    // for actual write access; a stale/read-only directory is not selected.
+    if (!portable.empty() && fs::is_directory(portable, ec))
+        return ps2r::app::GameFolder::EnsureWritableDataDirectory(
+            portable.generic_string(), home.generic_string());
+    ec.clear();
+    if (!home.empty() && fs::is_directory(home, ec)) {
+        const std::string existing_home =
+            ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
+        if (!existing_home.empty()) return existing_home;
+    }
+    // A new portable install gets its own userdata/ directory, but create it
+    // before SettingsFile attempts to write ps2r.ini inside it. This is also
+    // the fallback when an older HOME directory has become read-only.
+    if (!exe.empty() && !ps2r::app::GameFolder::EnsureWritableDataDirectory(exe.generic_string(), {}).empty())
+        return ps2r::app::GameFolder::EnsureWritableDataDirectory(
+            portable.generic_string(), home.generic_string());
+    return ps2r::app::GameFolder::EnsureWritableDataDirectory(home.generic_string(), {});
 }
 
 ps2r::app::GameFolder::Resolved LocateFolders(const std::string& config_arg, const std::string& mc_dir_arg, const std::string& mods_dir_arg,

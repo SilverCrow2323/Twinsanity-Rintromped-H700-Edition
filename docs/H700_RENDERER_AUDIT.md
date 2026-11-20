@@ -1,64 +1,71 @@
+![H700 graphics port](h700/assets/hero.svg)
+
 # H700 renderer audit
 
 ## Purpose
 
-Record the real renderer and platform dependencies before creating an H700 build target. This is a source audit, not a claim that the game has been ported or tested on an H700 device.
+Record the source-level gaps between the upstream desktop renderer and the H700 GLES 3.2 environment, and keep every compatibility decision tied to an evidence level.
 
-## Current desktop graphics path
+## ✅ Physical graphics evidence
 
-| Area | Current implementation | H700 implication |
+The tested muOS 2606.0 H700 device reports:
+
+| Layer | Result |
+|---|---|
+| EGL | 1.4 · ARM |
+| GPU | Mali-G31 · Bifrost r20p0 |
+| GLES | 3.2 |
+| GLSL | ES 3.20 |
+| SDL video backend | mali |
+| Window presentation | Six visible colour-frame swaps |
+
+This confirms the firmware graphics stack. It does not confirm NativeEE renderer compatibility or gameplay.
+
+## Source-level desktop assumptions
+
+| Area | Upstream implementation | H700 consequence |
 |---|---|---|
-| Build dependency | Root `CMakeLists.txt` finds SDL2 and desktop `OpenGL::GL` for non-Vita builds | A CPU-only AArch64 build still links the desktop GL path |
-| Renderer target | `engine/engine/render/backends/gl/CMakeLists.txt` builds `ps2r_render_gl` against `OpenGL::GL` and describes it as OpenGL 4.1 core | No GLES/Vulkan renderer target is defined here |
-| Window/context | `engine/engine/platform/sdl/gl_context.cpp` requests OpenGL 4.1, core profile and forward compatibility through SDL | The H700 target needs a separately selected context profile and a verified SDL/EGL path |
-| Shader language | `engine/engine/render/backends/gl/gl_shader_sources.cpp` contains multiple `#version 410 core` programs | Shaders need a deliberate GLES variant or a translation/compatibility layer |
-| Host GL header | `engine/engine/platform/host/platform.h` selects `GL/glcorearb.h` for Linux | H700 needs the GLES header and function/library contract, not the desktop Linux GL header |
-| Link dependency | `engine/cmake/OpenGlDependency.cmake` uses `find_package(OpenGL)` outside the Vita lane | A GLES link target must be introduced without changing desktop link behaviour |
+| Build | Non-Vita Linux uses OpenGL::GL | Explicit PS2R_GLES profile and GLESv2 link path required |
+| Header | GL/glcorearb.h | Select GLES3/gl32.h only for H700 profile |
+| Context | SDL requests OpenGL 4.1 core | SDL must request ES 3.2 |
+| Shader source | GLSL 410 core | Convert to GLSL ES 320 with precision declarations |
+| Interpolation | noperspective on PS2 S/T/Q varying | Remove only on audited v_texcoord path; verify output |
+| Uniform API | glProgramUniform* | Bind target program, use glUniform*, restore |
+| Depth API | glClearDepth | Use glClearDepthf |
+| Texture dimensions | glGetTexLevelParameteriv | Derive mip dimensions from surface descriptor |
+| FBO state | glDrawBuffer | Use GLES glDrawBuffers |
+| Buffer mapping | GL_MAP_UNSYNCHRONIZED_BIT | Omit unsupported desktop flag |
 
-The desktop SDL target is `ps2r_platform_sdl`. Its CMake definition links SDL2 and OpenGL and currently builds `window.cpp` plus `gl_context.cpp`.
+## Architecture changes in the H700 branch
 
-## Shader compatibility finding
+- PS2R_GLES is explicitly selected by the root application and forwarded to the NativeEE ExternalProject.
+- The root and engine CMake projects share GLES include and library paths.
+- NativeEE selects GLES3/gl32.h and SDL ES context attributes only in the H700 profile.
+- The root application links the imported GLESv2 target instead of finding desktop OpenGL.
+- The shader adapter rewrites the audited GLSL source profile and inserts highp defaults.
+- Uniform writes use a temporary program bind on GLES.
+- The desktop-only timer query census is disabled in the initial GLES profile.
 
-The source shader strings use `#version 410 core`. They also use the `noperspective` interpolation qualifier for the PS2 S/T/Q coordinates. The current vertex shader comments explain that `gl_Position.w` is 1.0 in that path, so ordinary perspective interpolation may be equivalent there; nevertheless, this must be proved by the existing frame/image judges before changing the qualifier.
+## Compatibility decisions that still need validation
 
-The Khronos GLSL ES 3.20 specification lists `smooth` and `flat` as its core interpolation qualifiers; `noperspective` is not part of that core list. Do not simply replace the shader version or delete the qualifier without checking all shader variants and their output.
+Read the living [API compatibility matrix](h700/compatibility-matrix.md) for the full classification. Important remaining areas include FBO formats, mip-chain readback, stencil-only targets, sampler behavior, buffer synchronization, texture formats, shader variants and frame capture comparison.
 
-- [Khronos GLSL ES 3.20 specification — interpolation qualifiers](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html)
-- [Arm Mali-G31 product page](https://support.arm.com/compute-ip/mali-g31)
+## Build evidence boundaries
 
-## API review still required
+| Evidence | What it proves |
+|---|---|
+| Source guard | Expected shader conversion rules remain present |
+| Header compile | Selected renderer units compile against GLES headers |
+| Link test | Required target symbols resolve against the real sysroot |
+| Device API test | Actual Mali driver accepts the operations |
+| Image comparison | Renderer output matches a known reference |
+| Gameplay test | The real game reaches and runs a scene |
 
-The existing GL backend calls a wide range of functions. The first source pass identified, among others:
+No stronger claim should be made than the highest evidence level actually achieved.
 
-- VAO/VBO creation and vertex attribute binding.
-- Sampler objects and texture upload/update paths.
-- Framebuffers, renderbuffers, depth/stencil attachments and readback.
-- Texture-level queries and pixel-store row-length state.
-- Extension enumeration and optional anisotropic filtering.
-- GPU timer and synchronisation code in separate renderer modules.
+## References
 
-Each call must be classified as GLES 3.2 core, extension-backed, desktop-only or replaceable. The list above is a starting inventory, not a complete API compatibility report.
-
-## Vita is not the H700 backend
-
-The Vita build has its own conditional path through vitaGL over Sony GXM. The source describes that implementation as an ES 2-class compatibility layer and uses Vita-specific memory pools and startup logic. It is useful historical evidence that the engine can have platform-specific graphics setup, but it does not prove that the desktop renderer already works on Mali-G31.
-
-## Recommended next implementation sequence
-
-1. Add an explicit target/profile option; do not infer H700 from `CMAKE_SYSTEM_PROCESSOR=aarch64`.
-2. Add a small SDL/EGL context probe that logs SDL version, GL vendor, renderer, version and extensions on the device.
-3. Build a GLES shader prototype with the minimum scanout shader and a known test texture.
-4. Convert each shader family in stages and compare pixel captures against the desktop reference.
-5. Audit FBO formats, depth/stencil behaviour, texture queries, buffer streaming and timer APIs.
-6. Only after the graphics probe works, integrate the existing SDL input and audio services with the actual muOS runtime.
-7. Measure the H700 device before setting resolution, scaling, filtering or threading defaults.
-
-## Acceptance gates
-
-- Desktop OpenGL 4.1 build remains unchanged.
-- The H700 profile selects GLES explicitly and fails early with a useful message when the context/API is unavailable.
-- Shader image tests pass for the title, menus, movies, UI, transparency, shadows and render-target copies.
-- Input, audio, disc streaming, saves, exit and repeated cold launches pass on the actual H700 device.
-- Logs record device, firmware, renderer/version, build commit and test results.
-
-Until these gates pass, the H700 target remains experimental and unvalidated.
+- [GLSL ES 3.20 specification](https://registry.khronos.org/OpenGL/specs/es/3.2/GLSL_ES_Specification_3.20.html)
+- [ARM Mali-G31](https://support.arm.com/compute-ip/mali-g31)
+- [Allwinner H700 brief](https://www.allwinnertech.com/uploads/pdf/2021070513595227.pdf)
+- [Detailed GLES compatibility matrix](h700/compatibility-matrix.md)

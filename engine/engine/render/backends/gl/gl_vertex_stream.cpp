@@ -134,8 +134,12 @@ int GlVertexStream::UploadRaw(const void* verts, size_t bytes, size_t stride) {
             offset_ = slice_end_ - kVitaSliceSize;
             off = (offset_ + stride - 1) / stride * stride;
         }
-        void* p = glMapBufferRange(GL_ARRAY_BUFFER, static_cast<GLintptr>(off), static_cast<GLsizeiptr>(bytes),
-                                   GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_FLUSH_EXPLICIT_BIT);
+        #if PS2R_HOST_GLES
+        const GLbitfield map_flags = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+#else
+        const GLbitfield map_flags = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+#endif
+        void* p = glMapBufferRange(GL_ARRAY_BUFFER, static_cast<GLintptr>(off), static_cast<GLsizeiptr>(bytes), map_flags);
         if (p) {
             // one copy in 32 timed: the uncached ring's write rate on the device (the census's memory line)
             CopyIn(p, verts, bytes);
@@ -198,10 +202,13 @@ int GlVertexStream::UploadRaw(const void* verts, size_t bytes, size_t stride) {
 #endif
         off = 0;
     }
+    #if PS2R_HOST_GLES
+    const GLbitfield map_flags = GL_MAP_WRITE_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+#else
+    const GLbitfield map_flags = GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT | GL_MAP_FLUSH_EXPLICIT_BIT;
+#endif
     void* p = glMapBufferRange(GL_ARRAY_BUFFER, static_cast<GLintptr>(off),
-                               static_cast<GLsizeiptr>(bytes),
-                               GL_MAP_WRITE_BIT | GL_MAP_UNSYNCHRONIZED_BIT |
-                                   GL_MAP_FLUSH_EXPLICIT_BIT);
+                               static_cast<GLsizeiptr>(bytes), map_flags);
     if (p) {
         std::memcpy(p, verts, bytes);
         glFlushMappedBufferRange(GL_ARRAY_BUFFER, 0, static_cast<GLsizeiptr>(bytes));

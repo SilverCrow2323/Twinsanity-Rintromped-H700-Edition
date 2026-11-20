@@ -78,26 +78,59 @@ std::vector<std::string> LauncherSettings::TexturePacks() const {
 }
 
 void LauncherSettings::DrawDisplayPage() {
-    ImGui::TextDisabled("Mirrors the in-game Options > Display page; applied when the game starts, persisted to ps2r.ini.");
+    static const char* const kFrameRates[] = {"30 / half-rate", "60 / full rate", "120", "144", "240", "uncapped"};
+    static const char* const kFrameRateValues[] = {"30", "60", "120", "144", "240", "uncapped"};
+    static const char* const kTextureFilters[] = {"title", "point", "bilinear", "trilinear"};
+
+    ImGui::TextDisabled("Changes apply when the game starts and are saved to ps2r.ini.");
     ImGui::Spacing();
-    if (ImGui::Checkbox("FPS / game Hz overlay (ui.perf_overlay)", &cfg_.ui.perf_overlay)) PersistBool("ui.perf_overlay", cfg_.ui.perf_overlay);
-    if (ImGui::Checkbox("VSync (video.vsync)", &cfg_.video.vsync)) PersistBool("video.vsync", cfg_.video.vsync);
+    ImGui::BeginChild("h700-recommended-profile", ImVec2(0, 88), true);
+    ImGui::TextColored(ImVec4(1.0f, 0.82f, 0.22f, 1.0f), "H700 STARTING PROFILE // TEST");
+    ImGui::TextWrapped("1x internal scale, half-rate presentation and the game's own texture filtering. The game simulation and CPU clock are not underclocked.");
+    if (ImGui::Button("APPLY RECOMMENDED TEST PROFILE", ImVec2(-1, 30))) {
+        cfg_.video.scale = 1;
+        cfg_.video.frame_rate = ps2r::FrameRateSel::Rate30;
+        cfg_.video.aspect = ps2r::AspectSel::Auto;
+        cfg_.video.texture_filter = ps2r::TextureFilterSel::Title;
+        Persist("video.scale", "1");
+        Persist("video.frame_rate", "30");
+        Persist("video.aspect", "auto");
+        Persist("video.texture_filter", "title");
+    }
+    ImGui::EndChild();
+    ImGui::Spacing();
+
+    if (ImGui::Checkbox("FPS / game Hz overlay (ui.perf_overlay)", &cfg_.ui.perf_overlay))
+        PersistBool("ui.perf_overlay", cfg_.ui.perf_overlay);
+    if (ImGui::Checkbox("VSync (video.vsync)", &cfg_.video.vsync))
+        PersistBool("video.vsync", cfg_.video.vsync);
+
+    int frame_rate = static_cast<int>(cfg_.video.frame_rate);
+    if (frame_rate < 0 || frame_rate >= 6) frame_rate = 1;
+    if (ImGui::Combo("Presentation rate (video.frame_rate)", &frame_rate, kFrameRates, 6)) {
+        cfg_.video.frame_rate = static_cast<ps2r::FrameRateSel>(frame_rate);
+        Persist("video.frame_rate", kFrameRateValues[frame_rate]);
+    }
+    ImGui::TextDisabled("30 shows every other game picture (30 fps at 60 Hz, 25 at 50 Hz); it does not slow the game logic.");
+
     int aspect = static_cast<int>(cfg_.video.aspect);
     if (ImGui::Combo("Aspect (video.aspect)", &aspect, kAspects, 5)) {
         cfg_.video.aspect = static_cast<decltype(cfg_.video.aspect)>(aspect);
         Persist("video.aspect", kAspects[aspect]);
     }
     int scale = cfg_.video.scale;
-    if (ImGui::SliderInt("Internal scale (video.scale)", &scale, 1, 4) && scale != cfg_.video.scale) {
+    if (ImGui::SliderInt("Internal scale (video.scale)", &scale, 1, 4, "%dx") && scale != cfg_.video.scale) {
         cfg_.video.scale = scale;
         Persist("video.scale", std::to_string(scale));
     }
-    int cap = cfg_.video.fps_cap;
-    if (ImGui::SliderInt("Render fps cap (video.fps_cap; 0 = none)", &cap, 0, 240) && cap != cfg_.video.fps_cap) {
-        cfg_.video.fps_cap = cap;
-        Persist("video.fps_cap", std::to_string(cap));
+    int filter = static_cast<int>(cfg_.video.texture_filter);
+    if (filter < 0 || filter >= 4) filter = 0;
+    if (ImGui::Combo("Texture filter (video.texture_filter)", &filter, kTextureFilters, 4)) {
+        cfg_.video.texture_filter = static_cast<ps2r::TextureFilterSel>(filter);
+        Persist("video.texture_filter", kTextureFilters[filter]);
     }
-    ImGui::Spacing();
+    ImGui::TextDisabled("CPU frequency remains under muOS control. Lowering it is not a fix for renderer submission stalls.");
+
     ImGui::SeparatorText("Texture pack (video.texture_pack)");
     const std::vector<std::string> packs = TexturePacks();
     ImGui::TextDisabled("%s", cfg_.paths.texture_packs.c_str());

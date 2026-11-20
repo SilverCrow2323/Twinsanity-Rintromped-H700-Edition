@@ -392,14 +392,17 @@ struct Gfx {
     // blended ps2e_draw state (ps2e_draw.cpp: Decoded textures, no FBA on a blended draw, colour clamp on, 32-bit frame),
     // so no draw reads the destination; on by default on the Vita (each draw costs vitaGL's and the emulator's GXM work),
     // TE_GFX_JOIN_BLENDED=0/1 decides, TE_AB=joinblend flips it in-run
-#if defined(__vita__)
+#if defined(__vita__) || PS2R_HOST_GLES
+    // H700's GLES driver also benefits from fewer draw submissions. The join is exact:
+    // only adjacent draws with identical fixed-function state are concatenated.
     std::atomic<bool> join_blended{true};
 #else
     std::atomic<bool> join_blended{false};
 #endif
     // The shadow volumes' counting draws of a run drawn as one draw per state (SubmitBuckets / SubmitVolumeRun): on by
     // default on the Vita (every draw there costs vitaGL's ~12 us and the engine's state path), TE_GFX_GROUP_VOLUMES=0/1
-#if defined(__vita__)
+#if defined(__vita__) || PS2R_HOST_GLES
+    // Coalesce contiguous shadow-volume count draws by stencil state on GLES as well as Vita.
     bool group_volumes = true;
 #else
     bool group_volumes = false;

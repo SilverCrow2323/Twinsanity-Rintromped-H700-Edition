@@ -1,4 +1,4 @@
-# engine/render/backends/gl -- the OpenGL 4.1 core adapter (GlDevice and its parts).
+# engine/render/backends/gl -- the shared desktop GL / H700 GLES renderer adapter (GlDevice and its parts).
 # Includes only engine/render/backend.h, engine/gs/hle/ir/*.h and
 # engine/gs/hle/texsrc/texture_source.h (ctest Render_IncludeDepth).
 include(${CMAKE_SOURCE_DIR}/cmake/OpenGlDependency.cmake)

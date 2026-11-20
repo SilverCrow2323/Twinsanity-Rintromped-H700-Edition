@@ -36,6 +36,9 @@ public:
     static std::string FolderOfFile(const std::string& file);
     // Whether <folder>/ps2r.ini exists (a file that opens for reading)
     static bool HasSettings(const std::string& folder);
+    // Create and verify the preferred per-game data directory; use fallback when it cannot be created or written.
+    // Returns the selected path, or empty when neither location is usable.
+    static std::string EnsureWritableDataDirectory(const std::string& preferred, const std::string& fallback);
 
     struct Inputs {
         std::string exe_dir;        // the running executable's folder ("" when the platform cannot say)

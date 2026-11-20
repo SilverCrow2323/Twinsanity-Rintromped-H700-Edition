@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="420" viewBox="0 0 1440 420" role="img" aria-labelledby="title desc">
+  <title id="title">Twinsanity Rintromped — H700 Edition</title>
+  <desc id="desc">A technical project banner with a stylized GPU die, circuit traces and H700 graphics stack.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset=".58" stop-color="#10243a"/>
+      <stop offset="1" stop-color="#071b28"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#b8ff4b"/>
+      <stop offset="1" stop-color="#28d8ce"/>
+    </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#1dd6c3" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#1dd6c3" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#7bded5" stroke-opacity=".09" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="1440" height="420" rx="28" fill="url(#bg)"/>
+  <rect width="1440" height="420" rx="28" fill="url(#grid)"/>
+  <circle cx="1130" cy="202" r="290" fill="url(#halo)"/>
+  <g opacity=".5" fill="none" stroke="#38cfc4" stroke-width="2">
+    <path d="M900 72h104v45h72m-176 0h42v75h120m-162 35h88v-28h90m-136 95h62v-48h128"/>
+    <path d="M1010 56v-22h72m-84 316h72v-44h80m-24-250h70v60h62"/>
+    <path d="M1160 94h76v-36h86m-86 225h52v44h94"/>
+  </g>
+  <g fill="#b8ff4b">
+    <circle cx="1076" cy="117" r="5"/><circle cx="1090" cy="192" r="5"/><circle cx="1114" cy="257" r="5"/>
+    <circle cx="1082" cy="34" r="4"/><circle cx="1236" cy="94" r="4"/><circle cx="1236" cy="283" r="4"/>
+  </g>
+  <g transform="translate(1000 76)">
+    <rect x="0" y="0" width="250" height="250" rx="32" fill="#091725" stroke="url(#glow)" stroke-width="3"/>
+    <rect x="22" y="22" width="206" height="206" rx="22" fill="#102b39" stroke="#3cd9c7" stroke-opacity=".75" stroke-width="2"/>
+    <path d="M62 64h126v122H62z" fill="#0a1828" stroke="#b8ff4b" stroke-width="2"/>
+    <path d="M88 94h74v16H88zm0 34h74v16H88zm0 34h50v10H88z" fill="url(#glow)"/>
+    <g stroke="#b8ff4b" stroke-width="3" stroke-linecap="round">
+      <path d="M-14 40h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14"/>
+      <path d="M250 40h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14m-14 28h14"/>
+      <path d="M40 -14v14m28-14v14m28-14v14m28-14v14m28-14v14m28-14v14m28-14v14"/>
+      <path d="M40 250v14m28-14v14m28-14v14m28-14v14m28-14v14m28-14v14m28-14v14"/>
+    </g>
+  </g>
+  <g font-family="Inter,Segoe UI,Arial,sans-serif" fill="#f0f7f9">
+    <text x="88" y="110" font-size="18" font-weight="700" letter-spacing="4" fill="#b8ff4b">HARDWARE PORTING LAB</text>
+    <text x="84" y="188" font-size="52" font-weight="800" letter-spacing="-1.5">TWINSANITY</text>
+    <text x="84" y="248" font-size="52" font-weight="800" letter-spacing="-1.5" fill="url(#glow)">RINTROMPED</text>
+    <text x="88" y="296" font-size="24" font-weight="600" fill="#c9dce5">H700 EDITION</text>
+    <text x="88" y="352" font-size="16" fill="#a6bfcb">muOS Andromeda  •  Mali-G31  •  OpenGL ES 3.2</text>
+  </g>
+  <g transform="translate(88 375)">
+    <rect width="196" height="28" rx="14" fill="#163c3d" stroke="#b8ff4b" stroke-opacity=".65"/>
+    <circle cx="16" cy="14" r="5" fill="#b8ff4b"/>
+    <text x="31" y="19" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.4" fill="#e8fff1">GLES PREFLIGHT PASS</text>
+  </g>
+</svg>

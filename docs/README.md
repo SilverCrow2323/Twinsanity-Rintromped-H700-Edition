@@ -1,12 +1,35 @@
+![Twinsanity Rintromped H700](h700/assets/hero.svg)
+
 # Project documentation
 
-This directory contains contributor and porting documentation. The [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki) contains player-facing manuals, installation steps, FAQs and troubleshooting.
+**Engineering reference, practical Wiki source and H700 porting handbook.**
 
-## Guides
+The [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki) is the player-facing manual for installation, disc setup, mods, FAQs and troubleshooting. Its canonical tracked pages live in [wiki-source/](../wiki-source/README.md).
 
-- [Wiki Home source](../wiki-source/Home.md) — tracked source for the practical GitHub Wiki.
-- [Wiki publishing rules](../wiki-source/README.md) — page structure and publishing workflow.
-- [H700 porting plan](H700_PORTING_PLAN.md) — staged development and hardware acceptance gates.
-- [H700 renderer audit](H700_RENDERER_AUDIT.md) — current OpenGL/GLSL compatibility findings.
+## 🎨 Documentation standards
 
-The H700 target remains experimental until a physical device report is reviewed. The diagnostic preflight package is not a playable game build.
+Use the [documentation style guide](STYLE_GUIDE.md) for page structure, visual language, callouts, diagrams, assets, accessibility and evidence labels.
+
+## 📘 H700 engineering guides
+
+| Page | Scope |
+|---|---|
+| [H700 porting hub](h700/README.md) | Status, navigation and architecture |
+| [Device profile](h700/device-profile.md) | Physical muOS / Mali-G31 device evidence |
+| [Graphics port](h700/graphics-port.md) | SDL, EGL, GLES 3.2 and renderer adapters |
+| [API compatibility matrix](h700/compatibility-matrix.md) | Desktop GL differences, GLES decisions and tests |
+| [Build guide](h700/building.md) | AArch64 sysroot, CMake and CI checks |
+| [muOS installation](h700/install.md) | Diagnostic utility and log locations |
+| [FAQ](h700/faq.md) | Practical technical answers |
+| [Roadmap](h700/roadmap.md) | Milestones and acceptance gates |
+
+## 🧭 Original engineering plan
+
+- [H700 porting plan](H700_PORTING_PLAN.md) — development phases and hardware acceptance.
+- [H700 renderer audit](H700_RENDERER_AUDIT.md) — source-level OpenGL/GLES analysis.
+
+## Publishing the Wiki
+
+The tracked pages in [wiki-source/](../wiki-source/README.md) are canonical. Validate them with python tools/validate_wiki.py and publish from a local authenticated clone using sh tools/publish_wiki.sh.
+
+> **Evidence rule:** the physical EGL/GLES and SDL presentation tests passed, but the NativeEE game renderer and gameplay remain unvalidated.
