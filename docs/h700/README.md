@@ -61,6 +61,7 @@ flowchart LR
 | GLSL ES conversion | Added | Runtime adapter and source-level regression guard; Mali shader test pending |
 | GLES API compatibility | Initial adapters added | Compile gate and device workload tests pending |
 | Full renderer compile | CI validation | AArch64 compile-only target added |
+| GS surface smoke | Mesa CI validation | RGBA8 + depth/stencil FBO, texture upload/mipmaps, blit and pixel readback; Mali retest pending |
 | First game-world load | <strong>PASS · partial</strong> | Physical PAL run entered the beach hub |
 | Sustained gameplay | <strong>BLOCKED · OOM</strong> | Linux OOM killer terminated `te-game`; memory stability and useful frame pacing remain open |
 
