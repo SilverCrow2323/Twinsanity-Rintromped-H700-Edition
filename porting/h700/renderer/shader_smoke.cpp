@@ -8,6 +8,7 @@
 #include <EGL/eglext.h>
 #include <GLES3/gl32.h>
 
+#include <array>
 #include <cstdio>
 #include <initializer_list>
 #include <utility>
@@ -18,6 +19,145 @@ bool CheckEgl(EGLBoolean result, const char* operation) {
     if (result == EGL_TRUE) return true;
     std::fprintf(stderr, "[egl] %s failed (0x%04x)\n", operation, eglGetError());
     return false;
+}
+
+
+bool ReadRgbaPixel(const char* stage, const std::array<GLubyte, 4>& expected) {
+    std::array<GLubyte, 4> actual{};
+    glReadPixels(8, 8, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, actual.data());
+    const GLenum error = glGetError();
+    bool matches = error == GL_NO_ERROR;
+    for (size_t i = 0; i < actual.size(); ++i) {
+        const int difference = static_cast<int>(actual[i]) - static_cast<int>(expected[i]);
+        if (difference < -2 || difference > 2) matches = false;
+    }
+    std::fprintf(stderr,
+                 "[TARGET] %-20s pixel=%u,%u,%u,%u status=%s error=0x%04x\n",
+                 stage,
+                 static_cast<unsigned int>(actual[0]),
+                 static_cast<unsigned int>(actual[1]),
+                 static_cast<unsigned int>(actual[2]),
+                 static_cast<unsigned int>(actual[3]),
+                 matches ? "PASS" : "FAIL",
+                 error);
+    return matches;
+}
+
+bool RunRenderTargetSmoke() {
+    constexpr GLsizei width = 16;
+    constexpr GLsizei height = 16;
+    GLuint color_texture = 0;
+    GLuint depth_stencil = 0;
+    GLuint framebuffer = 0;
+    GLuint uploaded_texture = 0;
+    GLuint blit_texture = 0;
+    GLuint blit_framebuffer = 0;
+    bool ok = true;
+
+    glGenTextures(1, &color_texture);
+    glBindTexture(GL_TEXTURE_2D, color_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glGenRenderbuffers(1, &depth_stencil);
+    glBindRenderbuffer(GL_RENDERBUFFER, depth_stencil);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, width, height);
+
+    glGenFramebuffers(1, &framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, color_texture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
+                              GL_RENDERBUFFER, depth_stencil);
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::fprintf(stderr, "[TARGET] color + depth/stencil FBO incomplete: 0x%04x\n", status);
+        ok = false;
+    } else {
+        glViewport(0, 0, width, height);
+        glDisable(GL_SCISSOR_TEST);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthMask(GL_TRUE);
+        glStencilMask(0xFF);
+        glClearColor(0.25f, 0.50f, 0.75f, 1.0f);
+        glClearDepthf(0.5f);
+        glClearStencil(0x5A);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+        glFinish();
+        ok = ReadRgbaPixel("FBO clear/readback", {64, 128, 191, 255}) && ok;
+    }
+
+    std::array<GLubyte, width * height * 4> pixels{};
+    for (size_t i = 0; i < pixels.size(); i += 4) {
+        pixels[i + 0] = 32;
+        pixels[i + 1] = 96;
+        pixels[i + 2] = 160;
+        pixels[i + 3] = 255;
+    }
+
+    glGenTextures(1, &uploaded_texture);
+    glBindTexture(GL_TEXTURE_2D, uploaded_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, pixels.data());
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, uploaded_texture, 0);
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::fprintf(stderr, "[TARGET] uploaded texture FBO incomplete: 0x%04x\n", status);
+        ok = false;
+    } else {
+        glFinish();
+        ok = ReadRgbaPixel("texture upload/readback", {32, 96, 160, 255}) && ok;
+    }
+
+    glGenTextures(1, &blit_texture);
+    glBindTexture(GL_TEXTURE_2D, blit_texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0,
+                 GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGenFramebuffers(1, &blit_framebuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, blit_framebuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+                           GL_TEXTURE_2D, blit_texture, 0);
+    status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        std::fprintf(stderr, "[TARGET] blit destination FBO incomplete: 0x%04x\n", status);
+        ok = false;
+    } else {
+        glBindFramebuffer(GL_READ_FRAMEBUFFER, framebuffer);
+        glBindFramebuffer(GL_DRAW_FRAMEBUFFER, blit_framebuffer);
+        glBlitFramebuffer(0, 0, width, height, 0, 0, width, height,
+                          GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBindFramebuffer(GL_FRAMEBUFFER, blit_framebuffer);
+        glFinish();
+        ok = ReadRgbaPixel("FBO blit/readback", {32, 96, 160, 255}) && ok;
+    }
+
+    const GLenum error = glGetError();
+    if (error != GL_NO_ERROR) {
+        std::fprintf(stderr, "[TARGET] GL error after render-target smoke: 0x%04x\n", error);
+        ok = false;
+    }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    if (blit_framebuffer) glDeleteFramebuffers(1, &blit_framebuffer);
+    if (framebuffer) glDeleteFramebuffers(1, &framebuffer);
+    if (depth_stencil) glDeleteRenderbuffers(1, &depth_stencil);
+    if (color_texture) glDeleteTextures(1, &color_texture);
+    if (uploaded_texture) glDeleteTextures(1, &uploaded_texture);
+    if (blit_texture) glDeleteTextures(1, &blit_texture);
+
+    std::fprintf(stderr,
+                 "[TARGET] result: %s (RGBA8 + DEPTH24_STENCIL8, upload/mipmap, blit, readback)\n",
+                 ok ? "PASS" : "FAIL");
+    return ok;
 }
 
 }  // namespace
@@ -116,6 +256,7 @@ int main() {
     std::fprintf(stderr, "[SHADER] %-16s program=%u status=%s\n",
                  "ps2-fast", fast_program, fast_program ? "linked (optional)" : "not built (optional)");
 
+    const bool render_targets = built && RunRenderTargetSmoke();
     glFinish();
     const GLenum gl_error = glGetError();
     shaders.Destroy();
@@ -124,11 +265,11 @@ int main() {
     eglDestroySurface(display, surface);
     eglTerminate(display);
 
-    if (!built || !all_programs || gl_error != GL_NO_ERROR) {
+    if (!built || !all_programs || !render_targets || gl_error != GL_NO_ERROR) {
         std::fprintf(stderr, "[FAIL] NativeEE shader library build=%s all-programs=%s GL-error=0x%04x\n",
                      built ? "true" : "false", all_programs ? "true" : "false", gl_error);
         return 4;
     }
-    std::fprintf(stderr, "[RESULT] PASS: all required NativeEE production shader programs compiled and linked in GLES 3.2\n");
+    std::fprintf(stderr, "[RESULT] PASS: NativeEE production shaders and GLES render-target/texture/readback smoke passed\n");
     return 0;
 }
