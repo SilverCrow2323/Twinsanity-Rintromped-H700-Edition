@@ -108,7 +108,7 @@ Do not silence errors with global macros or by substituting a desktop GL header 
 
 ## Production shader smoke (Mesa)
 
-The renderer harness also exposes `h700_gles_shader_smoke_check`. It creates a headless EGL/GLES 3.2 pbuffer, instantiates the real NativeEE `GlShaderLibrary`, and compiles/links the production PS2, scanout, dither and stencil shader programs.
+The renderer harness also exposes `h700_gles_shader_smoke_check`. It creates a headless EGL/GLES 3.2 pbuffer, instantiates the real NativeEE `GlShaderLibrary`, and compiles/links the production PS2, scanout, dither and stencil shader programs. It then checks an RGBA8 color target with a DEPTH24_STENCIL8 attachment, uploads a known texture, generates its mip chain, blits between framebuffer objects and reads pixels back.
 
 On Ubuntu CI:
 
@@ -119,4 +119,4 @@ cmake --build build/mesa-gles --target h700_gles_shader_smoke_check --parallel 2
 EGL_PLATFORM=surfaceless LIBGL_ALWAYS_SOFTWARE=1 ./build/mesa-gles/h700_gles_shader_smoke
 ~~~
 
-The Mesa job is a **blocking CI gate**. A pass proves that the production shader library compiles and links under Mesa GLES; it is not proof of Mali driver behavior or correct game images. The same shader smoke is also included in the AArch64 `.muxapp` so that it can run on the physical H700. Its output is written to `logs/gles-shader-report.txt`.
+The Mesa job is a **blocking CI gate**. A pass proves that the production shader library compiles/links and that the basic color/depth-stencil FBO, upload/mipmap, blit and readback path works under Mesa GLES. It is not proof of Mali driver behavior, the complete GS format matrix or correct game images. The same shader smoke is also included in the AArch64 `.muxapp` so that it can run on the physical H700. Its output is written to `logs/gles-shader-report.txt`.
