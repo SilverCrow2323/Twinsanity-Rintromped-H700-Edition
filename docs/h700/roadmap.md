@@ -51,7 +51,7 @@ Actions artifact ID `14214608053`; outer ZIP digest `3a53eed01fd3e43583bb13b3758
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
 | 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; NativeEE runner links against ARM64 GLES and static LGPL FFmpeg | **Passed in CI** (`681f0b32`) |
 | 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed** (`681f0b32`); physical Mali retest pending |
-| 4 · GS surfaces | FBO, depth/stencil, textures, mipmaps and readback validated | Pending |
+| 4 · GS surfaces | Mesa CI covers RGBA8 + DEPTH24_STENCIL8 FBO, texture upload/mipmaps, blit and pixel readback; Mali validation pending | **Mesa CI only** |
 | 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
 | 6 · Game boot | Game reaches title and first interactive scene | Pending |
 | 7 · Runtime systems | Controls, audio, ISO streaming, saves and clean exit | Pending |
@@ -83,9 +83,9 @@ Actions artifact ID `14214608053`; outer ZIP digest `3a53eed01fd3e43583bb13b3758
 - [x] Package the same NativeEE shader smoke as an AArch64 executable in the muOS diagnostic `.muxapp`.
 - [ ] Execute the packaged `GlShaderLibrary::Build()` on the Mali-G31 and inspect `logs/gles-shader-report.txt`.
 - [ ] Confirm every required shader program on the device and resolve any Mali-specific compiler differences.
-- [ ] Test color, depth and stencil FBO combinations.
-- [ ] Test texture uploads, mip tails, filtering and supported formats.
-- [ ] Test copies, readback alignment and synchronization.
+- [x] Exercise an RGBA8 color target with a DEPTH24_STENCIL8 attachment, clear and pixel readback in the blocking Mesa GLES smoke.
+- [x] Exercise texture upload, mip generation, framebuffer blit and pixel readback in the blocking Mesa GLES smoke.
+- [ ] Test the full GS color/depth/stencil format matrix, Mali-specific filtering and synchronization, and compare deterministic images on the physical device.
 - [ ] Capture deterministic images and compare them against desktop references.
 
 ## 5 — First NativeEE frame
