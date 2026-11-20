@@ -9,6 +9,7 @@
 #include <GLES3/gl32.h>
 
 #include <array>
+#include <cstddef>
 #include <cstdio>
 #include <initializer_list>
 #include <utility>
@@ -27,7 +28,7 @@ bool ReadRgbaPixel(const char* stage, const std::array<GLubyte, 4>& expected) {
     glReadPixels(8, 8, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE, actual.data());
     const GLenum error = glGetError();
     bool matches = error == GL_NO_ERROR;
-    for (size_t i = 0; i < actual.size(); ++i) {
+    for (std::size_t i = 0; i < actual.size(); ++i) {
         const int difference = static_cast<int>(actual[i]) - static_cast<int>(expected[i]);
         if (difference < -2 || difference > 2) matches = false;
     }
@@ -91,7 +92,7 @@ bool RunRenderTargetSmoke() {
     }
 
     std::array<GLubyte, width * height * 4> pixels{};
-    for (size_t i = 0; i < pixels.size(); i += 4) {
+    for (std::size_t i = 0; i < pixels.size(); i += 4) {
         pixels[i + 0] = 32;
         pixels[i + 1] = 96;
         pixels[i + 2] = 160;
@@ -266,8 +267,9 @@ int main() {
     eglTerminate(display);
 
     if (!built || !all_programs || !render_targets || gl_error != GL_NO_ERROR) {
-        std::fprintf(stderr, "[FAIL] NativeEE shader library build=%s all-programs=%s GL-error=0x%04x\n",
-                     built ? "true" : "false", all_programs ? "true" : "false", gl_error);
+        std::fprintf(stderr, "[FAIL] shader-build=%s programs=%s render-targets=%s GL-error=0x%04x\n",
+                     built ? "true" : "false", all_programs ? "true" : "false",
+                     render_targets ? "true" : "false", gl_error);
         return 4;
     }
     std::fprintf(stderr, "[RESULT] PASS: NativeEE production shaders and GLES render-target/texture/readback smoke passed\n");
