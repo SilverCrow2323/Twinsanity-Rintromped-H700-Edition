@@ -1,6 +1,6 @@
 # H700 porting status
 
-**Latest complete H700 CI: PASS on exact code HEAD `95732802bd5c651e83a90dfdf85d95249b3654aa`, run [#44067269456](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44067269456), with all six jobs green. The full runner is ELF64/AArch64 and requires at most `GLIBC_2.30`; the full muOS `.muxapp` passed ZIP integrity, single-root layout, diagnostics and licence-payload validation (inner SHA-256 `a088feba52ec205c558bb1918f66de041510b23981f5865abdaeb89ae51c08a3`). Full-muxapp artifact ID `14321467319`, outer ZIP 5,565,674 bytes, digest `sha256:d59fe6940c0448086a945f665c7c7470d1ab5086cc955f2652205df7471d02f9`; full-runner artifact ID `14321691939`, digest `sha256:7d3a89630d053dc9030fa1253c13ba186ea6835927545d18ce1fc06a7cbdb29e`. The build had no title ELF/disc input: game-specific recompilation and composition tests were skipped. Windows run #44067269389 and Wiki run #44067269169 passed; launcher Linux and Windows passed while macOS ARM64 remained queued at the latest check. The only physical evidence remains the 12 November EGL/GLES/SDL colour-frame preflight. Mali production shader execution, first NativeEE frame, game boot and gameplay remain NOT YET VALIDATED.**
+**Latest complete H700 CI: PASS on exact branch HEAD `de542c2a01b258621b54afe1b4639f404529891a`, run [#44444112447](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44444112447), with all six jobs green. The full runner is ELF64/AArch64 PIE and requires at most `GLIBC_2.30`; the full muOS `.muxapp` passed ZIP integrity and contains exactly one `TwinsanityRintromped/` root with `mux_launch.sh` and `mux_lang.ini`, without `game.iso` or `disc-image.txt` (inner SHA-256 `63297ee433dd0c85bd764bd672e18088456d13b27dc6a7273731b8f7c7805bde`). Full-muxapp artifact ID `14493181192`, outer ZIP 5,570,187 bytes, digest `sha256:9ee4ebbeec84e2f3cabf6d9c7fb2d4d32120e2172257d3bca4926b714b02f616`; full-runner artifact ID `14492557707`, outer ZIP 5,645,082 bytes, digest `sha256:a6d937b571f910742bd33d68462c604f493156e01af5abf1f0a4e1345098e9d0`. The build had no title ELF/disc input: game-specific recompilation and composition tests were skipped. Windows run #44067269389 and Wiki run #44067269169 passed; launcher Linux and Windows passed while macOS ARM64 remained queued at the latest check. The only physical evidence remains the 12 November EGL/GLES/SDL colour-frame preflight. Mali production shader execution, first NativeEE frame, game boot and gameplay remain NOT YET VALIDATED.**
 
 ## Current status
 
@@ -10,7 +10,7 @@
 | H700 branch | Active | `h700/porting`; work isolated from upstream baseline |
 | EGL / GLES / SDL preflight | **Historical device PASS** | muOS 2606.0 Andromeda, Mali-G31; EGL 1.4, GLES 3.2, SDL `mali` driver and six visible colour frames on 12 November 2026 |
 | Device inventory | Collected | Allwinner `sun50iw9`, kernel 4.9.170, muOS 2606.0 |
-| Andromeda controller mapping | Host regression tests added | Active muOS mapping, selected database, system database and Retro/Modern fallback; physical controls still pending |
+| Andromeda controller mapping | Host regression suite wired into host-checks | Ten deterministic tests cover active mapping, selected/system database precedence, Retro/Modern fallback, stick capability and future-release isolation; physical controls still pending |
 | Root CMake H700 profile | Added | `PS2R_GLES`; application and NativeEE both select GLES headers |
 | GLES dependency path | Added | `GLES3/gl32.h`, `libGLESv2`, imported `OpenGL::GL` interface |
 | SDL context selection | Added | Requests ES 3.2 and rejects lower returned versions |
@@ -126,3 +126,8 @@ The latest validation runs now complete on this documentation head:
 - Launcher matrix [#44123850075](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44123850075): Linux x86_64 AppImage **PASS**, Windows x64 **PASS**, macOS ARM64 **CANCELLED**. The matrix is not fully green; the cancelled macOS lane remains a separate CI follow-up.
 
 This confirms the current CI compile/link/package gates, not a playable-game result. The CI runner still does not contain the user's game ISO or a title ELF, and no new physical Mali report is attached to this run. Production shader execution on Mali, render-target/readback validation, first NativeEE game frame, game boot, input/audio/video gameplay and sustained performance remain unverified. Keep PR #2 in Draft and do not publish a release.
+
+
+## Andromeda controller regression coverage
+
+The shared `muos_mapping.h` helper and both production call sites were already present on `h700/porting`; the closed PR #11's old branch is not needed. Its ten-case SDL-stub test and fake SDL header are now executed by `porting/h700/scripts/test-kit.sh` as part of `host-checks`. The checks guard both launcher and in-game integration and exercise the exact environment/database/fallback precedence. They remain host-only evidence; the RG35XX H physical button matrix and MENU + START exit chord still require device testing.

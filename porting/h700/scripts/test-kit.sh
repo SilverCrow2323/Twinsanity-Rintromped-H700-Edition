@@ -166,4 +166,31 @@ set -e
 [ "$link_rc" -eq 2 ]
 [ ! -e "$TMP/launcher-args.txt" ]
 
+# Guard the shared muOS mapping helper in both pre-launch and in-game paths.
+MUOS_MAPPING_HEADER="$ROOT/../../engine/engine/platform/sdl/input/muos_mapping.h"
+GAMEPAD_SOURCE="$ROOT/../../engine/engine/platform/sdl/input/gamepad_backend.cpp"
+LAUNCHER_SOURCE="$ROOT/../../engine/app/host/launcher.cpp"
+grep -q 'muos_mapping::Apply(i)' "$LAUNCHER_SOURCE"
+grep -q 'muos_mapping::Apply(device_index)' "$GAMEPAD_SOURCE"
+grep -q 'SDL_GAMECONTROLLERCONFIG_FILE' "$MUOS_MAPPING_HEADER"
+grep -q 'SDL_GAMECONTROLLERCONFIG' "$MUOS_MAPPING_HEADER"
+grep -q 'find("andromeda")' "$MUOS_MAPPING_HEADER"
+grep -q 'a:b2,b:b3,x:b4,y:b5' "$MUOS_MAPPING_HEADER"
+grep -q 'a:b3,b:b2,x:b5,y:b4' "$MUOS_MAPPING_HEADER"
+grep -q 'guide:b12,start:b11,back:b10' "$MUOS_MAPPING_HEADER"
+grep -q 'HasRightStick(device_index)' "$MUOS_MAPPING_HEADER"
+grep -q 'SDL_JoystickNumAxes(joystick) >= 4' "$MUOS_MAPPING_HEADER"
+grep -q 'Andromeda muOS-Keys map failed' "$GAMEPAD_SOURCE"
+grep -q 'Andromeda muOS-Keys map failed' "$LAUNCHER_SOURCE"
+grep -q 'refusing generic map for Andromeda muOS-Keys' "$GAMEPAD_SOURCE"
+grep -q 'refusing incorrect generic fallback for Andromeda muOS-Keys' "$LAUNCHER_SOURCE"
+
+# Execute the ten-case mapping contract against SDL stubs. This proves the
+# deterministic helper logic only; it is not a physical muOS controller test.
+c++ -std=c++17 -Wall -Wextra -Werror \
+  -I"$ROOT/tests/fake-sdl" -I"$ROOT/../../engine" \
+  "$ROOT/tests/test-muos-mapping.cpp" -o "$TMP/test-muos-mapping"
+mkdir -p "$TMP/muos-mapping"
+TW_MUOS_TEST_DIR="$TMP/muos-mapping" "$TMP/test-muos-mapping"
+
 echo 'Host checks passed (device and AArch64 runtime tests pending).'
