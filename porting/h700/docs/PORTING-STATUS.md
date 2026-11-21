@@ -131,3 +131,21 @@ This confirms the current CI compile/link/package gates, not a playable-game res
 ## Andromeda controller regression coverage
 
 The shared `muos_mapping.h` helper and both production call sites were already present on `h700/porting`; the closed PR #11's old branch is not needed. Its ten-case SDL-stub test and fake SDL header are now executed by `porting/h700/scripts/test-kit.sh` as part of `host-checks`. The checks guard both launcher and in-game integration and exercise the exact environment/database/fallback precedence. They remain host-only evidence; the RG35XX H physical button matrix and MENU + START exit chord still require device testing.
+
+
+## Exact full-package evidence · 21 November 2026
+
+Current isolated H700 branch HEAD: \`f7e22324cabf38bcf370cff2632154897fbf03a9\`.
+
+- H700 run [#44722519260](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260): **6/6 jobs passed** — host checks, GLES renderer compile, blocking Mesa production shader smoke, full AArch64 application link, AArch64 diagnostic package and full muOS muxapp.
+- Full runner: \`twinsanityevolved\`, ELF64 little-endian AArch64 PIE; maximum required GLIBC symbol \`GLIBC_2.30\`, within the pinned Bullseye GLIBC 2.31 baseline.
+- Full muxapp: \`Twinsanity-Rintromped-H700-Edition.muxapp\`; inner SHA-256 \`157b1cb574574cd68009fd2aa018bcad165ab561b5550522717e563ac1a8cf7f\`.
+- Full muxapp Actions artifact [#14623421505](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260/artifacts/14623421505): 5,572,650 bytes; outer ZIP digest \`sha256:935ceea794fdd51bac53197ea2236d9dd1df31cd2bbf158546857238725630a3\`.
+- Full runner artifact [#14622258955](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260/artifacts/14622258955): 5,645,082 bytes; outer ZIP digest \`sha256:d6bd185f7ab3abf80d35faefb7b7c6f8d9bbb677ee13c50110dbc247c84f6ad4\`.
+- Diagnostic preflight artifact [#14623390477](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260/artifacts/14623390477): 400,039 bytes; outer ZIP digest \`sha256:2823c9b6d7cebf568ee3e79fbf5e253d963a8e4fb9f9af7345d8747fcce64ddc\`.
+- Windows engine build [#44722519351](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519351) and Wiki validation [#44722519251](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519251): **PASS**.
+- Launcher matrix [#44722519238](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519238): Linux AppImage and Windows passed; macOS ARM64 was cancelled. The launcher workflow is therefore not fully green.
+
+The full package verifier confirms ZIP integrity, the single root \`TwinsanityRintromped/\`, required \`mux_launch.sh\` / \`mux_lang.ini\`, runtime and licence payload. It excludes \`game.iso\` and \`disc-image.txt\`; the user's own image is resolved from the application directory. Host regression tests also exercise a missing saved image falling back to the root \`game.iso\`, repair of \`disc-image.txt\`, rejection of parent traversal and rejection of a symlink that points outside the app directory.
+
+**Not a playable-game certification:** the successful build does not include the user's title ELF or disc image. No post-change Mali production-shader result, first NativeEE game frame, game boot, controller, audio/video, disc streaming, save behavior or sustained gameplay is demonstrated. The earlier EGL/GLES + SDL color-frame preflight remains separate and does not validate this package. A physical test record must identify the device, MuOS version, exact inner package SHA-256 and collected logs.
