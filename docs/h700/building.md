@@ -120,3 +120,12 @@ EGL_PLATFORM=surfaceless LIBGL_ALWAYS_SOFTWARE=1 ./build/mesa-gles/h700_gles_sha
 ~~~
 
 The Mesa job is a **blocking CI gate**. A pass proves that the production shader library compiles/links and that the basic color/depth-stencil FBO, upload/mipmap, blit and readback path works under Mesa GLES. It is not proof of Mali driver behavior, the complete GS format matrix or correct game images. The same shader smoke is also included in the AArch64 `.muxapp` so that it can run on the physical H700. Its output is written to `logs/gles-shader-report.txt`.
+
+
+## Latest exact full package · 21 November 2026
+
+The current isolated branch HEAD \`f7e22324cabf38bcf370cff2632154897fbf03a9\` passed H700 run [#44722519260](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260), all six jobs. The full runner is ELF64/AArch64 PIE with maximum required GLIBC \`GLIBC_2.30\` (Bullseye baseline \`2.31\`). The full muxapp inner SHA-256 is \`157b1cb574574cd68009fd2aa018bcad165ab561b5550522717e563ac1a8cf7f\`; uploaded artifact [#14623421505](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44722519260/artifacts/14623421505) is 5,572,650 bytes with outer digest \`935ceea794fdd51bac53197ea2236d9dd1df31cd2bbf158546857238725630a3\`.
+
+The package verifier confirms one \`TwinsanityRintromped/\` root, launcher/language files, runtime and licence payload; it excludes the user's \`game.iso\` and \`disc-image.txt\`. The launcher host tests cover fallback to the root-level personal ISO, saved-path repair, parent-traversal rejection and symlink escape rejection.
+
+This remains cross-build and package evidence only. The runner had no title ELF or game disc. Production shader execution on Mali, first NativeEE frame, game boot, controller, audio/video, disc streaming, saves and sustained gameplay remain unverified on hardware.
