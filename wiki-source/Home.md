@@ -4,6 +4,10 @@ A native Crash Twinsanity port built from the `twinsanity-reversed` decompilatio
 
 The practical Wiki is the place for installation, disc setup, mods, troubleshooting and the H700 port status.
 
+**[OPEN THE PROJECT WIKI ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki)** · [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) · [Repository](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition) · [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues)
+
+There is no separate static project website at this time; the Wiki is the public player-facing documentation hub.
+
 > [!IMPORTANT]
 > **MUST KNOW!!** You need your own legally obtained Crash Twinsanity disc image. Do not upload it to this repository, issues, pull requests or public file shares.
 
