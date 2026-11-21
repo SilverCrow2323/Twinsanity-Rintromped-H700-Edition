@@ -129,3 +129,10 @@ The current isolated branch HEAD \`f7e22324cabf38bcf370cff2632154897fbf03a9\` pa
 The package verifier confirms one \`TwinsanityRintromped/\` root, launcher/language files, runtime and licence payload; it excludes the user's \`game.iso\` and \`disc-image.txt\`. The launcher host tests cover fallback to the root-level personal ISO, saved-path repair, parent-traversal rejection and symlink escape rejection.
 
 This remains cross-build and package evidence only. The runner had no title ELF or game disc. Production shader execution on Mali, first NativeEE frame, game boot, controller, audio/video, disc streaming, saves and sustained gameplay remain unverified on hardware.
+
+
+## Exact current full package · run 44891447801
+
+The current H700 branch HEAD \`8fb339ab3b9210ec92fda2237553c8cb459d1424\` passed all six jobs in [run #44891447801](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44891447801). The full runner is ELF64/AArch64 PIE with maximum required GLIBC \`2.30\` (Bullseye baseline \`2.31\`). The inner muxapp SHA-256 is \`f1e740c3e32053a315d28124718f178e4e5601d9adfb8e325d5deb954d93be55\`; artifact [#14702635970](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44891447801/artifacts/14702635970) is 5,572,651 bytes with outer digest \`2be7846040b93e4fb157b1c9c4e748725b5c0e74b54aa4e677147b383caa518c\`.
+
+The package verifier confirms one \`TwinsanityRintromped/\` root, launcher/language/runtime/licence assets and no user ISO. This is an exact CI package result, not proof of a NativeEE first frame or game boot on Mali. No controller, audio/video, disc streaming, saves or sustained gameplay is certified.
