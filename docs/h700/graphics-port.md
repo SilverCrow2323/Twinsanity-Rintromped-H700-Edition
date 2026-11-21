@@ -5,7 +5,7 @@
 **From the confirmed muOS SDL/Mali path to the first NativeEE-rendered frame.**
 
 > [!NOTE]
-> The physical H700 has passed EGL 1.4, OpenGL ES 3.2, GLSL ES 3.20 and SDL window presentation. The engine's full rendering path is a separate validation gate.
+> The physical H700 has passed EGL/GLES/SDL preflight, and a later PAL runner reached the beach hub on an earlier package. That proves a rendered NativeEE scene, but the run ended in OOM; the current package and full rendering path still need a fresh device test.
 
 ## 🧭 Runtime architecture
 
@@ -49,6 +49,12 @@ The first production PS2 vertex shader then failed on Mali because the embedded 
 The same log exposed a separate first-run storage issue: `userdata/` was selected before it existed, so writing `ps2r.ini.tmp` failed. The runner now creates and write-probes its data directory, with a fallback to the per-user data path. Host regression tests cover both a missing directory and an unusable preferred path.
 
 **What this proves:** the real runner, disc loader, input/audio initialisation and Mali context are now reached. **What it does not prove:** a successful Mali shader compile, a visible NativeEE frame, a title screen or playable gameplay.
+
+## 🧪 Later physical PAL run — beach hub reached, then OOM
+
+A later H700/Mali-G31 report records the supplied PAL image reaching `levels/earth/hub/beach`. This is evidence that a NativeEE-rendered game scene was presented on an earlier package, beyond the six-colour SDL preflight. The Linux OOM killer subsequently terminated `te-game` at approximately 706 MiB file-backed RSS plus 127 MiB anonymous RSS.
+
+The report does not include the exact muOS build, source SHA or package digest, so this result cannot be assigned to the current CI artifact. The current 0.2.5-dev candidate adds first-draw texture decoding, lower retained texture-pool budgets and RSS telemetry. A fresh physical run must confirm whether those changes prevent the same OOM. The scene render is a historical first-frame milestone, not proof of sustained gameplay, correct full-scene output, stable memory, controls, audio/video or disc streaming.
 
 ## 🧩 Compatibility work in the engine
 
