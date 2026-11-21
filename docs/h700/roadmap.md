@@ -28,6 +28,12 @@ An earlier full runner was installed and launched on a physical H700/Mali-G31 us
 
 The 13 November report does not record an exact firmware build, package SHA-256 or Actions artifact for that physical runner; do not attach the later CI package hash to this older test.
 
+## 🧪 Later physical PAL run — partial game boot, OOM blocked
+
+A subsequent H700/Mali-G31 report records the user's PAL image reaching `levels/earth/hub/beach`, so a NativeEE-rendered game scene and partial game boot were achieved on an earlier package. The Linux OOM killer later terminated `te-game`; the recorded peak was approximately 706 MiB file-backed RSS plus 127 MiB anonymous RSS. This is a confirmed memory-pressure termination, not evidence of a GLES shader crash.
+
+The report did not preserve the exact muOS build, source commit or package SHA-256. Do not attribute this physical result to the current CI artifact. The current 0.2.5-dev candidate adds first-draw texture decoding, smaller retained texture-pool budgets and RSS telemetry, but those mitigations have not yet been re-tested on the device. The first-frame milestone is therefore **historically demonstrated**, while the current package, sustained gameplay, controller, audio/video, disc streaming, saves and thermal behavior remain open.
+
 **Milestone boundary:** physical runner startup and disc/retail-ELF initialisation were demonstrated, but the first NativeEE-rendered frame, title screen and gameplay were **not**. The shader normaliser fix has not yet been retested on the physical Mali device.
 
 ## ✅ CI evidence — 16 November 2026
@@ -50,10 +56,10 @@ Actions artifact ID `14214608053`; outer ZIP digest `3a53eed01fd3e43583bb13b3758
 |---|---|---|
 | 1 · Hardware preflight | EGL 1.4, GLES 3.2, SDL Mali window and visible swaps | **Passed on physical H700** |
 | 2 · GLES compile + link | Renderer and SDL source objects cross-compile for AArch64; NativeEE runner links against ARM64 GLES and static LGPL FFmpeg | **Passed in CI** (`681f0b32`) |
-| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed** (`681f0b32`); physical Mali retest pending |
+| 3 · Production shaders | Required NativeEE programs compile/link in Mesa and on Mali-G31 | **Mesa CI passed**; an earlier physical game scene rendered, but current-package shader retest is pending |
 | 4 · GS surfaces | Mesa CI covers RGBA8 + DEPTH24_STENCIL8 FBO, texture upload/mipmaps, blit and pixel readback; Mali validation pending | **Mesa CI only** |
-| 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | Pending |
-| 6 · Game boot | Game reaches title and first interactive scene | Pending |
+| 5 · First engine frame | NativeEE presents a deterministic renderer-generated frame | **Historical physical pass** on an unpinned PAL package; current candidate retest pending |
+| 6 · Game boot | Game reaches title and first interactive scene | **Partial** — beach hub reached, then OOM termination |
 | 7 · Runtime systems | Controls, audio, ISO streaming, saves and clean exit | Pending |
 | 8 · Release | Stable frame pacing, thermals, install/update and docs | **Runner candidate packaged**; title-specific build and physical validation pending |
 
@@ -98,7 +104,7 @@ Actions artifact ID `14214608053`; outer ZIP digest `3a53eed01fd3e43583bb13b3758
 
 ## 6–8 — Game runtime and release candidate
 
-The NativeEE runner-candidate `.muxapp` now exists as a reproducible CI artifact. It is not game-verified: the latest CI build had no title ELF/disc input, and title-specific recompilation and game composition were skipped. The next test is on the physical H700: install this exact package, retest production shaders on Mali after the normaliser fix, record the first NativeEE frame, then verify the game's title screen and an interactive scene.
+The NativeEE runner-candidate `.muxapp` now exists as a reproducible CI artifact. A previous physical PAL run reached the beach hub but was terminated by OOM; its package identity was not recorded. The latest CI build still had no title ELF/disc input, so title-specific recompilation and game composition were skipped. The next test is to install the exact current package, retest Mali shaders, repeat the beach-hub boot and measure whether the memory mitigations prevent OOM.
 
 The final stable-release gate still includes repeatable cold boot, correct rendering, controller mapping, audio, disc streaming, save/load, clean shutdown, stable frame pacing/thermals, upgrade-safe muOS packaging, user-data preservation, clear troubleshooting guides and a reproducible CI artifact.
 
