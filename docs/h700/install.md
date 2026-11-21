@@ -4,6 +4,16 @@
 <strong>Current status:</strong> the physical H700 run has reached the PAL game world and loaded the beach hub. A subsequent run was terminated by the Linux OOM killer: this is a confirmed memory-pressure failure, not a confirmed GLES shader crash. The 0.2.5-dev H700 candidate now decodes textures on first draw by default, lowers retained texture-pool budgets, and reports anonymous/file-backed RSS. These changes still require a fresh on-device run before they can be called validated. This is a development build, not a release-ready installer.
 </blockquote>
 
+## Current CI candidate — 21 November 2026
+
+- Source HEAD: `544b832921945f6cda7ead8a9529aa215f05ed47`
+- H700 workflow: [run #44894174655](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44894174655), all six jobs passed.
+- Full inner package: `Twinsanity-Rintromped-H700-Edition.muxapp`
+- Inner package SHA-256: `dc4fe8d78e7256b049babfeb4c7f97a7a220e56b399c7f2678b1db46a61b2c63`
+- Actions artifact: [#14703582099](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/actions/runs/44894174655/artifacts/14703582099), outer ZIP SHA-256 `db57c45e3e5f5d355dc2d9dc7c4d32c54f34e0e963999de9294ec9aa37a0021e`
+
+This exact candidate has **not** been physically tested. The beach-hub/OOM result above belongs to an earlier package whose hash and firmware were not recorded. Use this current artifact for the next controlled test and record the device firmware/build plus the four diagnostic reports and `game-launch.log`.
+
 ## Choose the package
 
 | Artifact | What it installs | When to use it |
