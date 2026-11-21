@@ -7,6 +7,10 @@
 - Added H700 `/proc` telemetry for process RSS split into anonymous, file-backed and shared memory, plus system `MemAvailable`.
 - Confirmed from the physical kernel report that the prior runner was killed by the OOM killer. The root source of the large file-backed RSS remains under investigation; this patch is a mitigation candidate, not a validated fix.
 - Documented the PAL edition as the repeatable test baseline (50 Hz video standard; not a promise of 50 rendered FPS on H700).
+- Latest full H700 build on code head f7e22324cabf38bcf370cff2632154897fbf03a9 passed all six jobs in run #44722519260; full runner is ELF64/AArch64 with GLIBC_2.30 maximum.
+- Full muOS muxapp inner SHA-256: 157b1cb574574cd68009fd2aa018bcad165ab561b5550522717e563ac1a8cf7f; Actions artifact #14623421505 outer digest 935ceea794fdd51bac53197ea2236d9dd1df31cd2bbf158546857238725630a3.
+- The package has one TwinsanityRintromped/ root, includes launcher/language/runtime/licence assets and excludes the user's game.iso and disc-image.txt.
+- Windows and Wiki validation passed; the launcher matrix remains incomplete because macOS ARM64 was cancelled. Mali production shaders, NativeEE first frame, title boot and gameplay remain unverified.
 
 ## 0.2.4-dev
 
