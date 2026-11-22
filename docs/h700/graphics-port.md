@@ -156,3 +156,10 @@ The GLES uniform uploader is deferred by default on H700. For a controlled A/B r
 The H700 GLES profile enables two conservative batching paths by default: adjacent blended draws with identical fixed-function state are joined in order, and consecutive shadow-volume count draws are grouped by stencil state. The environment overrides `TE_GFX_JOIN_BLENDED=0` and `TE_GFX_GROUP_VOLUMES=0` remain available for A/B comparison. These changes do not alter the title simulation rate or the internal render scale.
 
 The full H700 package includes `logs/performance-diagnostics.once`, so the first launch after installing an update automatically runs the NativeEE CPU sampler at 2 ms intervals plus the frame/build/render census every 120 presents. The marker is removed before the game starts; normal subsequent launches do not run the sampler. To collect another report later, recreate the empty marker file. Reports are appended to `logs/game-launch.log`.
+
+
+## Texture-pool fence safety
+
+The GLES texture pool may refill an existing allocation with `glTexSubImage2D` only after a sync object was successfully created and `glClientWaitSync` reports it signalled. A null result from `glFenceSync` is **not** evidence that the GPU is idle: the entry remains busy and the caller re-specifies it with `glTexImage2D`, allowing OpenGL to preserve any in-flight storage. A pending or failed fence poll follows the same conservative path. The Vita profile does not use sync objects for this pool and therefore also re-specifies retired storage.
+
+The host regression `Render_TexturePoolFenceSafety` checks that only the `Signaled` state permits in-place refill. This protects the fallback decision in code; it does not measure Mali memory pressure or replace the fresh physical OOM-retest required by the H700 acceptance plan.

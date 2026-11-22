@@ -23,12 +23,16 @@ uint32_t GlTexturePool::Acquire(int width, int height, bool* storage_idle) {
             if (r == GL_ALREADY_SIGNALED || r == GL_CONDITION_SATISFIED) {
                 glDeleteSync(static_cast<GLsync>(e.fence));
                 e.fence = nullptr;
+                e.fence_state = FenceState::Signaled;
+            } else {
+                e.fence_state = FenceState::Pending;
             }
 #else
             e.fence = nullptr;
+            e.fence_state = FenceState::Unavailable;
 #endif
         }
-        if (!e.fence) {
+        if (CanRefillInPlace(e.fence_state)) {
             found = static_cast<int>(i);
             *storage_idle = true;
             break;
@@ -57,8 +61,10 @@ void GlTexturePool::Retire(uint32_t tex, int width, int height, GlStateCache& st
     e.w = static_cast<uint16_t>(width);
     e.h = static_cast<uint16_t>(height);
     e.fence = nullptr;
+    e.fence_state = FenceState::Unavailable;
 #if !PS2R_HOST_VITA
     e.fence = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+    if (e.fence) e.fence_state = FenceState::Pending;
 #endif
     e.retire_seq = ++seq_;
     entries_.push_back(e);

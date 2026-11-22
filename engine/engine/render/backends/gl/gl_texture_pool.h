@@ -1,10 +1,10 @@
 // render/backends/gl/gl_texture_pool.h -- GlTexturePool: recycled RGBA8 level-0 texture
 // storage plus the mip-tail synthesis helper.
 //
-// A retired texture keeps its storage and drops a fence at the retire point; an
-// acquire of the same dimensions prefers an entry whose fence has signalled (every
-// command that referenced it has completed, so an in-place glTexSubImage2D refill is
-// stall-free) and otherwise hands back a busy entry the caller must re-specify
+// A retired texture keeps its storage and drops a fence at the retire point. An
+// in-place glTexSubImage2D refill is allowed only when a successfully-created fence
+// reports signalled. If fence creation is unavailable/fails, or the fence is pending
+// / fails to poll, the entry is treated as busy and the caller must re-specify it
 // (glTexImage2D with data orphans the old allocation). The pool is bounded by entry
 // and byte caps; oldest retirees are really deleted first.
 #pragma once
@@ -21,6 +21,13 @@ class GlStateCache;
 
 class GlTexturePool {
 public:
+    enum class FenceState : uint8_t { Unavailable, Pending, Signaled };
+
+    // A missing fence is not evidence that the GPU has finished using the storage.
+    static constexpr bool CanRefillInPlace(FenceState state) noexcept {
+        return state == FenceState::Signaled;
+    }
+
 #if PS2R_HOST_VITA
     // The Vita: a retired texture keeps vitaGL pool memory (VRAM first: 96 MB in all), and a refill of a whole image
     // re-specifies it anyway (GlDevice::Upload: no copy-on-write), so the storage is not what the pool saves there --
@@ -53,6 +60,7 @@ private:
         uint32_t tex = 0;
         uint16_t w = 0, h = 0;
         void* fence = nullptr;
+        FenceState fence_state = FenceState::Unavailable;
         uint64_t retire_seq = 0;
     };
     std::vector<Entry> entries_;
