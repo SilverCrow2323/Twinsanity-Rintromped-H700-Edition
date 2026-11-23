@@ -19,6 +19,14 @@ ps2r_render_test(test_s9_stencil_smoke)
 ps2r_render_test(test_inherited_uniforms)
 ps2r_render_test(test_texture_filter)
 
+# A pooled texture may be refilled in place only after a real sync fence signals.
+# This pure host test covers the fail-closed state mapping, including glFenceSync failure.
+add_executable(test_gl_texture_pool test_gl_texture_pool.cpp)
+target_include_directories(test_gl_texture_pool PRIVATE ${CMAKE_SOURCE_DIR})
+target_compile_options(test_gl_texture_pool PRIVATE -Wall -Wextra -Werror -O2)
+add_test(NAME Render_TexturePoolFenceSafety COMMAND test_gl_texture_pool)
+set_tests_properties(Render_TexturePoolFenceSafety PROPERTIES TIMEOUT 60)
+
 # The rendering pins over a title's frozen PCSX2 baselines (title-screen draws, whole-frame
 # replays, the attract-sequence correctness gate) were ONE title's: they keyed on that title's
 # dumps and screenshots as private fixtures, and on ps2r_title_renderer_profile. A title module
