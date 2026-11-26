@@ -1,37 +1,14 @@
-# TwinsanityEvolved
+# Player documentation
 
-A native Crash Twinsanity port built from the `twinsanity-reversed` decompilation and the NativeEE engine. The game reads your own disc image at run time; this repository and its releases do not include the original game data.
+This is the version-controlled player handbook for TwinsanityEvolved. It replaces the separate GitHub Wiki so installation, game-data handling, platform support and troubleshooting are reviewed alongside the source.
 
-The practical Wiki is the place for installation, disc setup, mods, troubleshooting and the H700 port status.
+- [Overview](Overview.md)
+- [Getting started](Getting-started.md)
+- [Supported platforms](Supported-platforms.md)
+- [Discs and game data](Discs-and-game-data.md)
+- [Mods](Mods.md)
+- [Frequently asked questions](FAQ.md)
+- [Troubleshooting](Troubleshooting.md)
+- [H700 / PS Vita port status](H700-port-status.md)
 
-**[OPEN THE PROJECT WIKI ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki)** · [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) · [Repository](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition) · [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues)
-
-There is no separate static project website at this time; the Wiki is the public player-facing documentation hub.
-
-> [!IMPORTANT]
-> **MUST KNOW!!** You need your own legally obtained Crash Twinsanity disc image. Do not upload it to this repository, issues, pull requests or public file shares.
-
-## Start here
-
-- [Getting started](Getting-started) — download, install and launch the game.
-- [Supported platforms](Supported-platforms) — what the current release targets, and what it does not promise.
-- [H700 port status](H700-port-status) — the handheld target, known differences and the next engineering gates.
-- [Discs and game data](Discs-and-game-data) — disc recognition and where personal data lives.
-- [Mods](Mods) — supported mod formats and their limits.
-- [Troubleshooting](Troubleshooting) — practical checks for common problems.
-- [FAQ](FAQ) — short answers.
-
-## Project status
-
-The current README and release notes describe the desktop builds and the PS Vita build. A Linux AArch64 archive is listed, but that alone does **not** establish compatibility with an Allwinner H700 handheld or muOS.
-
-The H700 work is tracked separately and remains **unvalidated on hardware** until the dedicated graphics, input, audio and packaging gates pass on the target device.
-
-## Principles
-
-- Keep the original disc image outside the source tree.
-- Keep the game, settings, memory cards and mods in the user's game folder.
-- Treat build/CI success as build evidence, not as proof of handheld compatibility.
-- Keep player instructions here; keep implementation detail in the repository's `docs/`.
-
----
+For downloads use [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases). For bugs use [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues).
