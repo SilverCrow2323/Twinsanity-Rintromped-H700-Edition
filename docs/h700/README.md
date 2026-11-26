@@ -29,6 +29,7 @@ The device creates an EGL 1.4 display, a GLES 3.2 context and a visible SDL wind
 | Page | Use it for |
 |---|---|
 | [Device profile](device-profile.md) | Read the real device report and tested capabilities |
+| [Validation evidence report](device-validation-report.md) | Generate hash-linked JSON/Markdown reports from device logs and package checksums |
 | [Controller input](controller-input.md) | Understand muOS Andromeda GUID, Retro/Modern and SDL button mapping |
 | [Graphics port](graphics-port.md) | Understand the SDL → EGL → GLES path and renderer adaptations |
 | [API compatibility matrix](compatibility-matrix.md) | Track desktop GL differences, GLES decisions and validation state |
