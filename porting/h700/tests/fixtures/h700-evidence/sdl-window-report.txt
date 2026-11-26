@@ -1,0 +1,7 @@
+Twinsanity Rintromped - H700 SDL/GLES window probe
+[build] ABI=AArch64
+[SDL] video_driver=mali
+[GL] renderer=Mali-G31
+[GL] version=OpenGL ES 3.2
+[VISUAL] swapping six solid-color frames
+[RESULT] PASS: SDL window, GLES 3.2+ context and buffer swaps work. Game renderer is not tested.

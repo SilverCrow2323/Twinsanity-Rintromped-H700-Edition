@@ -22,6 +22,7 @@ sh -n "$ROOT/scripts/package-full-muxapp.sh"
 grep -q 'PAL edition' "$ROOT/scripts/package-full-muxapp.sh"
 grep -q '50 Hz video timing' "$ROOT/scripts/package-full-muxapp.sh"
 python3 -c "from pathlib import Path; compile(Path('tools/gl_api_inventory.py').read_text(encoding='utf-8'), 'tools/gl_api_inventory.py', 'exec')"
+python3 -m unittest discover -s tests -p 'test_validation_report.py'
 TMP=$(mktemp -d); trap 'rm -rf "$TMP"' EXIT HUP INT TERM
 # X11 defines the global macro None as 0. The platform API must not use that
 # token as an enum member because EGL includes Xlib before platform.h.

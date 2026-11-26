@@ -1,0 +1,4 @@
+===== BASIC =====
+uname: Linux muOS 4.9.170
+===== END =====
+System inventory complete.

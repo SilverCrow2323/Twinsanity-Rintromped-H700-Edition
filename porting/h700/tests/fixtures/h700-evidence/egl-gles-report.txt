@@ -1,0 +1,7 @@
+Twinsanity Rintromped - H700 EGL/GLES probe
+[build] ABI=AArch64
+[EGL] version=1.4 vendor=ARM
+[GL] vendor=ARM
+[GL] renderer=Mali-G31
+[GL] version=OpenGL ES 3.2
+[GL] shading_language=OpenGL ES GLSL ES 3.20
