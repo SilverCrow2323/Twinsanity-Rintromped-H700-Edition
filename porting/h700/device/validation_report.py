@@ -51,6 +51,37 @@ def build_report(evidence_dir:Path,device:str,firmware:str,build_commit:str,pack
         if not package.is_file(): raise ReportError(f"Package does not exist: {package}")
         report["package"]={"file":package.name,"bytes":package.stat().st_size,"sha256":sha256(package)}
     return report
+
+def verify_report(report: dict, evidence_dir: Path, package: Path | None = None) -> None:
+    """Verify every evidence file against the report's size and SHA-256 fingerprints."""
+    if not isinstance(report, dict) or report.get("schema_version") != 1:
+        raise ReportError("Unsupported validation report schema")
+    evidence = report.get("evidence")
+    files = evidence.get("files") if isinstance(evidence, dict) else None
+    if not isinstance(files, dict) or set(files) != set(REQUIRED):
+        raise ReportError("Validation report evidence inventory is incomplete")
+    for key, (expected_name, _marker) in REQUIRED.items():
+        record = files.get(key)
+        if not isinstance(record, dict) or record.get("file") != expected_name:
+            raise ReportError(f"Invalid evidence record: {key}")
+        path = evidence_dir / expected_name
+        if path.is_symlink() or not path.is_file():
+            raise ReportError(f"Missing or unsafe evidence file: {expected_name}")
+        if path.stat().st_size != record.get("bytes") or sha256(path) != record.get("sha256"):
+            raise ReportError(f"Evidence fingerprint mismatch: {expected_name}")
+    package_record = report.get("package")
+    if package_record is not None:
+        if package is None:
+            raise ReportError("Report includes a package fingerprint; provide --package to verify it")
+        if package.is_symlink() or not package.is_file():
+            raise ReportError("Package path is missing or unsafe")
+        if (package.name != package_record.get("file") or
+                package.stat().st_size != package_record.get("bytes") or
+                sha256(package) != package_record.get("sha256")):
+            raise ReportError("Package fingerprint mismatch")
+    elif package is not None:
+        raise ReportError("A package was supplied but the report has no package fingerprint")
+
 def markdown(report:dict)->str:
     observed=report["evidence"]["observed"]
     lines=["# H700 device validation report","",f"- **Device:** {report['device']['model']}",
