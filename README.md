@@ -9,11 +9,11 @@ this repository — you need your own disc image, which is read at run time.
 
 ## Project hub and player documentation
 
-There is currently **no separate project website** published for this repository. The public documentation hub is the [GitHub Wiki](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki), backed by the tracked [Wiki source](wiki-source/). Use [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) for downloadable builds and [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues) for support.
+The player handbook is maintained in version-controlled Markdown under [`docs/player/`](docs/player/README.md), so documentation changes are reviewed with the source. Use [Releases](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases) for downloadable builds and [Issues](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/issues) for support.
 
-- [Open the project Wiki ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/wiki)
+- [Player handbook](docs/player/README.md)
 - [Latest releases ↗](https://github.com/SilverCrow2323/Twinsanity-Rintromped-H700-Edition/releases)
-- [H700 port notes](wiki-source/H700-port-status.md)
+- [H700 port notes](docs/player/H700-port-status.md)
 
 ## What's new
 
