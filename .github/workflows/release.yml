@@ -48,6 +48,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      - name: Test asset scanner signatures and exclusions
+        run: python3 -m unittest tools/ci/test_asset_scan.py -v
       - name: Asset scan over the tree (zero findings)
         run: python3 tools/ci/asset_scan.py
       - name: No developer vocabulary where a player reads (zero findings)

@@ -6,6 +6,14 @@ Bring TwinsanityEvolved to an Allwinner H700 handheld and its installed firmware
 
 This document is an engineering plan, not a compatibility claim. There is no H700 hardware validation recorded yet.
 
+## Evidence classes — keep these separate
+
+**Automated/host evidence** includes source audits, unit tests, cross-compilation, AArch64 ELF checks, EGL pbuffer tests, SDL context creation under a virtual display and package inspection. These prove only the behavior exercised in their host/CI environment.
+
+**Physical H700 evidence** requires a real RG35XX H/H700 running the named muOS release, with device inventory, panel/RAM identity, EGL/GLES report, SDL window/swap report, input mapping, audio initialization, suspend/resume and logs. A CI artifact or QEMU run cannot satisfy this gate.
+
+Current hardware status remains **not validated** until that evidence is attached and reviewed.
+
 ## Baseline
 
 The current player README and release notes describe desktop targets, a Linux AArch64 archive and a separate PS Vita package. The desktop release notes specify OpenGL 4.1. The PS Vita path is a distinct native target.
